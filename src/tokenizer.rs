@@ -1,6 +1,9 @@
+use std::fmt;
+
 use regex::RegexSet;
 use combine::{StreamOnce};
-use combine::primitives::{SourcePosition, Error};
+use combine::primitives::{Error};
+use {Pos};
 
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -12,6 +15,7 @@ pub enum Kind {
     ExprStart,
     ExprEnd,
     StStart,  // Statement start '##'
+    String,
     // Expression tokens
     Operator,
     Paren,
@@ -22,8 +26,8 @@ pub enum Kind {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Token<'a> {
-    kind: Kind,
-    value: &'a str,
+    pub kind: Kind,
+    pub value: &'a str,
 }
 
 pub struct Tokenizer {
@@ -35,14 +39,14 @@ pub struct Tokenizer {
 pub struct TokenStream<'a> {
     tok: &'a Tokenizer,
     buf: &'a str,
-    position: SourcePosition,
+    position: Pos,
     off: usize,
 }
 
 impl<'a> StreamOnce for TokenStream<'a> {
     type Item = Token<'a>;
     type Range = Token<'a>;
-    type Position = SourcePosition;
+    type Position = Pos;
     fn uncons(&mut self) -> Result<Self::Item, Error<Self::Item, Self::Range>>
     {
         unimplemented!();
@@ -71,21 +75,27 @@ impl Tokenizer {
                  |skip\
                  |if|elif|else|endif\
                  |let\
-                 |syntax\
+                 |syntax|validate\
                  ",           // Keyword
                 r"^[a-zA-Z_][a-zA-Z0-9_]*",  // Ident
                 r"(?:0[oxb])?[0-9][0-9_]*(\.[0-9_]+)?",  // Number
-                r#""#,  // String
+                r#""(:?[^"]|\\")*"|'(:?[^']|\\')*'"#,  // String
             ]).unwrap(),
         }
     }
 
-    pub fn parse<'x: 'y, 'y>(&'x self, buf: &'y str) -> TokenStream<'y> {
+    pub fn scan<'x: 'y, 'y>(&'x self, buf: &'y str) -> TokenStream<'y> {
         TokenStream {
             tok: self,
             buf: buf,
-            position: SourcePosition { line: 1, column: 1 },
+            position: Pos { line: 1, column: 1 },
             off: 0,
         }
+    }
+}
+
+impl<'a> fmt::Display for Token<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(&self.value, f)
     }
 }

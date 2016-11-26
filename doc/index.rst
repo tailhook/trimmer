@@ -1,13 +1,10 @@
-.. Trimmer documentation master file, created by
-   sphinx-quickstart on Sat Nov 26 00:54:57 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to Trimmer's documentation!
 ===================================
 
 Trimmer is a template language that was initially created to make configuration
-files.
+files. Basically it's template renderer for text files which can also do
+very small subset of validations to make process of design of template easier
+and safer to use.
 
 Contents:
 
@@ -20,14 +17,16 @@ Quick showcase:
 .. code-block:: bash
 
     ## syntax: indent, {}
+    ## validate default: '^[^;{}]*$'  # no ; { } to break nginx syntax
+    ## validate ne: '^[^;{}]+$'       # non-empty (note plus in regex)
     http {
         ## for server in servers
-            ## skip if server.hostname == 'null'
+            ## skip if server.hostname == null
             server {
                 root /var/www;
                 server_name
                     ## for name in server.hostnames
-                       {{+ server.hostname }}.{{ suffix -}}
+                       {{+ server.hostname | ne }}.{{ suffix | ne -}}
                     ## endfor
                 ;
                 ## if server.ip
@@ -61,6 +60,5 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
 
