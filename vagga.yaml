@@ -1,5 +1,14 @@
 commands:
 
+  doc: !Command
+    description: Build documentation
+    container: doc
+    run: [sphinx-build-3, -b, html, doc, doc/_build]
+    work-dir: /work
+    epilog: |
+      -------------------------------------------------------
+      Documentation is built under doc/_build/html/index.html
+
   cargo: !Command
     description: Run any cargo command
     container: ubuntu
@@ -20,8 +29,7 @@ containers:
 
   ubuntu:
     setup:
-    - !Ubuntu trusty
-    - !UbuntuUniverse ~
+    - !Ubuntu trusty - !UbuntuUniverse ~
     - !Install [make, checkinstall, wget, ca-certificates,
                 libssl-dev, build-essential]
 
@@ -33,3 +41,12 @@ containers:
     environ:
       HOME: /work/target
       USER: pc
+
+  doc:
+    setup:
+    - !Alpine v3.4
+    - !Repo edge/main
+    - !Install [alpine-base, py3-sphinx]
+    # If you require additional packages to build docs uncomment this
+    # - !Py2Requirements docs/requirements.txt
+
