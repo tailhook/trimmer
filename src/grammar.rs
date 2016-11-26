@@ -11,6 +11,8 @@ use {Pos};
 #[derive(Debug, PartialEq)]
 pub struct Syntax {
     indent: bool,
+    new_line_at_eof: bool,
+    // parenthesis
     curly: bool,
     square: bool,
     round: bool,
@@ -63,7 +65,7 @@ pub struct Body {
 
 #[derive(Debug, PartialEq)]
 pub enum StatementCode {
-    Raw(String),
+    OutputRaw(String),
     Output(Expr),
     Cond {
         conditional: Vec<(Expr, Body)>,
@@ -101,8 +103,10 @@ fn statement<'a>(input: TokenStream<'a>)
     use tokenizer::Kind::*;
     use helpers::*;
     use combine::combinator::position;
+    use self::StatementCode::*;
+
     let statements =
-        kind(String).map(|tok| StatementCode::Raw(tok.value.to_string()));
+        kind(Raw).map(|tok| OutputRaw(tok.value.to_string()));
     (position(), statements, position()).map(|(s, c, e)| Statement {
         position: (s, e),
         code: c,
@@ -122,13 +126,15 @@ impl Parser {
     }
     pub fn parse(&self, data: &str) -> Result<Template, ParseError> {
         use combine::combinator::*;
+        use helpers::kind;
+
         let s = self.tok.scan(data);
 
         let mut p = many(parser(statement)).map(|stmts| Template {
             check: Syntax::new(),  // TODO(tailhook)
             validators: HashMap::new(),  // TODO(tailhook)
             body: Body { statements: stmts },
-        });
+        }).skip(kind(Kind::Eof));
 
         let (template, _) = p.parse(s)?;
         // TODO(tailhook) should we assert EOF?
@@ -141,6 +147,7 @@ impl Syntax {
     fn new() -> Syntax {
         Syntax {
             indent: false,
+            new_line_at_eof: true,
             curly: false,
             square: false,
             round: false,

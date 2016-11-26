@@ -10,7 +10,7 @@ quick_error! {
     pub enum ParseError {
         Parse(position: SourcePosition, error: String) {
             description("error parsing template")
-            display("{}", error)
+            display("{}:{}: {}", position.line, position.column, error.trim())
         }
     }
 }
