@@ -19,7 +19,7 @@ Quick showcase:
 
 .. code-block:: bash
 
-    ## syntaxcheck: indent, {}
+    ## syntax: indent, {}
     http {
         ## for server in servers
             ## skip if server.hostname == 'null'
