@@ -19,10 +19,17 @@ Quick showcase:
 
 .. code-block:: bash
 
+    ## syntaxcheck: indent, {}
     http {
         ## for server in servers
+            ## skip if server.hostname == 'null'
             server {
-                server_name {{ server.hostname }};
+                root /var/www;
+                server_name
+                    ## for name in server.hostnames
+                       {{+ server.hostname }}.{{ suffix -}}
+                    ## endfor
+                ;
                 ## if server.ip
                     listen {{ server.ip }}:80;
                 ## else
@@ -38,11 +45,13 @@ Results in (note the indentation):
 
     http {
         server {
+            root /var/www;
             server_name apple.local;
             listen 192.168.0.1:80;
         }
         server {
-            server_name orange.local;
+            root /var/www;
+            server_name orange.local plum.local;
             listen 80;
         }
     }
