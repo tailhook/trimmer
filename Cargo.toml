@@ -1,0 +1,15 @@
+[package]
+name = "trimmer"
+description = """
+    A whitespace and memory friendly template engine
+"""
+license = "MIT/Apache-2.0"
+readme = "README.rst"
+keywords = ["template", "render", "whitespace"]
+homepage = "http://github.com/tailhook/trimmer"
+documentation = "http://trimmer.readthedocs.io"
+version = "0.1.0"
+authors = ["paul@colomiets.name"]
+
+[dependencies]
+quick-error = "1.0.0"
