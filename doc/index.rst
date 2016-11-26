@@ -6,11 +6,46 @@
 Welcome to Trimmer's documentation!
 ===================================
 
+Trimmer is a template language that was initially created to make configuration
+files.
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
+
+Quick showcase:
+
+.. code-block:: bash
+
+    http {
+        ## for server in servers
+            server {
+                server_name {{ server.hostname }};
+                ## if server.ip
+                    listen {{ server.ip }}:80;
+                ## else
+                    listen 80;
+                ## endif
+            }
+        ## endfor
+    }
+
+Results in (note the indentation):
+
+.. code-block:: nginx
+
+    http {
+        server {
+            server_name apple.local;
+            listen 192.168.0.1:80;
+        }
+        server {
+            server_name orange.local;
+            listen 80;
+        }
+    }
 
 
 Indices and tables

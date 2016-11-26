@@ -6,8 +6,8 @@ commands:
     run: [sphinx-build-3, -b, html, doc, doc/_build]
     work-dir: /work
     epilog: |
-      -------------------------------------------------------
-      Documentation is built under doc/_build/html/index.html
+      --------------------------------------------------
+      Documentation is built under doc/_build/index.html
 
   cargo: !Command
     description: Run any cargo command
