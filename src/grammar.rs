@@ -8,6 +8,7 @@ use parse_error::ParseError;
 use {Pos};
 
 
+#[derive(Debug, PartialEq)]
 pub struct Syntax {
     indent: bool,
     curly: bool,
@@ -15,6 +16,7 @@ pub struct Syntax {
     round: bool,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum ExprCode {
     // Constants
     Str(String),
@@ -48,13 +50,18 @@ pub enum ExprCode {
     Mod(Box<Expr>, Box<Expr>),
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Expr {
-    position: (Pos, Pos),
-    code: ExprCode,
+    pub position: (Pos, Pos),
+    pub code: ExprCode,
 }
 
-pub struct Body(Vec<Statement>);
+#[derive(Debug, PartialEq)]
+pub struct Body {
+    pub statements: Vec<Statement>,
+}
 
+#[derive(Debug, PartialEq)]
 pub enum StatementCode {
     Raw(String),
     Output(Expr),
@@ -72,15 +79,16 @@ pub enum StatementCode {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Statement {
-    position: (Pos, Pos),
-    code: StatementCode,
+    pub position: (Pos, Pos),
+    pub code: StatementCode,
 }
 
 pub struct Template {
-    check: Syntax,
-    validators: HashMap<String, Regex>,
-    body: Body,
+    pub check: Syntax,
+    pub validators: HashMap<String, Regex>,
+    pub body: Body,
 }
 
 pub struct Parser {
@@ -119,7 +127,7 @@ impl Parser {
         let mut p = many(parser(statement)).map(|stmts| Template {
             check: Syntax::new(),  // TODO(tailhook)
             validators: HashMap::new(),  // TODO(tailhook)
-            body: Body(stmts),
+            body: Body { statements: stmts },
         });
 
         let (template, _) = p.parse(s)?;
