@@ -13,6 +13,8 @@ mod helpers;
 mod grammar;
 mod parse_error;
 mod vars;
+mod render;
+mod render_error;
 #[cfg(test)] mod tests;
 
 
@@ -20,6 +22,5 @@ pub use position::Pos;
 pub use grammar::Parser;
 pub use parse_error::ParseError;
 pub use vars::Context;
-
-/// A parsed template code that can be rendered
-pub struct Template(grammar::Template);
+pub use render::Template;
+pub use render_error::{RenderError, DataError};
