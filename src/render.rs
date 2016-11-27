@@ -34,16 +34,33 @@ impl Template {
             errors: Vec::new(),
         };
         rnd.write_block(&self.0.body.statements)?;
-        if rnd.errors.len() == 0 {
+        if rnd.errors.len() != 0 {
             return Err(RenderError::Data(rnd.errors));
-        } else {
-            return Ok(())
         }
+        return Ok(())
     }
 }
 
 impl<'a, W: Write> Renderer<'a, W> {
-    fn write_block(&mut self, vec: &[Statement]) -> Result<(), io::Error> {
-        unimplemented!();
+    fn write_block(&mut self, items: &[Statement]) -> Result<(), io::Error> {
+        use grammar::StatementCode::*;
+
+        for item in items {
+            match item.code {
+                OutputRaw(ref x) => {
+                    self.buf.write(x.as_bytes())?;
+                }
+                _ => unimplemented!(),
+            }
+        }
+        Ok(())
     }
+}
+
+pub fn template(imp: grammar::Template) -> Template {
+    Template(imp)
+}
+
+pub fn extract(tpl: Template) -> grammar::Template {
+    tpl.0
 }

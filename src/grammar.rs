@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use combine::{Parser as CombineParser, ParseResult};
 
 use regex::Regex;
+use render::{self, template};
 use tokenizer::{Tokenizer, TokenStream, Kind};
 use parse_error::ParseError;
 use {Pos};
@@ -151,7 +152,7 @@ impl Parser {
         }
     }
     /// Parse and compile a template
-    pub fn parse(&self, data: &str) -> Result<Template, ParseError> {
+    pub fn parse(&self, data: &str) -> Result<render::Template, ParseError> {
         use combine::combinator::*;
         use helpers::kind;
 
@@ -163,10 +164,10 @@ impl Parser {
             body: Body { statements: stmts },
         }).skip(kind(Kind::Eof));
 
-        let (template, _) = p.parse(s)?;
+        let (tpl, _) = p.parse(s)?;
         // TODO(tailhook) should we assert EOF?
         // TODO(tailhook) execute checks
-        return Ok(template);
+        return Ok(template(tpl));
     }
 }
 
