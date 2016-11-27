@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
-use combine::{Stream, Parser, ConsumedResult, satisfy};
-use combine::primitives::{Error, ParseError, Info};
+use combine::{Parser, ConsumedResult, satisfy, skip_many};
+use combine::combinator::{SkipMany};
 
 use tokenizer::{TokenStream, Kind, Token};
 
@@ -17,6 +17,13 @@ pub fn kind<'x>(kind: Kind) -> TokenMatch<'x> {
         kind: kind,
         phantom: PhantomData,
     }
+}
+
+pub fn ws<'x>() -> SkipMany<TokenMatch<'x>> {
+    skip_many(TokenMatch {
+        kind: Kind::Whitespace,
+        phantom: PhantomData,
+    })
 }
 
 impl<'a> Parser for TokenMatch<'a> {

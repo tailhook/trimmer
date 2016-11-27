@@ -1,14 +1,17 @@
 use std::fmt::Write;
 
-use combine::primitives::{ParseError as CombineError, SourcePosition, Error};
+use combine::primitives::{ParseError as CombineError, Error};
 
 use tokenizer::TokenStream;
+use {Pos};
 
 
 quick_error! {
+    /// Error parsing template
     #[derive(Debug)]
     pub enum ParseError {
-        Parse(position: SourcePosition, error: String) {
+        /// Invalid syntax
+        InvalidSyntax(position: Pos, error: String) {
             description("error parsing template")
             display("{}:{}: {}", position.line, position.column, error.trim())
         }
@@ -71,6 +74,6 @@ impl<'a> From<CombineError<TokenStream<'a>>> for ParseError {
             writeln!(&mut buf, "    {}", error).unwrap();
         }
 
-        ParseError::Parse(e.position, buf)
+        ParseError::InvalidSyntax(e.position, buf)
     }
 }

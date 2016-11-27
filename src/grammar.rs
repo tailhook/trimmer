@@ -97,16 +97,38 @@ pub struct Parser {
     tok: Tokenizer,
 }
 
+fn expression<'a>(input: TokenStream<'a>)
+    -> ParseResult<Expr, TokenStream<'a>>
+{
+    use tokenizer::Kind::*;
+    use helpers::*;
+    use combine::combinator::{position};
+
+    let expr = kind(Ident).map(|t| ExprCode::Var(t.value.into()));
+    (kind(ExprStart).skip(ws()).with(position()),
+        expr,
+        position().skip(ws()).skip(kind(ExprEnd)))
+    .map(|(s, c, e)| Expr {
+        position: (s, e),
+        code: c,
+    })
+    .parse_stream(input)
+}
+
 fn statement<'a>(input: TokenStream<'a>)
     -> ParseResult<Statement, TokenStream<'a>>
 {
     use tokenizer::Kind::*;
     use helpers::*;
-    use combine::combinator::position;
+    use combine::combinator::{position, parser};
     use self::StatementCode::*;
 
     let statements =
-        kind(Raw).map(|tok| OutputRaw(tok.value.to_string()));
+        kind(Raw).map(|tok| OutputRaw(tok.value.to_string()))
+        // Whitespace out of any blocks is output as is
+        .or(parser(expression).map(Output))
+        .or(kind(Whitespace).map(|tok| OutputRaw(tok.value.to_string())))
+        .or(kind(Newline).map(|tok| OutputRaw(tok.value.to_string())));
     (position(), statements, position()).map(|(s, c, e)| Statement {
         position: (s, e),
         code: c,

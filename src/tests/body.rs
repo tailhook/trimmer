@@ -1,28 +1,49 @@
-use std::collections::HashMap;
+use tests::assert_eq;
 
 use grammar::ExprCode::*;
 use grammar::StatementCode::*;
-use grammar::{Parser, Template, Syntax, Statement};
+use grammar::{Parser, Statement, Expr};
 use {Pos};
 
 fn parse(data: &'static str) -> Vec<Statement> {
     Parser::new().parse(data).unwrap().body.statements
 }
 
-fn line(line_no: i32, start: i32, end: i32) ->  (Pos, Pos) {
+fn line(line_no: usize, start: usize, end: usize) ->  (Pos, Pos) {
     (Pos { line: line_no, column: start },
      Pos { line: line_no, column: end })
 }
 
 #[test]
 fn empty() {
-    assert_eq!(parse(""), vec![]);
+    assert_eq(parse(""), vec![]);
 }
 
 #[test]
 fn hello() {
-    assert_eq!(parse("hello"), vec![Statement {
+    assert_eq(parse("hello"), vec![Statement {
         position: line(1, 1, 6),
         code: OutputRaw("hello".into()),
     }]);
+}
+
+#[test]
+fn var() {
+    assert_eq(parse("a{{ x }}b"), vec![
+        Statement {
+            position: line(1, 1, 2),
+            code: OutputRaw("a".into()),
+        },
+        Statement {
+            position: line(1, 2, 9),
+            code: Output(Expr {
+                position: line(1, 5, 6),
+                code: Var(String::from("x")),
+            }),
+        },
+        Statement {
+            position: line(1, 9, 10),
+            code: OutputRaw("b".into()),
+        },
+    ]);
 }

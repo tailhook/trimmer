@@ -1,5 +1,4 @@
 use std::fmt;
-use std::cmp::min;
 
 use regex::{Regex, RegexSet};
 use combine::{StreamOnce};
@@ -43,6 +42,7 @@ pub struct Tokenizer {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum State {
     Top,
+    Expr,
 }
 
 #[derive(Clone)]
@@ -73,8 +73,24 @@ impl<'a> StreamOnce for TokenStream<'a> {
 
                 match tok.kind {
                     CommentStart => unimplemented!(),
-                    ExprStart => unimplemented!(),
+                    ExprStart => {
+                        self.state = State::Expr;
+                    }
                     StStart => unimplemented!(),
+                    _ => {}
+                }
+                return Ok(tok)
+            }
+            State::Expr => {
+                let tok = self.match_expr()?;
+
+                self.update_pos(tok.value);
+
+                match tok.kind {
+                    CommentStart => unimplemented!(),
+                    ExprEnd => {
+                        self.state = State::Top;
+                    }
                     _ => {}
                 }
                 return Ok(tok)
@@ -104,15 +120,29 @@ impl<'a> TokenStream<'a> {
             }
         }
     }
+    fn match_expr(&self) -> Result<Token<'a>, Error<Token<'a>, Token<'a>>> {
+        let cur = &self.buf[self.off..];
+        match self.tok.expr_set.matches(cur).into_iter().next() {
+            None => {
+                Err(Error::Unexpected(
+                    Info::Borrowed("end of file, expected `}}`")))
+            }
+            Some(idx) => {
+                let (s, e) = self.tok.expr_list[idx].0.find(cur).unwrap();
+                assert_eq!(s, 0);
+                Ok(Token { kind: self.tok.expr_list[idx].1, value: &cur[..e] })
+            }
+        }
+    }
     fn update_pos(&mut self, val: &str) {
         self.off += val.len();
         let lines = val.as_bytes().iter().filter(|&&x| x == b'\n').count();
-        self.position.line += lines as i32;
+        self.position.line += lines;
         if lines > 0 {
             let num = val[val.rfind('\n').unwrap()+1..].chars().count();
-            self.position.column = num as i32;
+            self.position.column = num;
         } else {
-            self.position.column += val.chars().count() as i32;
+            self.position.column += val.chars().count();
         }
     }
 }
@@ -121,10 +151,10 @@ impl Tokenizer {
     pub fn new() -> Tokenizer {
         use self::Kind::*;
         let top = &[
-            (r"[ \t]+", Whitespace),
-            (r"\n", Newline),
             (r"\{\{[+-]?", ExprStart),
             (r"\{#", CommentStart),
+            (r"\n", Newline),
+            (r"[ \t]+", Whitespace),
         ];
         let expr = &[
             (r"^\s+", Whitespace),
