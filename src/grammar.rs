@@ -93,6 +93,10 @@ pub struct Template {
     pub body: Body,
 }
 
+/// A reusable parser
+///
+/// Instance of this class must (and should) be reused for compiling multiple
+/// templates
 pub struct Parser {
     tok: Tokenizer,
 }
@@ -146,6 +150,7 @@ impl Parser {
             tok: Tokenizer::new(),
         }
     }
+    /// Parse and compile a template
     pub fn parse(&self, data: &str) -> Result<Template, ParseError> {
         use combine::combinator::*;
         use helpers::kind;
