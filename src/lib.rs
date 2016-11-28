@@ -15,12 +15,13 @@ mod parse_error;
 mod vars;
 mod render;
 mod render_error;
+mod std_vars;
 #[cfg(test)] mod tests;
 
 
 pub use position::Pos;
 pub use grammar::Parser;
 pub use parse_error::ParseError;
-pub use vars::Context;
+pub use vars::{Context, Variable, Var, IntoVariable};
 pub use render::Template;
 pub use render_error::{RenderError, DataError};

@@ -102,14 +102,46 @@ pub struct Parser {
     tok: Tokenizer,
 }
 
+// TODO(tailhook) allow escaping errors
+// TODO(tailhook) implement hex escapes
+fn parse_str(val: &str) -> String {
+    let mut escape = false;
+    let mut res = String::new();
+
+    for ch in val[1..val.len()-1].chars() {
+        if escape {
+            match ch {
+                '"' => res.push('"'),
+                '\\' => res.push('\\'),
+                '/' => res.push('/'),
+                'b' => res.push('\x08'),
+                'f' => res.push('\x0c'),
+                'n' => res.push('\n'),
+                'r' => res.push('\r'),
+                't' => res.push('\t'),
+                ch => res.push(ch),
+            }
+            escape = false;
+        } else if ch == '\\' {
+            escape = true;
+        } else {
+            res.push(ch);
+        }
+    }
+    return res;
+}
+
 fn expression<'a>(input: TokenStream<'a>)
     -> ParseResult<Expr, TokenStream<'a>>
 {
     use tokenizer::Kind::*;
     use helpers::*;
+    use self::ExprCode::*;
     use combine::combinator::{position};
 
-    let expr = kind(Ident).map(|t| ExprCode::Var(t.value.into()));
+    let expr =
+        kind(Ident).map(|t| Var(t.value.into()))
+        .or(kind(String).map(|t| Str(parse_str(t.value))));
     (kind(ExprStart).skip(ws()).with(position()),
         expr,
         position().skip(ws()).skip(kind(ExprEnd)))
@@ -180,5 +212,11 @@ impl Syntax {
             square: false,
             round: false,
         }
+    }
+}
+
+impl Expr {
+    pub fn code(&self) -> &ExprCode {
+        &self.code
     }
 }

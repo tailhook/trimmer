@@ -1,60 +1,85 @@
-use std::io::{self, Write};
+use std::fmt::{self, Write};
 
-use grammar::{self, Statement};
+use grammar::{self, Statement, Expr};
 use render_error::{RenderError, DataError};
-use {Context, Pos};
+use vars::undefined;
+use {Context, Pos, Variable, Var, IntoVariable};
 
 
 /// A parsed template code that can be rendered
 pub struct Template(grammar::Template);
 
 
-pub struct Renderer<'a, W: Write + 'a> {
-    buf: &'a mut W,
+struct Renderer {
+    buf: String,
     errors: Vec<(Pos, DataError)>,
 }
 
 
 impl Template {
     /// Render template to string
-    pub fn render(&self, context: &Context) -> Result<String, RenderError> {
-        let mut buf = Vec::new();
-        self.render_into(context, &mut buf)?;
-        Ok(String::from_utf8(buf).unwrap())
-    }
-
-    /// Render template to custom buffer
-    ///
-    /// Note: when error occurs partial data are already written
-    pub fn render_into<B: io::Write>(&self, context: &Context, buf: &mut B)
-        -> Result<(), RenderError>
+    pub fn render(&self, context: &Context)
+        -> Result<String, RenderError>
     {
         let mut rnd = Renderer {
-            buf: buf,
+            buf: String::new(),
             errors: Vec::new(),
         };
-        rnd.write_block(&self.0.body.statements)?;
+        render(&mut rnd, context, &self.0)?;
         if rnd.errors.len() != 0 {
             return Err(RenderError::Data(rnd.errors));
         }
-        return Ok(())
+        return Ok(rnd.buf)
     }
 }
 
-impl<'a, W: Write> Renderer<'a, W> {
-    fn write_block(&mut self, items: &[Statement]) -> Result<(), io::Error> {
-        use grammar::StatementCode::*;
+fn render(r: &mut Renderer, c: & Context, t: &grammar::Template)
+    -> Result<(), fmt::Error>
+{
+        write_block(r, c, &t.body.statements)
+}
 
-        for item in items {
-            match item.code {
-                OutputRaw(ref x) => {
-                    self.buf.write(x.as_bytes())?;
+fn eval_expr<'x>(r: &mut Renderer, c: &'x Context<'x>, expr: &'x Expr)
+    -> Var<'x>
+{
+    use grammar::ExprCode::*;
+
+    match expr.code() {
+        &Str(ref s) => s.into_variable(),
+        &Var(ref s) => {
+            match c.get(s) {
+                Some(x) => x,
+                None => {
+                    r.errors.push((
+                        expr.position.0,
+                        DataError::VariableNotFound(s.to_string())));
+                    undefined()
                 }
-                _ => unimplemented!(),
             }
         }
-        Ok(())
+        _ => unimplemented!(),
     }
+}
+
+fn write_block(r: &mut Renderer, c: &Context<>, items: &[Statement])
+    -> Result<(), fmt::Error>
+{
+    use grammar::StatementCode::*;
+
+    for item in items {
+        match item.code {
+            OutputRaw(ref x) => {
+                r.buf.push_str(x);
+            }
+            Output(ref e) => {
+                let var = &eval_expr(r, c, e);
+                write!(&mut r.buf, "{}",
+                    var.output().unwrap_or(&""))?;
+            }
+            _ => unimplemented!(),
+        }
+    }
+    Ok(())
 }
 
 pub fn template(imp: grammar::Template) -> Template {
