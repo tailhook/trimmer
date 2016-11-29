@@ -151,32 +151,6 @@ pub trait IntoVariable<'a> {
 }
 
 
-/*
-impl<'a> From<&'a &'a str> for Var<'a> {
-    fn from(x: &'a &'a str) -> Var<'a> {
-        Var::Borrowed(x)
-    }
-}
-*/
-
-/*
-trait X: Debug {
-    fn as_str(&self) -> &str;
-}
-
-impl X for str {
-    fn as_str(&self) -> &str {
-        self
-    }
-}
-
-impl<T: X> Variable for T {
-    fn typename(&self) -> &'static str {
-        "&str"
-    }
-}
-*/
-
 impl<'a> IntoVariable<'a> for String {
     fn into_variable(self) -> Var<'a> {
         Var { value: VarImpl::Owned(Box::new(self)) }
@@ -189,21 +163,6 @@ impl<'a> IntoVariable<'a> for &'a str {
     }
 }
 
-
-/*
-impl<'a> IntoVariable<'a> for &'a String {
-    fn into_variable(self) -> Var<'a> {
-        Var::Borrowed(self)
-    }
-}
-
-impl<'a, T: Variable + 'a> IntoVariable<'a> for T {
-    fn into_variable(self) -> Var<'a> {
-        Var::Owned(Box::new(self))
-    }
-}
-*/
-
 impl<'a, T: Variable + 'a> IntoVariable<'a> for &'a T
 {
     fn into_variable(self) -> Var<'a> {
@@ -211,23 +170,3 @@ impl<'a, T: Variable + 'a> IntoVariable<'a> for &'a T
     }
 }
 
-/*
-
-
-impl<'a> Variable for Box<Variable>
-    where Self: 'a
-{
-    fn attr(&self, attr: &str) -> Result<Var<'a>, DataError> {
-        self.attr(attr)
-    }
-    fn subscript(&self, key: &Variable) -> Result<Var<'a>, DataError> {
-        self.subscript(key)
-    }
-    fn output(&self) -> Result<&Display, DataError> {
-        self.output()
-    }
-    fn typename(&self) -> &'static str {
-        self.typename()
-    }
-}
-*/
