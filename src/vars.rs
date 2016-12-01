@@ -1,5 +1,4 @@
 use std::fmt::{self, Display, Debug};
-use std::collections::HashMap;
 
 use render_error::DataError;
 
@@ -7,7 +6,7 @@ use render_error::DataError;
 pub struct Undefined;
 
 pub const UNDEFINED: &'static Undefined = &Undefined;
-const EMPTY: &'static &'static str = &"";
+pub const EMPTY: &'static &'static str = &"";
 
 pub struct Var<'a> {
     value: VarImpl<'a>
@@ -28,7 +27,7 @@ pub trait Variable: Debug {
     ///
     /// Depending on your domain `a.x` may be equivalent of `a["x"]` or
     /// maybe not. Integer arguments `a.0` are not supported.
-    fn attr<'x>(&'x self, _attr: &str) -> Result<Var<'x>, DataError> {
+    fn attr<'x>(&'x self, _attr: &str) -> Result<&'x Variable, DataError> {
         Err(DataError::AttrUnsupported(self.typename()))
     }
     /// Evaluates `a[b]`
@@ -36,11 +35,13 @@ pub trait Variable: Debug {
     /// Depending on your domain `a["x"]` may be equivalent of `a.x` or
     /// maybe not.
     ///
-    /// You may exract string value for a key with `key.output().to_string()`.
+    /// You may exract string value for a key with `key.as_str_key()`
+    /// and `key.as_int_key()`.
+    ///
     /// Note that actual key may have a (rust) type that is different from
     /// type of self (i.e. may come from different library).
-    fn subscript(&self, _key: &Variable) -> Result<Var, DataError> {
-        Err(DataError::SubscriptUnsupported(self.typename()))
+    fn index(&self, _key: &Variable) -> Result<Var, DataError> {
+        Err(DataError::IndexUnsupported(self.typename()))
     }
     /// Evaluates `{{ x }}`
     ///
@@ -55,13 +56,29 @@ pub trait Variable: Debug {
     /// `Json::Object` as a mapping and `Json::Array` as an array, not just
     /// return `Json`
     fn typename(&self) -> &'static str;
+    /// Return string value of the variable used as key in index
+    ///
+    /// String keys are used for indexing dicts
+    ///
+    /// It's okay not to implement this method for complex variables
+    fn as_str_key(&self) -> Result<&str, DataError> {
+        Err(DataError::StrKeyUnsupported(self.typename()))
+    }
+    /// Return intenger value of the variable used as key
+    ///
+    /// Integer keys are used for indexing arrays
+    ///
+    /// It's okay not to implement this method for complex variables
+    fn as_int_key(&self) -> Result<usize, DataError> {
+        Err(DataError::IntKeyUnsupported(self.typename()))
+    }
 }
 
 impl Variable for Undefined {
-    fn attr<'x>(&'x self, _attr: &str) -> Result<Var<'x>, DataError> {
-        Ok(Var { value: VarImpl::Borrowed(UNDEFINED) })
+    fn attr<'x>(&'x self, _attr: &str) -> Result<&'x Variable, DataError> {
+        Ok(UNDEFINED)
     }
-    fn subscript<'x>(&'x self, _key: &Variable) -> Result<Var<'x>, DataError> {
+    fn index<'x>(&'x self, _key: &Variable) -> Result<Var<'x>, DataError> {
         Ok(Var { value: VarImpl::Borrowed(UNDEFINED) })
     }
     fn output(&self) -> Result<&Display, DataError> {
@@ -70,10 +87,6 @@ impl Variable for Undefined {
     fn typename(&self) -> &'static str {
         "undefined"
     }
-}
-
-pub fn undefined() -> Var<'static> {
-    Var { value: VarImpl::Borrowed(UNDEFINED) }
 }
 
 impl<'a> Debug for Var<'a> {
@@ -86,6 +99,7 @@ impl<'a> Debug for Var<'a> {
     }
 }
 
+/*
 impl<'a> Variable for Var<'a> {
     fn attr<'x>(&'x self, attr: &str) -> Result<Var<'x>, DataError> {
         match self.value {
@@ -94,11 +108,11 @@ impl<'a> Variable for Var<'a> {
             VarImpl::Str(_) => Err(DataError::AttrUnsupported("&str")),
         }
     }
-    fn subscript<'x>(&'x self, key: &Variable) -> Result<Var<'x>, DataError> {
+    fn index<'x>(&'x self, key: &Variable) -> Result<Var<'x>, DataError> {
         match self.value {
-            VarImpl::Borrowed(x) => x.subscript(key),
-            VarImpl::Owned(ref x) => x.subscript(key),
-            VarImpl::Str(_) => Err(DataError::SubscriptUnsupported("&str")),
+            VarImpl::Borrowed(x) => x.index(key),
+            VarImpl::Owned(ref x) => x.index(key),
+            VarImpl::Str(_) => Err(DataError::IndexUnsupported("&str")),
         }
     }
     fn output(&self) -> Result<&Display, DataError> {
@@ -116,6 +130,7 @@ impl<'a> Variable for Var<'a> {
         }
     }
 }
+*/
 
 
 pub trait IntoVariable<'a> {

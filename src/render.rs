@@ -2,8 +2,8 @@ use std::fmt::{self, Write};
 
 use grammar::{self, Statement, Expr};
 use render_error::{RenderError, DataError};
-use vars::undefined;
-use {Pos, Variable, Var, IntoVariable};
+use vars::{UNDEFINED};
+use {Pos, Variable};
 
 
 /// A parsed template code that can be rendered
@@ -40,18 +40,27 @@ fn render(r: &mut Renderer, root: &Variable, t: &grammar::Template)
 }
 
 fn eval_expr<'x>(r: &mut Renderer, root: &'x Variable, expr: &'x Expr)
-    -> Var<'x>
+    -> &'x Variable
 {
     use grammar::ExprCode::*;
 
     match expr.code {
-        Str(ref s) => s.into_variable(),
+        Str(ref s) => s,
         Var(ref s) => {
             match root.attr(s) {
                 Ok(x) => x,
                 Err(e) => {
                     r.errors.push((expr.position.0, e));
-                    undefined()
+                    UNDEFINED
+                }
+            }
+        }
+        Attr(ref e, ref a) => {
+            match eval_expr(r, root, e).attr(a) {
+                Ok(x) => x,
+                Err(e) => {
+                    r.errors.push((expr.position.0, e));
+                    UNDEFINED
                 }
             }
         }

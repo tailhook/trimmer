@@ -13,10 +13,28 @@ quick_error! {
             description("object doesn't support getting attribute `a.b`")
             display("object {} doesn't support getting attribute", typename)
         }
+        /// No suche attribute on this object
+        AttrNotFound {
+            description("object doesn't have such attibute")
+        }
         /// Unsupported subscription operation
-        SubscriptUnsupported(typename: &'static str) {
+        IndexUnsupported(typename: &'static str) {
             description("object doesn't support subscription `a[b]`")
             display("object {} doesn't support subscription", typename)
+        }
+        /// Unsupported using this object as a key in dictionary subscription
+        StrKeyUnsupported(typename: &'static str) {
+            description("can't be stringified for subsciption `a[b]`")
+            display("object {} can't be stringified to be used as key", typename)
+        }
+        /// Unsupported using this object as a key in array subscription
+        IntKeyUnsupported(typename: &'static str) {
+            description("can't used as integer key for subscription")
+            display("object {} can't be a key for subscription", typename)
+        }
+        /// No suche attribute on this object
+        IndexNotFound {
+            description("object doesn't have value at specified index")
         }
         /// The object can't be created
         OutputUnsupported(typename: &'static str) {

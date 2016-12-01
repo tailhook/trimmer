@@ -4,8 +4,15 @@ use std::collections::HashMap;
 use {Template, Parser};
 
 
-fn parse(data: &'static str) -> Template {
-    Parser::new().parse(data).unwrap()
+fn parse(template: &str) -> Template {
+    Parser::new().parse(template).unwrap()
+}
+
+fn render_json(template: &str, value: &str) -> String {
+    use serde_json::{self, Value};
+    let tpl = Parser::new().parse(template).unwrap();
+    let vars: Value = serde_json::from_str(value).unwrap();
+    tpl.render(&vars).unwrap()
 }
 
 #[test]
@@ -45,4 +52,12 @@ fn const_str() {
     let t = parse(r#"a{{ " and " }}b"#);
     let c = HashMap::<_, String>::new();
     assert_eq!(&t.render(&c).unwrap(), "a and b");
+}
+
+#[test]
+fn attr() {
+    assert_eq!(
+        render_json("{{ x.a }} + {{ x.b }}",
+            r#"{"x": {"a": 2, "b": 73}}"#),
+        "2 + 73");
 }

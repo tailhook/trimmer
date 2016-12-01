@@ -5,7 +5,8 @@
 extern crate regex;
 extern crate combine;
 #[macro_use] extern crate quick_error;
-#[macro_use] extern crate difference;
+#[cfg(feature="rustc_serialize")] extern crate rustc_serialize;
+#[cfg(feature="serde")] extern crate serde_json;
 
 mod position;
 mod tokenizer;
@@ -16,6 +17,8 @@ mod vars;
 mod render;
 mod render_error;
 mod std_vars;
+#[cfg(feature="rustc_serialize")] mod rustc_json;
+#[cfg(feature="serde")] mod serde;
 #[cfg(test)] mod tests;
 
 
@@ -25,3 +28,4 @@ pub use parse_error::ParseError;
 pub use vars::{Variable, Var, IntoVariable};
 pub use render::Template;
 pub use render_error::{RenderError, DataError};
+

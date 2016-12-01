@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
 use combine::{Parser as CombineParser, ParseResult};
+use combine::combinator::{position, parser, many};
 
 use regex::Regex;
 use render::{self, template};
-use tokenizer::{Tokenizer, TokenStream, Kind};
+use tokenizer::{Tokenizer, TokenStream, Token, Kind};
 use parse_error::ParseError;
 use {Pos};
 
@@ -131,24 +132,52 @@ fn parse_str(val: &str) -> String {
     return res;
 }
 
-fn expression<'a>(input: TokenStream<'a>)
+fn atom<'a>(input: TokenStream<'a>)
     -> ParseResult<Expr, TokenStream<'a>>
 {
     use tokenizer::Kind::*;
     use helpers::*;
     use self::ExprCode::*;
-    use combine::combinator::{position};
 
     let expr =
         kind(Ident).map(|t| Var(t.value.into()))
         .or(kind(String).map(|t| Str(parse_str(t.value))));
-    (kind(ExprStart).skip(ws()).with(position()),
-        expr,
-        position().skip(ws()).skip(kind(ExprEnd)))
+    (position(), expr, position())
     .map(|(s, c, e)| Expr {
         position: (s, e),
         code: c,
     })
+    .parse_stream(input)
+}
+
+fn attr<'a>(input: TokenStream<'a>)
+    -> ParseResult<Expr, TokenStream<'a>>
+{
+    use tokenizer::Kind::*;
+    use helpers::*;
+    parser(atom)
+    .and(many(kind(Operator).with(kind(Ident)).and(position())))
+    .map(|(atom, vec):(_, Vec<_>)| {
+        vec.into_iter().fold(atom, |expr: Expr, (ident, e): (Token<'a>, _)| {
+            Expr {
+                position: (expr.position.0, e),
+                code: ExprCode::Attr(Box::new(expr),
+                                     ident.value.to_string())
+            }
+        })
+    })
+    .parse_stream(input)
+}
+
+fn expression<'a>(input: TokenStream<'a>)
+    -> ParseResult<Expr, TokenStream<'a>>
+{
+    use tokenizer::Kind::*;
+    use helpers::*;
+
+    kind(ExprStart).and(ws())
+        .with(parser(attr))
+        .skip(ws()).skip(kind(ExprEnd))
     .parse_stream(input)
 }
 
@@ -212,11 +241,5 @@ impl Syntax {
             square: false,
             round: false,
         }
-    }
-}
-
-impl Expr {
-    pub fn code(&self) -> &ExprCode {
-        &self.code
     }
 }

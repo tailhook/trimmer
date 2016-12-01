@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use combine::{Parser, ConsumedResult, satisfy, skip_many};
 use combine::combinator::{SkipMany};
+use combine::primitives::{ParseError, Error, Info};
 
 use tokenizer::{TokenStream, Kind, Token};
 
@@ -35,6 +36,10 @@ impl<'a> Parser for TokenMatch<'a> {
         -> ConsumedResult<Self::Output, Self::Input>
     {
         satisfy(|c: Token<'a>| c.kind == self.kind).parse_lazy(input)
+    }
+    fn add_error(&mut self, error: &mut ParseError<Self::Input>) {
+        error.add_error(Error::Expected(Info::Owned(
+            format!("{:?}", self.kind))));
     }
 }
 
@@ -72,5 +77,8 @@ impl<'a> Parser for Value<'a> {
         satisfy(|c: Token<'a>| {
             c.kind == self.kind && c.value == self.value
         }).parse_lazy(input)
+    }
+    fn add_error(&mut self, error: &mut ParseError<Self::Input>) {
+        error.add_error(Error::Expected(Info::Borrowed(self.value)));
     }
 }

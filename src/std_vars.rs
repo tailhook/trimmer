@@ -1,9 +1,8 @@
-use std::fmt::{Display, Debug};
-use std::hash::Hash;
+use std::fmt::Display;
 use std::collections::HashMap;
 
 use render_error::DataError;
-use {Variable, Var, IntoVariable};
+use {Variable};
 
 
 impl Variable for String {
@@ -34,9 +33,9 @@ impl<'a> Variable for &'a String {
 }
 
 impl<'a, V: Variable> Variable for HashMap<&'a str, V> {
-    fn attr<'x>(&'x self, attr: &str) -> Result<Var<'x>, DataError> {
+    fn attr<'x>(&'x self, attr: &str) -> Result<&'x Variable, DataError> {
         self.get(attr)
-        .map(IntoVariable::into_variable)
+        .map(|x| x as &Variable)
         .ok_or_else(|| DataError::VariableNotFound(attr.to_string()))
     }
     fn typename(&self) -> &'static str {
