@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use std::fmt::{self, Display, Debug};
 use std::collections::HashMap;
 
@@ -16,20 +15,20 @@ pub struct Var<'a> {
 
 pub enum VarImpl<'a> {
     Str(&'a str),
-    Borrowed(&'a Variable<'a>),
-    Owned(Rc<Variable<'a>+'a>),
+    Borrowed(&'a Variable),
+    Owned(Box<Variable+'a>),
 }
 
 /// A trait that you need to implement to put variable into the rendering
 /// context
 ///
 /// Note: by default all operations return unsupported error
-pub trait Variable<'a>: Debug {
+pub trait Variable: Debug {
     /// Evaluates `a.b` operation
     ///
     /// Depending on your domain `a.x` may be equivalent of `a["x"]` or
     /// maybe not. Integer arguments `a.0` are not supported.
-    fn attr(&self, _attr: &str) -> Result<Var<'a>, DataError> {
+    fn attr<'x>(&'x self, _attr: &str) -> Result<Var<'x>, DataError> {
         Err(DataError::AttrUnsupported(self.typename()))
     }
     /// Evaluates `a[b]`
@@ -40,7 +39,7 @@ pub trait Variable<'a>: Debug {
     /// You may exract string value for a key with `key.output().to_string()`.
     /// Note that actual key may have a (rust) type that is different from
     /// type of self (i.e. may come from different library).
-    fn subscript<'x>(&'a self, _key: &'a Variable<'x>) -> Result<Var<'a>, DataError> {
+    fn subscript(&self, _key: &Variable) -> Result<Var, DataError> {
         Err(DataError::SubscriptUnsupported(self.typename()))
     }
     /// Evaluates `{{ x }}`
@@ -59,49 +58,38 @@ pub trait Variable<'a>: Debug {
 }
 
 /// Holds variables passed to a template rendering function
-pub struct Context<'var> {
-    vars: HashMap<String, Var<'var>>,
+pub struct Context<'a> {
+    vars: HashMap<&'a str, Var<'a>>,
 }
 
-impl<'var> Context<'var> {
+impl<'a> Context<'a> {
     /// Create a new context
-    pub fn new() -> Context<'var> {
+    pub fn new() -> Context<'a> {
         Context {
             vars: HashMap::new(),
         }
     }
 
     /// Add a variable to context
-    pub fn add<V: IntoVariable<'var> + Debug + 'var>(&mut self,
-        key: &str, value: V)
+    pub fn add<V: IntoVariable<'a> + Debug + 'a>(&mut self,
+        key: &'a str, value: V)
     {
         let v= value.into_variable();
         println!("ADD {:?} = {:?}", key, v);
-        self.vars.insert(key.to_string(), v);
+        self.vars.insert(key, v);
     }
 
-    pub fn get(&self, key: &str) -> Option<Var<'var>>
-    {
-        self.vars.get(key).map(|x| x.me())
-    }
-}
-
-impl<'a> Var<'a> {
-    fn me(&self) -> Var<'a> {
-        use self::VarImpl::*;
-        match self.value {
-            Str(x) => Var { value: Str(x) },
-            Borrowed(x) => Var { value: Borrowed(x) },
-            Owned(ref x) => Var { value: Owned(x.clone()) },
-        }
+    /// Context
+    pub fn get(&'a self, key: &'a str) -> Option<Var<'a>> {
+        self.vars.get(key).map(IntoVariable::into_variable)
     }
 }
 
-impl<'a> Variable<'a> for Undefined {
-    fn attr(&self, _attr: &str) -> Result<Var<'a>, DataError> {
+impl Variable for Undefined {
+    fn attr<'x>(&'x self, _attr: &str) -> Result<Var<'x>, DataError> {
         Ok(Var { value: VarImpl::Borrowed(UNDEFINED) })
     }
-    fn subscript(&self, _key: &Variable) -> Result<Var<'a>, DataError> {
+    fn subscript<'x>(&'x self, _key: &Variable) -> Result<Var<'x>, DataError> {
         Ok(Var { value: VarImpl::Borrowed(UNDEFINED) })
     }
     fn output(&self) -> Result<&Display, DataError> {
@@ -110,6 +98,10 @@ impl<'a> Variable<'a> for Undefined {
     fn typename(&self) -> &'static str {
         "undefined"
     }
+}
+
+pub fn undefined() -> Var<'static> {
+    Var { value: VarImpl::Borrowed(UNDEFINED) }
 }
 
 impl<'a> Debug for Var<'a> {
@@ -122,17 +114,15 @@ impl<'a> Debug for Var<'a> {
     }
 }
 
-impl<'a> Variable<'a> for Var<'a> {
-    fn attr(&self, attr: &str) -> Result<Var<'a>, DataError> {
+impl<'a> Variable for Var<'a> {
+    fn attr<'x>(&'x self, attr: &str) -> Result<Var<'x>, DataError> {
         match self.value {
             VarImpl::Borrowed(x) => x.attr(attr),
             VarImpl::Owned(ref x) => x.attr(attr),
             VarImpl::Str(_) => Err(DataError::AttrUnsupported("&str")),
         }
     }
-    fn subscript<'x>(&'a self, key: &'a Variable<'x>)
-        -> Result<Var<'a>, DataError>
-    {
+    fn subscript<'x>(&'x self, key: &Variable) -> Result<Var<'x>, DataError> {
         match self.value {
             VarImpl::Borrowed(x) => x.subscript(key),
             VarImpl::Owned(ref x) => x.subscript(key),
@@ -163,7 +153,7 @@ pub trait IntoVariable<'a> {
 
 impl<'a> IntoVariable<'a> for String {
     fn into_variable(self) -> Var<'a> {
-        Var { value: VarImpl::Owned(Rc::new(self)) }
+        Var { value: VarImpl::Owned(Box::new(self)) }
     }
 }
 
@@ -173,7 +163,7 @@ impl<'a> IntoVariable<'a> for &'a str {
     }
 }
 
-impl<'a, T: Variable<'a>> IntoVariable<'a> for &'a T
+impl<'a, T: Variable + 'a> IntoVariable<'a> for &'a T
 {
     fn into_variable(self) -> Var<'a> {
         Var { value: VarImpl::Borrowed(self) }

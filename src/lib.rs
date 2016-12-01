@@ -24,4 +24,4 @@ pub use grammar::Parser;
 pub use parse_error::ParseError;
 pub use vars::{Context, Variable, Var, IntoVariable};
 pub use render::Template;
-pub use render_error::{RenderError, DataError, ErrorTracker};
+pub use render_error::{RenderError, DataError};

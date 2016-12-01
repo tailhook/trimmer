@@ -4,7 +4,7 @@ use render_error::DataError;
 use {Variable};
 
 
-impl<'a> Variable<'a> for String {
+impl Variable for String {
     fn typename(&self) -> &'static str {
         "String"
     }

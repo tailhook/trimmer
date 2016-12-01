@@ -1,15 +1,9 @@
 use std::fmt::{self, Write};
 
 use grammar::{self, Statement, Expr};
-use render_error::{RenderError, DataError, ErrorTracker, tracker};
-use {Context, Pos, Variable, Var};
-
-
-pub enum Value<'ast, 'var> {
-    Raw(&'ast str),
-    Var(Var<'var>),
-    Undefined,
-}
+use render_error::{RenderError, DataError};
+use vars::undefined;
+use {Context, Pos, Variable, Var, IntoVariable};
 
 
 /// A parsed template code that can be rendered
@@ -18,13 +12,7 @@ pub struct Template(grammar::Template);
 
 struct Renderer {
     buf: String,
-    errors: Vec<ErrorTracker>,
-}
-
-impl Renderer {
-    fn err(&mut self, span: (Pos, Pos), err: DataError) {
-        self.errors.push(tracker(span, self.buf.len(), err))
-    }
+    errors: Vec<(Pos, DataError)>,
 }
 
 
@@ -45,57 +33,49 @@ impl Template {
     }
 }
 
-fn render(r: &mut Renderer, c: &Context, t: &grammar::Template)
+fn render(r: &mut Renderer, c: & Context, t: &grammar::Template)
     -> Result<(), fmt::Error>
 {
         write_block(r, c, &t.body.statements)
 }
 
-fn eval_expr<'ast, 'var>(r: &mut Renderer,
-    c: &Context<'var>, expr: &'ast Expr)
-    -> Value<'ast, 'var>
+fn eval_expr<'x>(r: &mut Renderer, c: &'x Context<'x>, expr: &'x Expr)
+    -> Var<'x>
 {
     use grammar::ExprCode::*;
 
-    match expr.code {
-        Str(ref s) => Value::Raw(s),
-        Var(ref s) => match c.get(s) {
-            Some(x) => Value::Var(x),
-            None => {
-                r.err(expr.position,
-                    DataError::VariableNotFound(s.to_string()));
-                Value::Undefined
+    match expr.code() {
+        &Str(ref s) => s.into_variable(),
+        &Var(ref s) => {
+            match c.get(s) {
+                Some(x) => x,
+                None => {
+                    r.errors.push((
+                        expr.position.0,
+                        DataError::VariableNotFound(s.to_string())));
+                    undefined()
+                }
             }
-        },
+        }
         _ => unimplemented!(),
     }
 }
 
-fn write_block(r: &mut Renderer, c: &Context, items: &[Statement])
+fn write_block(r: &mut Renderer, c: &Context<>, items: &[Statement])
     -> Result<(), fmt::Error>
 {
     use grammar::StatementCode::*;
-    use self::Value::*;
 
     for item in items {
         match item.code {
             OutputRaw(ref x) => {
                 r.buf.push_str(x);
             }
-            Output(ref e) => match eval_expr(r, c, e) {
-                Raw(text) => r.buf.push_str(text),
-                Var(var) => match var.output() {
-                    Ok(data) => write!(r.buf, "{}", data)?,
-                    Err(e) => {
-                        r.err(item.position, e);
-                        // value written should be empty
-                    }
-                },
-                Undefined => {
-                    // Noop: we already shown this error when fetching the
-                    // variable itself
-                }
-            },
+            Output(ref e) => {
+                let var = &eval_expr(r, c, e);
+                write!(&mut r.buf, "{}",
+                    var.output().unwrap_or(&""))?;
+            }
             _ => unimplemented!(),
         }
     }
