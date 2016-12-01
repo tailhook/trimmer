@@ -32,6 +32,15 @@ quick_error! {
 }
 
 
+/// Structure that tracks where error occured
+#[derive(Debug)]
+pub struct ErrorTracker {
+    source: (Pos, Pos),
+    destination: usize,
+    error: DataError,
+}
+
+
 quick_error! {
     /// Error rendering template
     #[derive(Debug)]
@@ -54,11 +63,21 @@ quick_error! {
         ///
         /// When this kind of error occurs we try to skip error and do our
         /// best to continue rendering and collect more errors
-        Data(errs: Vec<(Pos, DataError)>) {
+        Data(errs: Vec<ErrorTracker>) {
             display("data error: {}", errs.iter()
-                .map(|&(p, ref e)| format!("{}: {}", p, e))
+                .map(|t| format!("{}: {}", t.source.0, t.error))
                 .collect::<Vec<_>>().join("\n  "))
             description("data error")
         }
+    }
+}
+
+pub fn tracker(source_span: (Pos, Pos), dest_pos: usize, err: DataError)
+    -> ErrorTracker
+{
+    ErrorTracker {
+        source: source_span,
+        destination: dest_pos,
+        error: err,
     }
 }

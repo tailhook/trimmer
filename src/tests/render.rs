@@ -7,17 +7,18 @@ fn parse(data: &'static str) -> Template {
 
 #[test]
 fn hello() {
+    let c = Context::new();
     let t = parse("hello");
-    assert_eq!(&t.render(&Context::new()).unwrap(),
+    assert_eq!(&t.render(&c).unwrap(),
                "hello");
 }
 
 #[test]
 fn var_borrow() {
-    let t = parse("a{{ x }}b");
     let x = String::from("+");
     let mut c = Context::new();
     c.add("x", &x);
+    let t = parse("a{{ x }}b");
     assert_eq!(&t.render(&c).unwrap(), "a+b");
 }
 
