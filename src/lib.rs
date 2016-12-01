@@ -22,6 +22,6 @@ mod std_vars;
 pub use position::Pos;
 pub use grammar::Parser;
 pub use parse_error::ParseError;
-pub use vars::{Context, Variable, Var, IntoVariable};
+pub use vars::{Variable, Var, IntoVariable};
 pub use render::Template;
 pub use render_error::{RenderError, DataError};

@@ -23,10 +23,10 @@ quick_error! {
             description("can't print object of type")
             display("can't print object of type {}", typename)
         }
-        /// Variable not found
+        /// Variable or attribute not found
         VariableNotFound(name: String) {
-            description("variable not found")
-            display("variable {:?} not found", name)
+            description("variable or attribute not found")
+            display("variable or attribute {:?} not found", name)
         }
     }
 }

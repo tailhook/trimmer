@@ -1,4 +1,7 @@
-use {Template, Parser, Context};
+use std::collections::HashMap;
+
+
+use {Template, Parser};
 
 
 fn parse(data: &'static str) -> Template {
@@ -8,7 +11,7 @@ fn parse(data: &'static str) -> Template {
 #[test]
 fn hello() {
     let t = parse("hello");
-    assert_eq!(&t.render(&Context::new()).unwrap(),
+    assert_eq!(&t.render(&HashMap::<_, String>::new()).unwrap(),
                "hello");
 }
 
@@ -16,30 +19,30 @@ fn hello() {
 fn var_borrow() {
     let t = parse("a{{ x }}b");
     let x = String::from("+");
-    let mut c = Context::new();
-    c.add("x", &x);
+    let mut c = HashMap::new();
+    c.insert("x", &x);
     assert_eq!(&t.render(&c).unwrap(), "a+b");
 }
 
 #[test]
 fn var_owned() {
     let t = parse("a{{ y }}b");
-    let mut c = Context::new();
-    c.add("y", String::from("-"));
+    let mut c = HashMap::new();
+    c.insert("y", String::from("-"));
     assert_eq!(&t.render(&c).unwrap(), "a-b");
 }
 
 #[test]
 fn var_str() {
     let t = parse("a{{ z }}b");
-    let mut c = Context::new();
-    c.add("z", "*");
+    let mut c = HashMap::new();
+    c.insert("z", "*");
     assert_eq!(&t.render(&c).unwrap(), "a*b");
 }
 
 #[test]
 fn const_str() {
     let t = parse(r#"a{{ " and " }}b"#);
-    let c = Context::new();
+    let c = HashMap::<_, String>::new();
     assert_eq!(&t.render(&c).unwrap(), "a and b");
 }

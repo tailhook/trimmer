@@ -57,34 +57,6 @@ pub trait Variable: Debug {
     fn typename(&self) -> &'static str;
 }
 
-/// Holds variables passed to a template rendering function
-pub struct Context<'a> {
-    vars: HashMap<&'a str, Var<'a>>,
-}
-
-impl<'a> Context<'a> {
-    /// Create a new context
-    pub fn new() -> Context<'a> {
-        Context {
-            vars: HashMap::new(),
-        }
-    }
-
-    /// Add a variable to context
-    pub fn add<V: IntoVariable<'a> + Debug + 'a>(&mut self,
-        key: &'a str, value: V)
-    {
-        let v= value.into_variable();
-        println!("ADD {:?} = {:?}", key, v);
-        self.vars.insert(key, v);
-    }
-
-    /// Context
-    pub fn get(&'a self, key: &'a str) -> Option<Var<'a>> {
-        self.vars.get(key).map(IntoVariable::into_variable)
-    }
-}
-
 impl Variable for Undefined {
     fn attr<'x>(&'x self, _attr: &str) -> Result<Var<'x>, DataError> {
         Ok(Var { value: VarImpl::Borrowed(UNDEFINED) })

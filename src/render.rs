@@ -3,7 +3,7 @@ use std::fmt::{self, Write};
 use grammar::{self, Statement, Expr};
 use render_error::{RenderError, DataError};
 use vars::undefined;
-use {Context, Pos, Variable, Var, IntoVariable};
+use {Pos, Variable, Var, IntoVariable};
 
 
 /// A parsed template code that can be rendered
@@ -18,14 +18,14 @@ struct Renderer {
 
 impl Template {
     /// Render template to string
-    pub fn render(&self, context: &Context)
+    pub fn render(&self, root: &Variable)
         -> Result<String, RenderError>
     {
         let mut rnd = Renderer {
             buf: String::new(),
             errors: Vec::new(),
         };
-        render(&mut rnd, context, &self.0)?;
+        render(&mut rnd, root, &self.0)?;
         if rnd.errors.len() != 0 {
             return Err(RenderError::Data(rnd.errors));
         }
@@ -33,26 +33,24 @@ impl Template {
     }
 }
 
-fn render(r: &mut Renderer, c: & Context, t: &grammar::Template)
+fn render(r: &mut Renderer, root: &Variable, t: &grammar::Template)
     -> Result<(), fmt::Error>
 {
-        write_block(r, c, &t.body.statements)
+        write_block(r, root, &t.body.statements)
 }
 
-fn eval_expr<'x>(r: &mut Renderer, c: &'x Context<'x>, expr: &'x Expr)
+fn eval_expr<'x>(r: &mut Renderer, root: &'x Variable, expr: &'x Expr)
     -> Var<'x>
 {
     use grammar::ExprCode::*;
 
-    match expr.code() {
-        &Str(ref s) => s.into_variable(),
-        &Var(ref s) => {
-            match c.get(s) {
-                Some(x) => x,
-                None => {
-                    r.errors.push((
-                        expr.position.0,
-                        DataError::VariableNotFound(s.to_string())));
+    match expr.code {
+        Str(ref s) => s.into_variable(),
+        Var(ref s) => {
+            match root.attr(s) {
+                Ok(x) => x,
+                Err(e) => {
+                    r.errors.push((expr.position.0, e));
                     undefined()
                 }
             }
@@ -61,7 +59,7 @@ fn eval_expr<'x>(r: &mut Renderer, c: &'x Context<'x>, expr: &'x Expr)
     }
 }
 
-fn write_block(r: &mut Renderer, c: &Context<>, items: &[Statement])
+fn write_block(r: &mut Renderer, root: &Variable, items: &[Statement])
     -> Result<(), fmt::Error>
 {
     use grammar::StatementCode::*;
@@ -72,7 +70,7 @@ fn write_block(r: &mut Renderer, c: &Context<>, items: &[Statement])
                 r.buf.push_str(x);
             }
             Output(ref e) => {
-                let var = &eval_expr(r, c, e);
+                let var = &eval_expr(r, root, e);
                 write!(&mut r.buf, "{}",
                     var.output().unwrap_or(&""))?;
             }
