@@ -5,7 +5,6 @@
 extern crate regex;
 extern crate combine;
 #[macro_use] extern crate quick_error;
-#[cfg(feature="rustc_serialize")] extern crate rustc_serialize;
 #[cfg(feature="serde")] extern crate serde_json;
 
 mod position;
@@ -17,7 +16,6 @@ mod vars;
 mod render;
 mod render_error;
 mod std_vars;
-#[cfg(feature="rustc_serialize")] mod rustc_json;
 #[cfg(feature="serde")] mod serde;
 #[cfg(test)] mod tests;
 
