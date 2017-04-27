@@ -3,15 +3,16 @@ use std::fmt::{self, Write};
 use grammar::{self, Statement, Expr};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED};
-use {Pos, Variable};
+use {Pos, Variable, Context};
 
 
 /// A parsed template code that can be rendered
 pub struct Template(grammar::Template);
 
 
-struct Renderer {
+struct Renderer<'a> {
     buf: String,
+    context: Context<'a>,
     errors: Vec<(Pos, DataError)>,
 }
 
@@ -23,6 +24,7 @@ impl Template {
     {
         let mut rnd = Renderer {
             buf: String::new(),
+            context: Context::new(),
             errors: Vec::new(),
         };
         render(&mut rnd, root, &self.0)?;
@@ -47,7 +49,7 @@ fn eval_expr<'x>(r: &mut Renderer, root: &'x Variable, expr: &'x Expr)
     match expr.code {
         Str(ref s) => s,
         Var(ref s) => {
-            match root.attr(s) {
+            match root.attr(&mut r.context, s) {
                 Ok(x) => x,
                 Err(e) => {
                     r.errors.push((expr.position.0, e));
@@ -56,7 +58,7 @@ fn eval_expr<'x>(r: &mut Renderer, root: &'x Variable, expr: &'x Expr)
             }
         }
         Attr(ref e, ref a) => {
-            match eval_expr(r, root, e).attr(a) {
+            match eval_expr(r, root, e).attr(&mut r.context, a) {
                 Ok(x) => x,
                 Err(e) => {
                     r.errors.push((expr.position.0, e));
@@ -81,7 +83,7 @@ fn write_block(r: &mut Renderer, root: &Variable, items: &[Statement])
             Output(ref e) => {
                 let var = &eval_expr(r, root, e);
                 write!(&mut r.buf, "{}",
-                    var.output().unwrap_or(&""))?;
+                    var.output(&mut r.context).unwrap_or(&""))?;
             }
             _ => unimplemented!(),
         }

@@ -2,20 +2,22 @@
 //!
 #![warn(missing_docs)]
 
-extern crate regex;
 extern crate combine;
+extern crate regex;
+extern crate typed_arena;
 #[macro_use] extern crate quick_error;
 #[cfg(feature="serde")] extern crate serde_json;
 
-mod position;
-mod tokenizer;
-mod helpers;
+mod context;
 mod grammar;
+mod helpers;
 mod parse_error;
-mod vars;
+mod position;
 mod render;
 mod render_error;
 mod std_vars;
+mod tokenizer;
+mod vars;
 #[cfg(feature="serde")] mod serde;
 #[cfg(test)] mod tests;
 
@@ -23,7 +25,8 @@ mod std_vars;
 pub use position::Pos;
 pub use grammar::Parser;
 pub use parse_error::ParseError;
-pub use vars::{Variable, Var, IntoVariable};
+pub use vars::Variable;
+pub use context::Context;
 pub use render::Template;
 pub use render_error::{RenderError, DataError};
 

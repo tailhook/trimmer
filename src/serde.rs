@@ -3,14 +3,16 @@ use std::fmt::Display;
 use serde_json::Value;
 
 use vars::EMPTY;
-use {DataError, Variable, Var, IntoVariable};
+use {DataError, Variable, Context};
 
 pub const TRUE: &'static &'static str = &"true";
 pub const FALSE: &'static &'static str = &"false";
 
 
 impl Variable for Value {
-    fn attr<'x>(&'x self, attr: &str) -> Result<&'x Variable, DataError> {
+    fn attr<'x>(&'x self, _: &mut Context,  attr: &str)
+        -> Result<&'x Variable, DataError>
+    {
         use serde_json::Value::*;
         match *self {
             Object(ref x) => {
@@ -21,23 +23,25 @@ impl Variable for Value {
             _ => Err(DataError::AttrUnsupported(self.typename()))
         }
     }
-    fn index<'x>(&'x self, key: &Variable) -> Result<Var<'x>, DataError> {
+    fn index<'x>(&'x self, ctx: &mut Context, key: &Variable)
+        -> Result<&Variable, DataError>
+    {
         use serde_json::Value::*;
         match *self {
             Object(ref x) => {
-                x.get(key.as_str_key()?)
-                .map(IntoVariable::into_variable)
+                x.get(key.as_str_key(ctx)?)
+                .map(|x| x as &Variable)
                 .ok_or(DataError::AttrNotFound)
             }
             Array(ref x) => {
-                x.get(key.as_int_key()?)
-                .map(IntoVariable::into_variable)
+                x.get(key.as_int_key(ctx)?)
+                .map(|x| x as &Variable)
                 .ok_or(DataError::IndexNotFound)
             }
             _ => Err(DataError::IndexUnsupported(self.typename()))
         }
     }
-    fn output(&self) -> Result<&Display, DataError> {
+    fn output(&self, _: &mut Context) -> Result<&Display, DataError> {
         use serde_json::Value::*;
         match *self {
             Null => Ok(EMPTY),
