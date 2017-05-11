@@ -201,6 +201,32 @@ fn statement<'a>(input: TokenStream<'a>)
     }).parse_stream(input)
 }
 
+pub fn optimize_statements(src: Vec<Statement>) -> Vec<Statement> {
+    use self::StatementCode::OutputRaw;
+    let mut dst = Vec::with_capacity(src.len());
+    for item in src.into_iter() {
+        match (&item, dst.last_mut()) {
+            (
+                &Statement {
+                    position: (_, new_end),
+                    code: OutputRaw(ref next),
+                },
+                Some(&mut Statement {
+                    position: (s, ref mut old_end),
+                    code: OutputRaw(ref mut prev),
+                })
+            ) => {
+                *old_end = new_end;
+                prev.push_str(next);
+                continue;
+            }
+            _ => {}
+        }
+        dst.push(item);
+    }
+    return dst;
+}
+
 impl Parser {
     /// Create a new parser
     ///
@@ -222,7 +248,7 @@ impl Parser {
         let mut p = many(parser(statement)).map(|stmts| Template {
             check: Syntax::new(),  // TODO(tailhook)
             validators: HashMap::new(),  // TODO(tailhook)
-            body: Body { statements: stmts },
+            body: Body { statements: optimize_statements(stmts) },
         }).skip(kind(Kind::Eof));
 
         let (tpl, _) = p.parse(s)?;
