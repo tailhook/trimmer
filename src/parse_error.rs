@@ -9,11 +9,24 @@ use {Pos};
 quick_error! {
     /// Error parsing template
     #[derive(Debug)]
-    pub enum ParseError {
+    pub enum ParseError wraps pub ParseErrorEnum {
         /// Invalid syntax
         InvalidSyntax(position: Pos, error: String) {
             description("error parsing template")
             display("{}:{}: {}", position.line, position.column, error.trim())
+        }
+        /// Invalid syntax directive
+        InvalidSyntaxDirective {
+            description("Invalid syntax directive")
+        }
+        /// Duplicate syntax directive
+        DuplicateSyntaxDirective {
+            description("duplicate syntax directive")
+        }
+        /// No `syntax: ident` directive
+        UnsupportedSyntax {
+            description("Template must start with `## syntax: indent`")
+            display("Template must start with `## syntax: indent`")
         }
     }
 }
@@ -74,6 +87,6 @@ impl<'a> From<CombineError<TokenStream<'a>>> for ParseError {
             writeln!(&mut buf, "    {}", error).unwrap();
         }
 
-        ParseError::InvalidSyntax(e.position, buf)
+        ParseErrorEnum::InvalidSyntax(e.position, buf).into()
     }
 }

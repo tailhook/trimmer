@@ -111,11 +111,14 @@ impl<'a> TokenStream<'a> {
                 Token { kind: Kind::Raw, value: cur }
             }
             Some(idx) => {
-                let (s, e) = self.tok.top_list[idx].0.find(cur).unwrap();
-                if s == 0 {
-                    Token { kind: self.tok.top_list[idx].1, value: &cur[..e] }
+                let m = self.tok.top_list[idx].0.find(cur).unwrap();
+                if m.start() == 0 {
+                    Token {
+                        kind: self.tok.top_list[idx].1,
+                        value: &cur[..m.end()]
+                    }
                 } else {
-                    Token { kind: Kind::Raw, value: &cur[..s] }
+                    Token { kind: Kind::Raw, value: &cur[..m.start()] }
                 }
             }
         }
@@ -128,9 +131,12 @@ impl<'a> TokenStream<'a> {
                     Info::Borrowed("end of file, expected `}}`")))
             }
             Some(idx) => {
-                let (s, e) = self.tok.expr_list[idx].0.find(cur).unwrap();
-                assert_eq!(s, 0);
-                Ok(Token { kind: self.tok.expr_list[idx].1, value: &cur[..e] })
+                let m = self.tok.expr_list[idx].0.find(cur).unwrap();
+                assert_eq!(m.start(), 0);
+                Ok(Token {
+                    kind: self.tok.expr_list[idx].1,
+                    value: &cur[..m.end()]
+                })
             }
         }
     }
