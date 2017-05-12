@@ -3,6 +3,7 @@ use std::fmt::{self, Write};
 use grammar::{self, Statement, Expr};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED};
+use varmap::Varmap;
 use {Pos, Variable, Context};
 
 
@@ -27,7 +28,8 @@ impl Template {
             context: Context::new(),
             errors: Vec::new(),
         };
-        render(&mut rnd, root, &self.0)?;
+        let mut root = Varmap::new(root);
+        render(&mut rnd, &mut root, &self.0)?;
         if rnd.errors.len() != 0 {
             return Err(RenderError::Data(rnd.errors));
         }
@@ -35,7 +37,7 @@ impl Template {
     }
 }
 
-fn render(r: &mut Renderer, root: &Variable, t: &grammar::Template)
+fn render(r: &mut Renderer, root: &mut Variable, t: &grammar::Template)
     -> Result<(), fmt::Error>
 {
         write_block(r, root, &t.body.statements)
@@ -70,7 +72,7 @@ fn eval_expr<'x>(r: &mut Renderer, root: &'x Variable, expr: &'x Expr)
     }
 }
 
-fn write_block(r: &mut Renderer, root: &Variable, items: &[Statement])
+fn write_block(r: &mut Renderer, root: &mut Variable, items: &[Statement])
     -> Result<(), fmt::Error>
 {
     use grammar::StatementCode::*;
@@ -90,7 +92,8 @@ fn write_block(r: &mut Renderer, root: &Variable, items: &[Statement])
                     let condval = &eval_expr(r, root, cond);
                     match condval.as_bool(&mut r.context) {
                         Ok(x) if x => {
-                            write_block(r, root, &branch_body.statements)?;
+                            let mut sub = Varmap::new(root);
+                            write_block(r, &mut sub, &branch_body.statements)?;
                             continue 'outer;
                         }
                         Ok(_) => {}
@@ -100,10 +103,12 @@ fn write_block(r: &mut Renderer, root: &Variable, items: &[Statement])
                         }
                     }
                 }
-                write_block(r, root, &otherwise.statements)?;
+                let mut sub = Varmap::new(root);
+                write_block(r, &mut sub, &otherwise.statements)?;
             }
             Loop { ref target, ref iterator, ref filter, ref body } => {
                 let iterator = &eval_expr(r, root, iterator);
+                let mut sub = Varmap::new(root);
                 unimplemented!();
             }
             _ => unimplemented!(),

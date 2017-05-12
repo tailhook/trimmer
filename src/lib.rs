@@ -21,6 +21,7 @@ mod std_vars;
 mod tokenizer;
 mod validators;
 mod vars;
+mod varmap;
 #[cfg(feature="serde")] mod serde;
 #[cfg(test)] mod tests;
 
