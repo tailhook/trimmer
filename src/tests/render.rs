@@ -66,6 +66,14 @@ fn cond() {
 }
 
 #[test]
+fn iteration() {
+    let t = parse("a\n## for x in items\n  - yx\n## endfor\n");
+    let mut c = HashMap::new();
+    c.insert("items", vec!["a", "b"]);
+    assert_eq!(&t.render(&c).unwrap(), "  - a\n  - b \n");
+}
+
+#[test]
 #[cfg(feature="serde")]
 fn attr() {
     assert_eq!(

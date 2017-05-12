@@ -20,21 +20,11 @@ pub fn kind<'x>(kind: Kind) -> TokenMatch<'x> {
     }
 }
 
-pub fn space<'x>() -> SkipMany<TokenMatch<'x>> {
+pub fn ws<'x>() -> SkipMany<TokenMatch<'x>> {
     skip_many(TokenMatch {
         kind: Kind::Whitespace,
         phantom: PhantomData,
     })
-}
-
-pub fn ws<'x>() -> SkipMany<Or<TokenMatch<'x>, TokenMatch<'x>>> {
-    skip_many(TokenMatch {
-        kind: Kind::Whitespace,
-        phantom: PhantomData,
-    }.or(TokenMatch {
-        kind: Kind::Newline,
-        phantom: PhantomData,
-    }))
 }
 
 impl<'a> Parser for TokenMatch<'a> {

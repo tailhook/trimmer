@@ -56,3 +56,12 @@ impl<'a, V: Variable> Variable for HashMap<&'a str, V> {
         Ok(self.len() > 0)
     }
 }
+
+impl<T: Variable> Variable for Vec<T> {
+    fn typename(&self) -> &'static str {
+        "Vec"
+    }
+    fn as_bool(&self, _: &mut Context) -> Result<bool, DataError> {
+        Ok(self.len() > 0)
+    }
+}

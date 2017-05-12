@@ -33,10 +33,13 @@ pub struct Token<'a> {
 }
 
 pub struct Tokenizer {
+    top_scan: Regex,
     top_set: RegexSet,
     top_list: Vec<(Regex, Kind)>,
     expr_set: RegexSet,
     expr_list: Vec<(Regex, Kind)>,
+    line_set: RegexSet,
+    line_list: Vec<(Regex, Kind)>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -99,7 +102,7 @@ impl<'a> StreamOnce for TokenStream<'a> {
                 return Ok(tok)
             }
             State::Statement => {
-                let tok = self.match_expr()?;
+                let tok = self.match_line_expr()?;
 
                 self.update_pos(tok.value);
 
@@ -123,13 +126,15 @@ impl<'a> StreamOnce for TokenStream<'a> {
 impl<'a> TokenStream<'a> {
     fn match_top(&self) -> Token<'a> {
         let cur = &self.buf[self.off..];
-        match self.tok.top_set.matches(cur).into_iter().next() {
+        let matching = self.tok.top_scan.find(cur);
+        match matching {
             None => {
                 Token { kind: Kind::Raw, value: cur }
             }
-            Some(idx) => {
-                let m = self.tok.top_list[idx].0.find(cur).unwrap();
+            Some(m) => {
                 if m.start() == 0 {
+                    let idx = self.tok.top_set.matches(cur)
+                        .into_iter().next().unwrap();
                     Token {
                         kind: self.tok.top_list[idx].1,
                         value: &cur[..m.end()]
@@ -157,6 +162,27 @@ impl<'a> TokenStream<'a> {
             }
         }
     }
+    fn match_line_expr(&self)
+        -> Result<Token<'a>, Error<Token<'a>, Token<'a>>>
+    {
+        let cur = &self.buf[self.off..];
+        match self.tok.line_set.matches(cur).into_iter().next() {
+            None => {
+                Ok(Token {
+                    kind: Kind::Newline,
+                    value: "",
+                })
+            }
+            Some(idx) => {
+                let m = self.tok.line_list[idx].0.find(cur).unwrap();
+                assert_eq!(m.start(), 0);
+                Ok(Token {
+                    kind: self.tok.line_list[idx].1,
+                    value: &cur[..m.end()]
+                })
+            }
+        }
+    }
     fn update_pos(&mut self, val: &str) {
         self.off += val.len();
         let lines = val.as_bytes().iter().filter(|&&x| x == b'\n').count();
@@ -176,13 +202,11 @@ impl Tokenizer {
         let top = &[
             (r"\{\{[+-]?", ExprStart),
             (r"\{#", CommentStart),
-            (r"##\s*(\w+)", StStart),
+            (r"##\s*(\w*)", StStart),
             (r"\n", Newline),
             (r"[ \t]+", Whitespace),
         ];
-        let expr = &[
-            (r"^\n", Newline),
-            (r"^[ \t]+", Whitespace),
+        let expr_common = &[
             (r"^[+-]?\}\}", ExprEnd),
             (r"^\{#", CommentStart),
             (r"^(?:and|or|not|>=|<=|==|!=|\.\.|[.|:><%*/+-])", Operator),
@@ -197,13 +221,41 @@ impl Tokenizer {
             (r"^(?:0[oxb])?[0-9][0-9_]*(\.[0-9_]+)?", Number),
             (r#"^"(:?[^"]|\\")*"|^'(:?[^']|\\')*'"#, String),
         ];
+        let expr = &[(r"^\s+", Whitespace)];
+        let line_expr = &[
+            (r"^\n", Newline),
+            (r"^[ \t]+", Whitespace),
+        ];
         Tokenizer {
-            top_set: RegexSet::new(top.iter().map(|&(r, _)| r)).unwrap(),
+            top_scan: Regex::new(
+                &format!("(?:{})",
+                    top.iter().map(|&(r, _)| format!("({})", r))
+                    .collect::<Vec<_>>()
+                    .join("|"))
+            ).unwrap(),
+            top_set: RegexSet::new(top.iter()
+                .map(|&(r, _)| format!("^{}", r))
+                .collect::<Vec<_>>()
+                .iter()
+                ).unwrap(),
             top_list: top.iter()
                 .map(|&(r, k)| (Regex::new(r).unwrap(), k))
                 .collect(),
-            expr_set: RegexSet::new(expr.iter().map(|&(r, _)| r)).unwrap(),
+            expr_set: RegexSet::new(
+                expr.iter()
+                .chain(expr_common.iter())
+                .map(|&(r, _)| r)).unwrap(),
             expr_list: expr.iter()
+                .chain(expr_common.iter())
+                .map(|&(r, k)| (Regex::new(r).unwrap(), k))
+                .collect(),
+            line_set: RegexSet::new(
+                line_expr.iter()
+                .chain(expr_common.iter())
+                .map(|&(r, _)| r)
+                ).unwrap(),
+            line_list: line_expr.iter()
+                .chain(expr_common.iter())
                 .map(|&(r, k)| (Regex::new(r).unwrap(), k))
                 .collect(),
         }

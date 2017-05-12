@@ -88,3 +88,49 @@ fn condition() {
         },
     ]);
 }
+
+#[test]
+fn iteration() {
+    use grammar::AssignTarget;
+    use grammar::StatementCode::*;
+    use grammar::ExprCode::*;
+
+    assert_eq(parse("a\n## for x in y\n  - {{ x }}\n## endfor\n"), vec![
+        Statement {
+            position: lines(1, 1, 2, 0),
+            code: OutputRaw("a\n".into()),
+        },
+        Statement {
+            position: lines(2, 0, 5, 0),
+            code: Loop {
+                target: AssignTarget::Var("x".into()),
+                iterator: Expr {
+                    position: line(2, 12, 13),
+                    code: Var("y".into()),
+                },
+                filter: None,
+                body: Body {
+                    statements: vec![
+                        Statement {
+                            position: line(3, 0, 4),
+                            // TODO(tailhook) no indent
+                            code: OutputRaw("  - ".into()),
+                        },
+                        Statement {
+                            position: line(3, 4, 11),
+                            // TODO(tailhook) no indent
+                            code: Output(Expr {
+                                position: line(3, 7, 8),
+                                code: Var("x".into()),
+                            }),
+                        },
+                        Statement {
+                            position: lines(3, 11, 4, 0),
+                            code: OutputRaw("\n".into()),
+                        },
+                    ],
+                },
+            }
+        },
+    ]);
+}

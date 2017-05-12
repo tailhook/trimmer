@@ -85,11 +85,8 @@ fn write_block(r: &mut Renderer, root: &Variable, items: &[Statement])
                 write!(&mut r.buf, "{}",
                     var.output(&mut r.context).unwrap_or(&""))?;
             }
-            Cond {
-                conditional: ref cond,
-                otherwise: ref else_body,
-            } => {
-                for &(ref cond, ref branch_body) in cond {
+            Cond { ref conditional, ref otherwise } => {
+                for &(ref cond, ref branch_body) in conditional {
                     let condval = &eval_expr(r, root, cond);
                     match condval.as_bool(&mut r.context) {
                         Ok(x) if x => {
@@ -103,7 +100,11 @@ fn write_block(r: &mut Renderer, root: &Variable, items: &[Statement])
                         }
                     }
                 }
-                write_block(r, root, &else_body.statements)?;
+                write_block(r, root, &otherwise.statements)?;
+            }
+            Loop { ref target, ref iterator, ref filter, ref body } => {
+                let iterator = &eval_expr(r, root, iterator);
+                unimplemented!();
             }
             _ => unimplemented!(),
         }

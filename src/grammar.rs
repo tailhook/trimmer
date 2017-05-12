@@ -74,13 +74,20 @@ pub enum StatementCode {
         otherwise: Body,
     },
     Loop {
-        filter: Expr,
+        target: AssignTarget,
+        iterator: Expr,
+        filter: Option<Expr>,
         body: Body,
     },
     Alias {
         name: String,
         expr: Expr,
     }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum AssignTarget {
+    Var(String),
 }
 
 #[derive(Debug, PartialEq)]
@@ -185,7 +192,19 @@ fn expression<'a>(input: TokenStream<'a>)
         .skip(ws()).skip(kind(ExprEnd))
     .parse_stream(input)
 }
-fn block<'a>(input: TokenStream<'a>)
+
+fn assign_target<'a>(input: TokenStream<'a>)
+    -> ParseResult<AssignTarget, TokenStream<'a>>
+{
+    use tokenizer::Kind::*;
+    use helpers::*;
+
+    kind(Ident)
+    .map(|t| AssignTarget::Var(t.value.to_string()))
+    .parse_stream(input)
+}
+
+fn if_stmt<'a>(input: TokenStream<'a>)
     -> ParseResult<StatementCode, TokenStream<'a>>
 {
     use tokenizer::Kind::*;
@@ -193,26 +212,58 @@ fn block<'a>(input: TokenStream<'a>)
     use helpers::*;
 
     st_start("if")
-        .skip(space())
+        .skip(ws())
         .with(parser(top_level_expression))
-        .skip(space())
+        .skip(ws())
         .skip(kind(Newline))
-        .and(many(parser(statement)))
-        .skip(st_start("endif"))
-        .skip(space())
-        .skip(kind(Newline))
-        .map(|(condition, block)| {
-            Cond {
-                conditional: vec![
-                    (condition, Body {
-                        statements: block,
-                    }),
-                ],
-                otherwise: Body {
-                    statements: Vec::new(),
-                }
+    .and(parser(body))
+    .skip(st_start("endif")).skip(ws()).skip(kind(Newline))
+    .map(|(condition, block)| {
+        Cond {
+            conditional: vec![
+                (condition, block),
+            ],
+            otherwise: Body {
+                statements: Vec::new(),
             }
-        })
+        }
+    })
+    .parse_stream(input)
+}
+fn for_stmt<'a>(input: TokenStream<'a>)
+    -> ParseResult<StatementCode, TokenStream<'a>>
+{
+    use tokenizer::Kind::*;
+    use self::StatementCode::*;
+    use helpers::*;
+
+    st_start("for")
+        .skip(ws())
+        .with(parser(assign_target))
+        .skip(ws())
+        .skip(keyword("in"))
+        .skip(ws())
+        .and(parser(top_level_expression))
+        .skip(ws())
+        .skip(kind(Newline))
+    .and(parser(body))
+    .skip(st_start("endfor")).skip(ws()).skip(kind(Newline))
+    .map(|((target, list), block)| {
+        Loop {
+            target: target,
+            iterator: list,
+            filter: None,
+            body: block,
+        }
+    })
+    .parse_stream(input)
+}
+
+fn block<'a>(input: TokenStream<'a>)
+    -> ParseResult<StatementCode, TokenStream<'a>>
+{
+    parser(if_stmt)
+    .or(parser(for_stmt))
     .parse_stream(input)
 }
 
@@ -226,14 +277,24 @@ fn statement<'a>(input: TokenStream<'a>)
 
     let statements =
         kind(Raw).map(|tok| OutputRaw(tok.value.to_string()))
-        // Whitespace out of any blocks is output as is
         .or(parser(expression).map(Output))
         .or(parser(block))
+        // Whitespace out of any blocks is output as is
         .or(kind(Whitespace).map(|tok| OutputRaw(tok.value.to_string())))
         .or(kind(Newline).map(|tok| OutputRaw(tok.value.to_string())));
     (position(), statements, position()).map(|(s, c, e)| Statement {
         position: (s, e),
         code: c,
+    }).parse_stream(input)
+}
+
+fn body<'a>(input: TokenStream<'a>)
+    -> ParseResult<Body, TokenStream<'a>>
+{
+    many(parser(statement)).map(|x| {
+        Body {
+            statements: optimize_statements(x),
+        }
     }).parse_stream(input)
 }
 
@@ -281,10 +342,10 @@ impl Parser {
 
         let s = self.tok.scan(data);
 
-        let mut p = many(parser(statement)).map(|stmts| Template {
+        let mut p = parser(body).map(|body| Template {
             check: Syntax::new(),  // TODO(tailhook)
             validators: HashMap::new(),  // TODO(tailhook)
-            body: Body { statements: optimize_statements(stmts) },
+            body: body,
         }).skip(kind(Kind::Eof));
 
         let (tpl, _) = p.parse(s)?;
