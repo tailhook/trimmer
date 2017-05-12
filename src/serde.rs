@@ -67,4 +67,17 @@ impl Variable for Value {
             Object(_) => "object",
         }
     }
+    fn as_bool(&self, _: &mut Context) -> Result<bool, DataError> {
+        use serde_json::Value::*;
+        match *self {
+            Null => Ok(false),
+            Bool(x) => Ok(x),
+            I64(x) => Ok(x != 0),
+            U64(x) => Ok(x != 0),
+            F64(x) => Ok(x != 0.),
+            String(ref s) => Ok(s.len() > 0),
+            Array(ref a) => Ok(a.len() > 0),
+            Object(ref o) => Ok(o.len() > 0),
+        }
+    }
 }

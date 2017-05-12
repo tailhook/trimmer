@@ -75,7 +75,7 @@ fn write_block(r: &mut Renderer, root: &Variable, items: &[Statement])
 {
     use grammar::StatementCode::*;
 
-    for item in items {
+    'outer: for item in items {
         match item.code {
             OutputRaw(ref x) => {
                 r.buf.push_str(x);
@@ -84,6 +84,26 @@ fn write_block(r: &mut Renderer, root: &Variable, items: &[Statement])
                 let var = &eval_expr(r, root, e);
                 write!(&mut r.buf, "{}",
                     var.output(&mut r.context).unwrap_or(&""))?;
+            }
+            Cond {
+                conditional: ref cond,
+                otherwise: ref else_body,
+            } => {
+                for &(ref cond, ref branch_body) in cond {
+                    let condval = &eval_expr(r, root, cond);
+                    match condval.as_bool(&mut r.context) {
+                        Ok(x) if x => {
+                            write_block(r, root, &branch_body.statements)?;
+                            continue 'outer;
+                        }
+                        Ok(_) => {}
+                        Err(e) => {
+                            r.errors.push((cond.position.0, e));
+                            // treating as false
+                        }
+                    }
+                }
+                write_block(r, root, &else_body.statements)?;
             }
             _ => unimplemented!(),
         }

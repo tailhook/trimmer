@@ -32,14 +32,19 @@ quick_error! {
             description("can't used as integer key for subscription")
             display("object {} can't be a key for subscription", typename)
         }
-        /// No suche attribute on this object
+        /// No such index on this object
         IndexNotFound {
             description("object doesn't have value at specified index")
         }
-        /// The object can't be created
+        /// The object can't be output
         OutputUnsupported(typename: &'static str) {
-            description("can't print object of type")
+            description("can't print object of this type")
             display("can't print object of type {}", typename)
+        }
+        /// The object can't be boolean
+        BoolUnsupported(typename: &'static str) {
+            description("can't treat object of this type as bool")
+            display("can't treat object of type {} as bool", typename)
         }
         /// Variable or attribute not found
         VariableNotFound(name: String) {

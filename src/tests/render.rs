@@ -56,6 +56,16 @@ fn const_str() {
 }
 
 #[test]
+fn cond() {
+    let t = parse("## if x\n  y\n## endif\n");
+    let mut c = HashMap::new();
+    c.insert("x", "");
+    assert_eq!(&t.render(&c).unwrap(), "");
+    c.insert("x", "x");
+    assert_eq!(&t.render(&c).unwrap(), "  y\n");
+}
+
+#[test]
 #[cfg(feature="serde")]
 fn attr() {
     assert_eq!(

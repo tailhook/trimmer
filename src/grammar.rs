@@ -168,6 +168,11 @@ fn attr<'a>(input: TokenStream<'a>)
     })
     .parse_stream(input)
 }
+fn top_level_expression<'a>(input: TokenStream<'a>)
+    -> ParseResult<Expr, TokenStream<'a>>
+{
+    attr(input)
+}
 
 fn expression<'a>(input: TokenStream<'a>)
     -> ParseResult<Expr, TokenStream<'a>>
@@ -176,8 +181,38 @@ fn expression<'a>(input: TokenStream<'a>)
     use helpers::*;
 
     kind(ExprStart).and(ws())
-        .with(parser(attr))
+        .with(parser(top_level_expression))
         .skip(ws()).skip(kind(ExprEnd))
+    .parse_stream(input)
+}
+fn block<'a>(input: TokenStream<'a>)
+    -> ParseResult<StatementCode, TokenStream<'a>>
+{
+    use tokenizer::Kind::*;
+    use self::StatementCode::*;
+    use helpers::*;
+
+    st_start("if")
+        .skip(space())
+        .with(parser(top_level_expression))
+        .skip(space())
+        .skip(kind(Newline))
+        .and(many(parser(statement)))
+        .skip(st_start("endif"))
+        .skip(space())
+        .skip(kind(Newline))
+        .map(|(condition, block)| {
+            Cond {
+                conditional: vec![
+                    (condition, Body {
+                        statements: block,
+                    }),
+                ],
+                otherwise: Body {
+                    statements: Vec::new(),
+                }
+            }
+        })
     .parse_stream(input)
 }
 
@@ -193,6 +228,7 @@ fn statement<'a>(input: TokenStream<'a>)
         kind(Raw).map(|tok| OutputRaw(tok.value.to_string()))
         // Whitespace out of any blocks is output as is
         .or(parser(expression).map(Output))
+        .or(parser(block))
         .or(kind(Whitespace).map(|tok| OutputRaw(tok.value.to_string())))
         .or(kind(Newline).map(|tok| OutputRaw(tok.value.to_string())));
     (position(), statements, position()).map(|(s, c, e)| Statement {

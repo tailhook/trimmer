@@ -12,6 +12,9 @@ impl Variable for String {
     fn output(&self, _: &mut Context) -> Result<&Display, DataError> {
         Ok(self)
     }
+    fn as_bool(&self, _: &mut Context) -> Result<bool, DataError> {
+        Ok(self.len() > 0)
+    }
 }
 
 impl<'a> Variable for &'a str {
@@ -21,6 +24,9 @@ impl<'a> Variable for &'a str {
     fn output(&self, _: &mut Context) -> Result<&Display, DataError> {
         Ok(self)
     }
+    fn as_bool(&self, _: &mut Context) -> Result<bool, DataError> {
+        Ok(self.len() > 0)
+    }
 }
 
 impl<'a> Variable for &'a String {
@@ -29,6 +35,9 @@ impl<'a> Variable for &'a String {
     }
     fn output(&self, _: &mut Context) -> Result<&Display, DataError> {
         Ok(self)
+    }
+    fn as_bool(&self, _: &mut Context) -> Result<bool, DataError> {
+        Ok(self.len() > 0)
     }
 }
 
@@ -42,5 +51,8 @@ impl<'a, V: Variable> Variable for HashMap<&'a str, V> {
     }
     fn typename(&self) -> &'static str {
         "HashMap"
+    }
+    fn as_bool(&self, _: &mut Context) -> Result<bool, DataError> {
+        Ok(self.len() > 0)
     }
 }

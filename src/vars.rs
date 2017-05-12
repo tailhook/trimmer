@@ -67,6 +67,12 @@ pub trait Variable: Debug {
     fn as_int_key(&self, _ctx: &mut Context) -> Result<usize, DataError> {
         Err(DataError::IntKeyUnsupported(self.typename()))
     }
+    /// Return boolean value of this object
+    ///
+    /// This is used in conditions `## if x`
+    fn as_bool(&self, _ctx: &mut Context) -> Result<bool, DataError> {
+        Err(DataError::BoolUnsupported(self.typename()))
+    }
 }
 
 impl Variable for Undefined {
@@ -85,5 +91,8 @@ impl Variable for Undefined {
     }
     fn typename(&self) -> &'static str {
         "undefined"
+    }
+    fn as_bool(&self, _: &mut Context) -> Result<bool, DataError> {
+        Ok(false)
     }
 }

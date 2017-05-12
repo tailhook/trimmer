@@ -16,7 +16,7 @@ pub enum Kind {
     Newline,
     ExprStart,
     ExprEnd,
-    StStart,  // Statement start '##'
+    StStart,  // Statement start '## something'
     // Expression tokens
     Operator,
     Paren,
@@ -43,6 +43,7 @@ pub struct Tokenizer {
 enum State {
     Top,
     Expr,
+    Statement,
 }
 
 #[derive(Clone)]
@@ -76,7 +77,9 @@ impl<'a> StreamOnce for TokenStream<'a> {
                     ExprStart => {
                         self.state = State::Expr;
                     }
-                    StStart => unimplemented!(),
+                    StStart => {
+                        self.state = State::Statement;
+                    }
                     _ => {}
                 }
                 return Ok(tok)
@@ -89,6 +92,20 @@ impl<'a> StreamOnce for TokenStream<'a> {
                 match tok.kind {
                     CommentStart => unimplemented!(),
                     ExprEnd => {
+                        self.state = State::Top;
+                    }
+                    _ => {}
+                }
+                return Ok(tok)
+            }
+            State::Statement => {
+                let tok = self.match_expr()?;
+
+                self.update_pos(tok.value);
+
+                match tok.kind {
+                    CommentStart => unimplemented!(),
+                    Newline => {
                         self.state = State::Top;
                     }
                     _ => {}
@@ -159,11 +176,13 @@ impl Tokenizer {
         let top = &[
             (r"\{\{[+-]?", ExprStart),
             (r"\{#", CommentStart),
+            (r"##\s*(\w+)", StStart),
             (r"\n", Newline),
             (r"[ \t]+", Whitespace),
         ];
         let expr = &[
-            (r"^\s+", Whitespace),
+            (r"^\n", Newline),
+            (r"^[ \t]+", Whitespace),
             (r"^[+-]?\}\}", ExprEnd),
             (r"^\{#", CommentStart),
             (r"^(?:and|or|not|>=|<=|==|!=|\.\.|[.|:><%*/+-])", Operator),

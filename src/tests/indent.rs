@@ -14,6 +14,7 @@ fn line(line_no: usize, start: usize, end: usize) ->  (Pos, Pos) {
     (Pos { line: line_no, column: start },
      Pos { line: line_no, column: end })
 }
+
 fn lines(line_st: usize, start: usize, line_end: usize, end: usize)
     -> (Pos, Pos)
 {
