@@ -53,6 +53,7 @@ enum State {
 pub struct TokenStream<'a> {
     tok: &'a Tokenizer,
     buf: &'a str,
+    indent: Option<usize>,
     position: Pos,
     off: usize,
     state: State,
@@ -73,7 +74,7 @@ impl<'a> StreamOnce for TokenStream<'a> {
             State::Top => {
                 let tok = self.match_top();
 
-                self.update_pos(tok.value);
+                let indent = self.update_pos(tok.value);
 
                 match tok.kind {
                     CommentStart => unimplemented!(),
@@ -81,6 +82,11 @@ impl<'a> StreamOnce for TokenStream<'a> {
                         self.state = State::Expr;
                     }
                     StStart => {
+                        if indent.is_none() {
+                            return Err(Error::Message(
+                                Info::Borrowed("Statement must start at the \
+                                    beginning of the line")));
+                        }
                         self.state = State::Statement;
                     }
                     _ => {}
@@ -183,16 +189,24 @@ impl<'a> TokenStream<'a> {
             }
         }
     }
-    fn update_pos(&mut self, val: &str) {
+    fn update_pos(&mut self, val: &str) -> Option<usize> {
+        let result = self.indent.take();
         self.off += val.len();
         let lines = val.as_bytes().iter().filter(|&&x| x == b'\n').count();
         self.position.line += lines;
         if lines > 0 {
-            let num = val[val.rfind('\n').unwrap()+1..].chars().count();
+            let line_offset = val.rfind('\n').unwrap()+1;
+            let num = val[line_offset..].chars().count();
+            let indent = val[line_offset..].as_bytes()
+                .iter().all(|&x| x == b' ');
+            if indent {
+                self.indent = Some(num);
+            }
             self.position.column = num;
         } else {
             self.position.column += val.chars().count();
         }
+        return result;
     }
 }
 
@@ -265,6 +279,7 @@ impl Tokenizer {
         TokenStream {
             tok: self,
             buf: buf,
+            indent: Some(0),
             position: Pos { line: 1, column: 1 },
             off: 0,
             state: State::Top,

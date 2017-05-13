@@ -36,6 +36,12 @@ fn hello() {
 }
 
 #[test]
+#[should_panic(expected="Statement must start at the beginning of the line")]
+fn invalid() {
+    parse("he ## if x\n## endif\n");
+}
+
+#[test]
 fn var() {
     assert_eq(parse("a{{ x }}b"), vec![
         Statement {
@@ -61,13 +67,13 @@ fn condition() {
     use grammar::StatementCode::*;
     use grammar::ExprCode::*;
 
-    assert_eq(parse("a\n## if x\n  b## endif\n"), vec![
+    assert_eq(parse("a\n## if x\n  b\n## endif\n"), vec![
         Statement {
             position: lines(1, 1, 2, 0),
             code: OutputRaw("a\n".into()),
         },
         Statement {
-            position: lines(2, 0, 4, 0),
+            position: lines(2, 0, 5, 0),
             code: Cond {
                 conditional: vec![
                     (Expr {
@@ -75,7 +81,7 @@ fn condition() {
                         code: Var("x".into()),
                     }, Body {
                         statements: vec![Statement {
-                            position: line(3, 0, 3),
+                            position: lines(3, 0, 4, 0),
                             // TODO(tailhook) no indent
                             code: OutputRaw("  b".into()),
                         }],
