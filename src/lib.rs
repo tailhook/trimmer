@@ -22,6 +22,7 @@ mod tokenizer;
 mod validators;
 mod vars;
 mod varmap;
+mod target;
 #[cfg(feature="serde")] mod serde;
 #[cfg(test)] mod tests;
 
@@ -34,5 +35,6 @@ pub use preparser::Options;
 pub use render_error::{RenderError, DataError};
 pub use render::Template;
 pub use validators::Validator;
-pub use vars::Variable;
+pub use vars::{Variable, Iterator};
+pub use target::{Target, TargetKind};
 

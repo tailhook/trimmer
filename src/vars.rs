@@ -1,5 +1,6 @@
 use std::fmt::{Display, Debug};
 
+use target::{Target, TargetKind};
 use context::Context;
 use render_error::DataError;
 
@@ -33,8 +34,8 @@ pub trait Variable: Debug {
     ///
     /// Note that actual key may have a (rust) type that is different from
     /// type of self (i.e. may come from different library).
-    fn index(&self, _ctx: &mut Context, _key: &Variable)
-        -> Result<&Variable, DataError>
+    fn index<'x>(&'x self, _ctx: &mut Context, _key: &Variable)
+        -> Result<&'x Variable, DataError>
     {
         Err(DataError::IndexUnsupported(self.typename()))
     }
@@ -72,6 +73,31 @@ pub trait Variable: Debug {
     /// This is used in conditions `## if x`
     fn as_bool(&self, _ctx: &mut Context) -> Result<bool, DataError> {
         Err(DataError::BoolUnsupported(self.typename()))
+    }
+
+    /// Return iterator over the value if appropriate
+    ///
+    /// Iterator should be smart enough to find out whether iterator over
+    /// key-value pairs or keys is expected. You can also optimize tuple
+    /// unpacking in the iterator itself
+    fn iterate<'x>(&'x self, _ctx: &mut Context, target: TargetKind)
+        -> Result<Box<Iterator<'x>+'x>, DataError>
+    {
+        Err(DataError::IterationUnsupported(self.typename(), target))
+    }
+}
+/// A trait that represents iterator over variable
+///
+/// Note: currently it contains only `next` item but in future we will add
+/// more methods that allow `loop.*` variables to work.
+pub trait Iterator<'a> {
+    /// Set apropriate variables and return `false` if previous iteration was
+    /// the last one
+    fn next<'y, 'z>(&mut self, _ctx: &mut Context<'a>,
+        target: &mut Target<'a, 'y, 'z>)
+        -> bool
+    {
+        return false;
     }
 }
 

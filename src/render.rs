@@ -4,6 +4,7 @@ use grammar::{self, Statement, Expr, AssignTarget};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED};
 use varmap::Varmap;
+use target;
 use {Pos, Variable, Context};
 
 
@@ -109,16 +110,32 @@ fn write_block<'x: 'y, 'y>(r: &mut Renderer<'x>,
                 write_block(r, &mut sub, &otherwise.statements)?;
             }
             Loop { ref target, ref iterator, ref filter, ref body } => {
-                let iterator = eval_expr(r, root, iterator);
-                //let mut sub = root.sub();
-                //sub.insert(String::from("__current_iterator"), iterator);
-                unimplemented!();
+                let value = eval_expr(r, root, iterator);
+                let kind = target::make_kind(target);
+                let mut iterator = match value.iterate(&mut r.context, kind) {
+                    Ok(iter) => iter,
+                    Err(e) => {
+                        r.errors.push((iterator.position.0, e));
+                        // treating as empty loop
+                        continue 'outer;
+                    }
+                };
+                loop {
+                    let mut sub = root.sub();
+                    {
+                        let mut target = target::make_target(target, &mut sub);
+                        if !iterator.next(&mut r.context, &mut target) {
+                            break;
+                        }
+                    }
+                    write_block(r, &mut sub, &body.statements)?;
+                }
             }
             Alias { ref target, ref value } => {
                 let value = &eval_expr(r, root, value);
                 match *target {
                     AssignTarget::Var(ref var_name) => {
-                        root.insert(var_name.to_string(), *value);
+                        root.set(var_name.to_string(), *value);
                     }
                 }
             }

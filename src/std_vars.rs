@@ -1,8 +1,16 @@
 use std::fmt::Display;
 use std::collections::HashMap;
+use std::slice::Iter;
+
+use target::{Target, TargetKind};
 
 use render_error::DataError;
-use {Variable, Context};
+use {Variable, Context, Iterator};
+
+struct VecIterator<'a, T: Variable + 'a> {
+    vec: &'a Vec<T>,
+    index: usize,
+}
 
 
 impl Variable for String {
@@ -57,11 +65,32 @@ impl<'a, V: Variable> Variable for HashMap<&'a str, V> {
     }
 }
 
-impl<T: Variable> Variable for Vec<T> {
+impl<'a, T: Variable + 'a> Variable for Vec<T> {
     fn typename(&self) -> &'static str {
         "Vec"
     }
     fn as_bool(&self, _: &mut Context) -> Result<bool, DataError> {
         Ok(self.len() > 0)
+    }
+    fn iterate<'x>(&'x self, _ctx: &mut Context, target: TargetKind)
+        -> Result<Box<Iterator<'x>+'x>, DataError>
+    {
+        Ok(Box::new(VecIterator { vec: self, index: 0 }))
+    }
+}
+
+impl<'a, T: Variable + 'a> Iterator<'a> for VecIterator<'a, T> {
+    fn next<'y, 'z>(&mut self, _ctx: &mut Context<'a>,
+        target: &mut Target<'a, 'y, 'z>)
+        -> bool
+    {
+        match self.vec.get(self.index) {
+            Some(x) => {
+                target.set(x);
+                self.index += 1;
+                true
+            },
+            None => false,
+        }
     }
 }

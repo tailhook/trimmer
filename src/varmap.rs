@@ -38,7 +38,7 @@ impl<'a, 'b> Varmap<'a, 'b> {
             self.root.attr(ctx, name)
         }
     }
-    pub fn insert(&mut self, name: String, value: &'a Variable) {
+    pub fn set(&mut self, name: String, value: &'a Variable) {
         self.local.insert(name, value);
     }
 }

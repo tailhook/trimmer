@@ -75,10 +75,11 @@ fn cond() {
 
 #[test]
 fn iteration() {
-    let t = parse("a\n## for x in items\n  - yx\n## endfor\n");
+    let t = parse("## for x in items\n  - {{ x }}\n## endfor\n");
     let mut c = HashMap::new();
     c.insert("items", vec!["a", "b"]);
-    assert_eq!(&t.render(&c).unwrap(), "  - a\n  - b \n");
+    // TODO(tailhook) fix indentation
+    assert_eq!(&t.render(&c).unwrap(), "  - a\n  - b\n");
 }
 
 #[test]
