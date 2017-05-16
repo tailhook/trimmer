@@ -81,7 +81,7 @@ pub enum StatementCode {
     },
     Alias {
         target: AssignTarget,
-        expr: Expr,
+        value: Expr,
     }
 }
 
@@ -259,11 +259,32 @@ fn for_stmt<'a>(input: TokenStream<'a>)
     .parse_stream(input)
 }
 
+fn let_stmt<'a>(input: TokenStream<'a>)
+    -> ParseResult<StatementCode, TokenStream<'a>>
+{
+    use tokenizer::Kind::*;
+    use self::StatementCode::*;
+    use helpers::*;
+
+    st_start("let")
+        .skip(ws())
+        .with(parser(assign_target))
+        .skip(ws())
+        .skip(operator("="))
+        .skip(ws())
+        .and(parser(top_level_expression))
+        .skip(ws())
+        .skip(kind(Newline))
+    .map(|(target, value)| Alias { target, value })
+    .parse_stream(input)
+}
+
 fn block<'a>(input: TokenStream<'a>)
     -> ParseResult<StatementCode, TokenStream<'a>>
 {
     parser(if_stmt)
     .or(parser(for_stmt))
+    .or(parser(let_stmt))
     .parse_stream(input)
 }
 

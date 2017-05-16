@@ -49,6 +49,14 @@ fn var_str() {
 }
 
 #[test]
+fn aliasing_vars() {
+    let t = parse("## let x = y\na{{ x }}b");
+    let mut c = HashMap::new();
+    c.insert("y", "+");
+    assert_eq!(&t.render(&c).unwrap(), "a+b");
+}
+
+#[test]
 fn const_str() {
     let t = parse(r#"a{{ " and " }}b"#);
     let c = HashMap::<_, String>::new();

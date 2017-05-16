@@ -223,7 +223,7 @@ impl Tokenizer {
         let expr_common = &[
             (r"^[+-]?\}\}", ExprEnd),
             (r"^\{#", CommentStart),
-            (r"^(?:and|or|not|>=|<=|==|!=|\.\.|[.|:><%*/+-])", Operator),
+            (r"^(?:and|or|not|>=|<=|==|!=|=|\.\.|[.|:><%*/+-])", Operator),
             (r"^[{}()\[\]]", Paren),
             ("^(?:for|in|endfor\
              |skip\

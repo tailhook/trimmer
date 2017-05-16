@@ -114,8 +114,8 @@ fn write_block<'x: 'y, 'y>(r: &mut Renderer<'x>,
                 //sub.insert(String::from("__current_iterator"), iterator);
                 unimplemented!();
             }
-            Alias { ref target, ref expr } => {
-                let value = &eval_expr(r, root, expr);
+            Alias { ref target, ref value } => {
+                let value = &eval_expr(r, root, value);
                 match *target {
                     AssignTarget::Var(ref var_name) => {
                         root.insert(var_name.to_string(), *value);

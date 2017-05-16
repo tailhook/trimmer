@@ -83,7 +83,7 @@ fn condition() {
                         statements: vec![Statement {
                             position: lines(3, 0, 4, 0),
                             // TODO(tailhook) no indent
-                            code: OutputRaw("  b".into()),
+                            code: OutputRaw("  b\n".into()),
                         }],
                     }),
                 ],
@@ -137,6 +137,26 @@ fn iteration() {
                     ],
                 },
             }
+        },
+    ]);
+}
+
+#[test]
+fn assign() {
+    use grammar::AssignTarget;
+    use grammar::StatementCode::*;
+    use grammar::ExprCode::*;
+
+    assert_eq(parse("## let x = y\n"), vec![
+        Statement {
+            position: lines(1, 1, 2, 0),
+            code: Alias {
+                target: AssignTarget::Var("x".into()),
+                value: Expr {
+                    position: line(1, 12, 13),
+                    code: Var("y".into()),
+                },
+            },
         },
     ]);
 }
