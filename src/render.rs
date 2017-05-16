@@ -1,6 +1,6 @@
 use std::fmt::{self, Write};
 
-use grammar::{self, Statement, Expr};
+use grammar::{self, Statement, Expr, AssignTarget};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED};
 use varmap::Varmap;
@@ -37,13 +37,14 @@ impl Template {
     }
 }
 
-fn render(r: &mut Renderer, root: &mut Variable, t: &grammar::Template)
+fn render<'x: 'y, 'y>(r: &mut Renderer<'x>, root: &mut Varmap<'x, 'y>,
+    t: &'x grammar::Template)
     -> Result<(), fmt::Error>
 {
-        write_block(r, root, &t.body.statements)
+    write_block(r, root, &t.body.statements)
 }
 
-fn eval_expr<'x>(r: &mut Renderer, root: &'x Variable, expr: &'x Expr)
+fn eval_expr<'x: 'y, 'y>(r: &mut Renderer, root: &Varmap<'x, 'y>, expr: &'x Expr)
     -> &'x Variable
 {
     use grammar::ExprCode::*;
@@ -51,7 +52,7 @@ fn eval_expr<'x>(r: &mut Renderer, root: &'x Variable, expr: &'x Expr)
     match expr.code {
         Str(ref s) => s,
         Var(ref s) => {
-            match root.attr(&mut r.context, s) {
+            match root.get(&mut r.context, s) {
                 Ok(x) => x,
                 Err(e) => {
                     r.errors.push((expr.position.0, e));
@@ -72,7 +73,8 @@ fn eval_expr<'x>(r: &mut Renderer, root: &'x Variable, expr: &'x Expr)
     }
 }
 
-fn write_block(r: &mut Renderer, root: &mut Variable, items: &[Statement])
+fn write_block<'x: 'y, 'y>(r: &mut Renderer<'x>,
+    root: &mut Varmap<'x, 'y>, items: &'x [Statement])
     -> Result<(), fmt::Error>
 {
     use grammar::StatementCode::*;
@@ -92,7 +94,7 @@ fn write_block(r: &mut Renderer, root: &mut Variable, items: &[Statement])
                     let condval = &eval_expr(r, root, cond);
                     match condval.as_bool(&mut r.context) {
                         Ok(x) if x => {
-                            let mut sub = Varmap::new(root);
+                            let mut sub = root.sub();
                             write_block(r, &mut sub, &branch_body.statements)?;
                             continue 'outer;
                         }
@@ -103,15 +105,23 @@ fn write_block(r: &mut Renderer, root: &mut Variable, items: &[Statement])
                         }
                     }
                 }
-                let mut sub = Varmap::new(root);
+                let mut sub = root.sub();
                 write_block(r, &mut sub, &otherwise.statements)?;
             }
             Loop { ref target, ref iterator, ref filter, ref body } => {
-                let iterator = &eval_expr(r, root, iterator);
-                let mut sub = Varmap::new(root);
+                let iterator = eval_expr(r, root, iterator);
+                //let mut sub = root.sub();
+                //sub.insert(String::from("__current_iterator"), iterator);
                 unimplemented!();
             }
-            _ => unimplemented!(),
+            Alias { ref target, ref expr } => {
+                let value = &eval_expr(r, root, expr);
+                match *target {
+                    AssignTarget::Var(ref var_name) => {
+                        root.insert(var_name.to_string(), *value);
+                    }
+                }
+            }
         }
     }
     Ok(())

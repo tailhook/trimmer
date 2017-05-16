@@ -80,7 +80,7 @@ pub enum StatementCode {
         body: Body,
     },
     Alias {
-        name: String,
+        target: AssignTarget,
         expr: Expr,
     }
 }
