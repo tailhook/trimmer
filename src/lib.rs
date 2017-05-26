@@ -4,12 +4,10 @@
 
 extern crate combine;
 extern crate regex;
-extern crate typed_arena;
 #[macro_use] extern crate quick_error;
 #[cfg(test)] #[macro_use] extern crate matches;
 #[cfg(feature="serde")] extern crate serde_json;
 
-mod context;
 mod grammar;
 mod helpers;
 mod parse_error;
@@ -27,7 +25,6 @@ mod target;
 #[cfg(test)] mod tests;
 
 
-pub use context::Context;
 pub use grammar::Parser;
 pub use parse_error::ParseError;
 pub use position::Pos;

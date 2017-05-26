@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use {Variable, Context};
+use {Variable};
 use render_error::DataError;
 
 
@@ -26,16 +26,16 @@ impl<'a, 'b> Varmap<'a, 'b> {
             local: HashMap::new()
         }
     }
-    pub fn get(&self, ctx: &mut Context, name: &str)
+    pub fn get(&self, name: &str)
         -> Result<&'a Variable, DataError>
     {
         if let Some(value) = self.local.get(name) {
             return Ok(*value);
         }
         if let Some(ref parent) = self.parent {
-            parent.get(ctx, name)
+            parent.get(name)
         } else {
-            self.root.attr(ctx, name)
+            self.root.attr(name)
         }
     }
     pub fn set(&mut self, name: String, value: &'a Variable) {

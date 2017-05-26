@@ -17,7 +17,7 @@ quick-error = "1.2.0"
 combine = "2.0.0"
 regex = "0.2.1"
 serde_json = { version="0.8.3", optional=true }
-typed-arena = "1.2.0"
+owning_ref = "0.3.3"
 
 [dev-dependencies]
 difference = "0.4.1"
