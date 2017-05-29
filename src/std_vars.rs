@@ -5,24 +5,12 @@ use std::slice::Iter;
 use target::{Target, TargetKind};
 
 use render_error::DataError;
-use {Variable, Iterator};
+use vars::{Variable, Var, Iterator};
+
 
 struct VecIterator<'a, T: Variable + 'a> {
     vec: &'a Vec<T>,
     index: usize,
-}
-
-
-impl Variable for String {
-    fn typename(&self) -> &'static str {
-        "String"
-    }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
-    }
-    fn as_bool(&self) -> Result<bool, DataError> {
-        Ok(self.len() > 0)
-    }
 }
 
 impl<'a> Variable for &'a str {
@@ -49,12 +37,12 @@ impl<'a> Variable for &'a String {
     }
 }
 
-impl<'a, V: Variable> Variable for HashMap<&'a str, V> {
-    fn attr<'x>(&'x self, attr: &str)
-        -> Result<&'x Variable, DataError>
+impl<V: Variable> Variable for HashMap<String, V> {
+    fn attr(&self, attr: &str)
+        -> Result<Var, DataError>
     {
         self.get(attr)
-        .map(|x| x as &Variable)
+        .map(|x| Var::Ref(x as &Variable))
         .ok_or_else(|| DataError::VariableNotFound(attr.to_string()))
     }
     fn typename(&self) -> &'static str {
@@ -73,9 +61,10 @@ impl<'a, T: Variable + 'a> Variable for Vec<T> {
         Ok(self.len() > 0)
     }
     fn iterate<'x>(&'x self, target: TargetKind)
-        -> Result<Box<Iterator<'x>+'x>, DataError>
+        -> Result<Box<Iterator<'x>>, DataError>
     {
-        Ok(Box::new(VecIterator { vec: self, index: 0 }))
+        unimplemented!();
+        // Ok(Box::new(VecIterator { vec: self, index: 0 }))
     }
 }
 

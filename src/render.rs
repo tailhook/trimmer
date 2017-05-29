@@ -1,5 +1,7 @@
 use std::fmt::{self, Write};
 
+use owning_ref::ErasedRcRef;
+
 use grammar::{self, Statement, Expr, AssignTarget};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED};
@@ -44,7 +46,7 @@ fn render<'x: 'y, 'y>(r: &mut Renderer, root: &mut Varmap<'x, 'y>,
 }
 
 fn eval_expr<'x: 'y, 'y>(r: &mut Renderer, root: &Varmap<'x, 'y>, expr: &'x Expr)
-    -> &'x Variable
+    -> ErasedRcRef<Variable>
 {
     use grammar::ExprCode::*;
 

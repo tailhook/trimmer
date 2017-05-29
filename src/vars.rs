@@ -1,7 +1,14 @@
+use std::rc::Rc;
 use std::fmt::{Display, Debug};
 
 use target::{Target, TargetKind};
 use render_error::DataError;
+use owning_ref::ErasedRcRef;
+
+pub enum Var<'a> {
+    Ref(&'a Variable),
+    Rc(ErasedRcRef<Variable>),
+}
 
 #[derive(Debug)]
 pub struct Undefined;
@@ -18,8 +25,8 @@ pub trait Variable: Debug {
     ///
     /// Depending on your domain `a.x` may be equivalent of `a["x"]` or
     /// maybe not. Integer arguments `a.0` are not supported.
-    fn attr<'x>(&'x self,  _attr: &str)
-        -> Result<&'x Variable, DataError>
+    fn attr(&self,  _attr: &str)
+        -> Result<Var, DataError>
     {
         Err(DataError::AttrUnsupported(self.typename()))
     }
@@ -33,8 +40,8 @@ pub trait Variable: Debug {
     ///
     /// Note that actual key may have a (rust) type that is different from
     /// type of self (i.e. may come from different library).
-    fn index<'x>(&'x self, _key: &Variable)
-        -> Result<&'x Variable, DataError>
+    fn index(&self, _key: &Variable)
+        -> Result<Var, DataError>
     {
         Err(DataError::IndexUnsupported(self.typename()))
     }
@@ -80,7 +87,7 @@ pub trait Variable: Debug {
     /// key-value pairs or keys is expected. You can also optimize tuple
     /// unpacking in the iterator itself
     fn iterate<'x>(&'x self, target: TargetKind)
-        -> Result<Box<Iterator<'x>+'x>, DataError>
+        -> Result<Box<Iterator<'x>>, DataError>
     {
         Err(DataError::IterationUnsupported(self.typename(), target))
     }
@@ -101,14 +108,14 @@ pub trait Iterator<'a> {
 
 impl Variable for Undefined {
     fn attr<'x>(&'x self, _attr: &str)
-        -> Result<&'x Variable, DataError>
+        -> Result<Var<'x>, DataError>
     {
-        Ok(UNDEFINED)
+        Ok(Var::Ref(UNDEFINED))
     }
     fn index<'x>(&'x self,  _key: &Variable)
-        -> Result<&Variable, DataError>
+        -> Result<Var<'x>, DataError>
     {
-        Ok(UNDEFINED)
+        Ok(Var::Ref(UNDEFINED))
     }
     fn output(&self) -> Result<&Display, DataError> {
         Ok(EMPTY)

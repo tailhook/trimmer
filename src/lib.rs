@@ -3,6 +3,7 @@
 #![warn(missing_docs)]
 
 extern crate combine;
+extern crate owning_ref;
 extern crate regex;
 #[macro_use] extern crate quick_error;
 #[cfg(test)] #[macro_use] extern crate matches;

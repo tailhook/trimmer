@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde_json::Value;
 
-use vars::EMPTY;
+use vars::{EMPTY, Var};
 use {DataError, Variable};
 
 pub const TRUE: &'static &'static str = &"true";
@@ -11,7 +11,7 @@ pub const FALSE: &'static &'static str = &"false";
 
 impl Variable for Value {
     fn attr<'x>(&'x self, attr: &str)
-        -> Result<&'x Variable, DataError>
+        -> Result<Var<'x>, DataError>
     {
         use serde_json::Value::*;
         match *self {
@@ -24,18 +24,18 @@ impl Variable for Value {
         }
     }
     fn index<'x>(&'x self, key: &Variable)
-        -> Result<&Variable, DataError>
+        -> Result<Var<'x>, DataError>
     {
         use serde_json::Value::*;
         match *self {
             Object(ref x) => {
                 x.get(key.as_str_key()?)
-                .map(|x| x as &Variable)
+                .map(|x| Var::Ref(x as &Variable))
                 .ok_or(DataError::AttrNotFound)
             }
             Array(ref x) => {
                 x.get(key.as_int_key()?)
-                .map(|x| x as &Variable)
+                .map(|x| Var::Ref(x as &Variable))
                 .ok_or(DataError::IndexNotFound)
             }
             _ => Err(DataError::IndexUnsupported(self.typename()))
