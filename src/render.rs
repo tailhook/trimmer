@@ -7,7 +7,7 @@ use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
 use owning::{Own, ExprCode};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED, Var};
-use varmap::Context;
+use varmap::{Context, set};
 use target;
 use {Pos, Variable};
 
@@ -91,18 +91,39 @@ fn write_block(r: &mut Renderer, root: &mut Context,
 {
     use grammar::StatementCode::*;
 
-    'outer: for item in items.iter() {
-        unimplemented!();
-        /*
+    'outer: for (idx, item) in items.iter().enumerate() {
         match item.code {
             OutputRaw(ref x) => {
                 r.buf.push_str(x);
             }
-            Output(ref e) => {
-                let var = &eval_expr(r, root, e);
+            Output(_) => {
+                let e = items.clone().map(|x| match x[idx].code {
+                    Output(ref e) => e,
+                    _ => unreachable!(),
+                });
+                let var = &eval_expr(r, root, &e);
                 write!(&mut r.buf, "{}",
                     var.output().unwrap_or(&""))?;
             }
+            Alias { ref target, .. } => {
+                let expr = items.clone().map(|x| match x[idx].code {
+                    Alias { ref value, .. } => value,
+                    _ => unreachable!(),
+                });
+                let value = eval_expr(r, root, &expr);
+                match *target {
+                    AssignTarget::Var(_) => {
+                        let name = items.clone().map(|x| match x[idx].code {
+                            Alias { target: AssignTarget::Var(ref name), .. }
+                            => &name[..],
+                            _ => unreachable!(),
+                        }).erase_owner();
+                        set(root, name, value);
+                    }
+                }
+            }
+            _ => unimplemented!(),
+            /*
             Cond { ref conditional, ref otherwise } => {
                 for &(ref cond, ref branch_body) in conditional {
                     let condval = &eval_expr(r, root, cond);
@@ -144,16 +165,8 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                     write_block(r, &mut sub, &body.statements)?;
                 }
             }
-            Alias { ref target, ref value } => {
-                let value = &eval_expr(r, root, value);
-                match *target {
-                    AssignTarget::Var(ref var_name) => {
-                        root.set(var_name.to_string(), *value);
-                    }
-                }
-            }
+            */
         }
-        */
     }
     Ok(())
 }
