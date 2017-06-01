@@ -87,7 +87,7 @@ pub trait Variable: Debug {
     /// key-value pairs or keys is expected. You can also optimize tuple
     /// unpacking in the iterator itself
     fn iterate<'x>(&'x self, target: TargetKind)
-        -> Result<Box<Iterator<'x>>, DataError>
+        -> Result<Box<Iterator<'x> + 'x>, DataError>
     {
         Err(DataError::IterationUnsupported(self.typename(), target))
     }

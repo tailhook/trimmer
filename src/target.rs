@@ -4,6 +4,8 @@ use grammar::AssignTarget;
 use varmap::Context;
 use vars::Variable;
 
+use owning_ref::ErasedRcRef;
+
 #[derive(Debug, Clone, Copy)]
 pub struct TargetKind(InternalKind);
 
@@ -12,20 +14,23 @@ pub enum InternalKind {
     Var,
 }
 
+enum Pointer {
+    Var(ErasedRcRef<str>),
+}
+
 /// This is an opaque type used to assign variable values into context by
 /// loop iterator
 pub struct Target<'a: 'b, 'b> {
     kind: TargetKind,
     vars: &'b mut Context<'a>,
-    target: &'b AssignTarget,
+    target: Option<Pointer>,
 }
 
 impl<'a, 'b> Target<'a, 'b> {
     pub fn set(&mut self, value: &Variable) {
-        match *self.target {
-            AssignTarget::Var(ref name) => {
-                unimplemented!();
-                //self.vars.set(name.clone(), value);
+        match *self.target.take().expect("can only set value once") {
+            AssignTarget::Var(name) => {
+                self.vars.set(name, value);
             }
         }
     }

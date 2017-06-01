@@ -8,11 +8,6 @@ use render_error::DataError;
 use vars::{Variable, Var, Iterator};
 
 
-struct VecIterator<'a, T: Variable + 'a> {
-    vec: &'a Vec<T>,
-    index: usize,
-}
-
 impl<'a> Variable for &'static str {
     fn typename(&self) -> &'static str {
         "String"
@@ -53,7 +48,7 @@ impl<V: Variable + 'static> Variable for HashMap<String, V> {
     }
 }
 
-impl<'a, T: Variable + 'a> Variable for Vec<T> {
+impl<'a, T: Variable + 'static> Variable for Vec<T> {
     fn typename(&self) -> &'static str {
         "Vec"
     }
@@ -61,21 +56,19 @@ impl<'a, T: Variable + 'a> Variable for Vec<T> {
         Ok(self.len() > 0)
     }
     fn iterate<'x>(&'x self, target: TargetKind)
-        -> Result<Box<Iterator<'x>>, DataError>
+        -> Result<Box<Iterator<'x> + 'x>, DataError>
     {
-        unimplemented!();
-        // Ok(Box::new(VecIterator { vec: self, index: 0 }))
+        Ok(Box::new(self.iter()))
     }
 }
 
-impl<'a, T: Variable + 'a> Iterator<'a> for VecIterator<'a, T> {
+impl<'a, T: Variable + 'a> Iterator<'a> for Iter<'a, T> {
     fn next(&mut self, target: &mut Target)
         -> bool
     {
-        match self.vec.get(self.index) {
+        match ::std::iter::Iterator::next(self) {
             Some(x) => {
                 target.set(x);
-                self.index += 1;
                 true
             },
             None => false,

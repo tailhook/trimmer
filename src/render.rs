@@ -159,10 +159,13 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                 let mut sub = root.sub();
                 write_block(r, &mut sub, &ostatements)?;
             }
-            _ => unimplemented!(),
-            /*
             Loop { ref target, ref iterator, ref filter, ref body } => {
-                let value = eval_expr(r, root, iterator);
+                let iterator = items.clone().map(|x| match x[idx].code {
+                    Loop { ref iterator, .. } => iterator,
+                    _ => unreachable!(),
+                });
+                let value = eval_expr(r, root, &iterator);
+
                 let kind = target::make_kind(target);
                 let mut iterator = match value.iterate(kind) {
                     Ok(iter) => iter,
@@ -172,6 +175,12 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                         continue 'outer;
                     }
                 };
+
+                let statements = items.clone().map(|x| match x[idx].code {
+                    Loop { ref body, .. } => &body.statements[..],
+                    _ => unreachable!(),
+                });
+
                 loop {
                     let mut sub = root.sub();
                     {
@@ -180,10 +189,9 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                             break;
                         }
                     }
-                    write_block(r, &mut sub, &body.statements)?;
+                    write_block(r, &mut sub, &statements)?;
                 }
             }
-            */
         }
     }
     Ok(())
