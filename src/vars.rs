@@ -25,8 +25,8 @@ pub trait Variable: Debug {
     ///
     /// Depending on your domain `a.x` may be equivalent of `a["x"]` or
     /// maybe not. Integer arguments `a.0` are not supported.
-    fn attr(&self,  _attr: &str)
-        -> Result<Var, DataError>
+    fn attr<'x>(&'x self,  _attr: &str)
+        -> Result<Var<'x>, DataError>
     {
         Err(DataError::AttrUnsupported(self.typename()))
     }

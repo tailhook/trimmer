@@ -4,7 +4,7 @@ use std::fmt::{self, Write};
 use owning_ref::{ErasedRcRef, OwningRef};
 
 use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
-use grammar::{ExprCode};
+use owning::{Own, ExprCode};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED, Var};
 use varmap::Varmap;
@@ -24,7 +24,7 @@ struct Renderer {
 
 impl Template {
     /// Render template to string
-    pub fn render(&self, root: &Rc<Variable>)
+    pub fn render<V: Variable + 'static>(&self, root: V)
         -> Result<String, RenderError>
     {
         let mut rnd = Renderer {
@@ -43,41 +43,45 @@ impl Template {
 fn render(r: &mut Renderer, root: &mut Varmap, t: &OwningRef<Rc<Tpl>, Tpl>)
     -> Result<(), fmt::Error>
 {
-    write_block(r, root, &t.map(|t| &t.body.statements[..]))
+    write_block(r, root,
+        &t.clone().map(|t| &t.body.statements[..]))
 }
 
 fn eval_expr(r: &mut Renderer, root: &Varmap,
-    expr_ref: &OwningRef<Rc<Tpl>, Expr>)
+    expr: &OwningRef<Rc<Tpl>, Expr>)
     -> ErasedRcRef<Variable>
 {
-    expr_ref.map(|expr| {
-        match expr.code {
-            ExprCode::Str(ref s) => s as &Variable,
-            ExprCode::Var(ref s) => {
-                match root.get(s) {
-                    Ok(x) => x,
-                    Err(e) => {
-                        r.errors.push((expr.position.0, e));
-                        UNDEFINED
-                    }
+    match expr.clone().map(|e| &e.code).own() {
+        ExprCode::Str(ref s) => {
+            s.clone().map(|x| x as &Variable).erase_owner()
+        },
+        ExprCode::Var(ref s) => {
+            unimplemented!();
+            /*
+            match root.get(s) {
+                Ok(x) => x,
+                Err(e) => {
+                    r.errors.push((expr.position.0, e));
+                    UNDEFINED
                 }
             }
-            ExprCode::Attr(ref e, ref a) => {
-                unimplemented!();
-                /*
-                match eval_expr(r, root, &expr_ref.map(|_| &**e)).attr(a) {
-                    Ok(Var::Ref(x)) => x,
-                    Ok(Var::Rc(_)) => unimplemented!(),
-                    Err(e) => {
-                        r.errors.push((expr.position.0, e));
-                        UNDEFINED as &Variable
-                    }
-                }
-                */
-            }
-            _ => unimplemented!(),
+            */
         }
-    }).erase_owner()
+        ExprCode::Attr(ref e, ref a) => {
+            unimplemented!();
+            /*
+            match eval_expr(r, root, &expr_ref.map(|_| &**e)).attr(a) {
+                Ok(Var::Ref(x)) => x,
+                Ok(Var::Rc(_)) => unimplemented!(),
+                Err(e) => {
+                    r.errors.push((expr.position.0, e));
+                    UNDEFINED as &Variable
+                }
+            }
+            */
+        }
+        _ => unimplemented!(),
+    }
 }
 
 fn write_block(r: &mut Renderer, root: &mut Varmap,
@@ -86,7 +90,9 @@ fn write_block(r: &mut Renderer, root: &mut Varmap,
 {
     use grammar::StatementCode::*;
 
-    'outer: for item in items {
+    'outer: for item in items.iter() {
+        unimplemented!();
+        /*
         match item.code {
             OutputRaw(ref x) => {
                 r.buf.push_str(x);
@@ -146,6 +152,7 @@ fn write_block(r: &mut Renderer, root: &mut Varmap,
                 }
             }
         }
+        */
     }
     Ok(())
 }
@@ -155,5 +162,6 @@ pub fn template(imp: grammar::Template) -> Template {
 }
 
 pub fn extract(tpl: Template) -> grammar::Template {
-    Rc::try_unwrap(tpl.0).expect("Can only extract uncloned template")
+    Rc::try_unwrap(tpl.0)
+        .unwrap_or_else(|_| panic!("Can only extract uncloned template"))
 }

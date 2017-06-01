@@ -22,6 +22,7 @@ mod validators;
 mod vars;
 mod varmap;
 mod target;
+mod owning;
 #[cfg(feature="serde")] mod serde;
 #[cfg(test)] mod tests;
 

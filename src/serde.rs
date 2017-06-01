@@ -16,9 +16,12 @@ impl Variable for Value {
         use serde_json::Value::*;
         match *self {
             Object(ref x) => {
+                /*
                 x.get(attr)
                 .map(|x| x as &Variable)
                 .ok_or(DataError::AttrNotFound)
+                */
+                unimplemented!();
             }
             _ => Err(DataError::AttrUnsupported(self.typename()))
         }

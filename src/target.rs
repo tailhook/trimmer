@@ -24,7 +24,8 @@ impl<'a, 'b> Target<'a, 'b> {
     pub fn set(&mut self, value: &Variable) {
         match *self.target {
             AssignTarget::Var(ref name) => {
-                self.vars.set(name.clone(), value);
+                unimplemented!();
+                //self.vars.set(name.clone(), value);
             }
         }
     }
