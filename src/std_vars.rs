@@ -69,7 +69,7 @@ impl<'a, T: Variable + 'a> Variable for Vec<T> {
 }
 
 impl<'a, T: Variable + 'a> Iterator<'a> for VecIterator<'a, T> {
-    fn next<'y, 'z>(&mut self, target: &mut Target<'a, 'y, 'z>)
+    fn next(&mut self, target: &mut Target)
         -> bool
     {
         match self.vec.get(self.index) {

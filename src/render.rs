@@ -24,7 +24,7 @@ struct Renderer {
 
 impl Template {
     /// Render template to string
-    pub fn render(&self, root: &Variable)
+    pub fn render(&self, root: &Rc<Variable>)
         -> Result<String, RenderError>
     {
         let mut rnd = Renderer {
@@ -40,14 +40,13 @@ impl Template {
     }
 }
 
-fn render<'x: 'y, 'y>(r: &mut Renderer, root: &mut Varmap<'x, 'y>,
-    t: &OwningRef<Rc<Tpl>, Tpl>)
+fn render(r: &mut Renderer, root: &mut Varmap, t: &OwningRef<Rc<Tpl>, Tpl>)
     -> Result<(), fmt::Error>
 {
     write_block(r, root, &t.map(|t| &t.body.statements[..]))
 }
 
-fn eval_expr<'x: 'y, 'y>(r: &mut Renderer, root: &Varmap<'x, 'y>,
+fn eval_expr(r: &mut Renderer, root: &Varmap,
     expr_ref: &OwningRef<Rc<Tpl>, Expr>)
     -> ErasedRcRef<Variable>
 {
@@ -81,8 +80,8 @@ fn eval_expr<'x: 'y, 'y>(r: &mut Renderer, root: &Varmap<'x, 'y>,
     }).erase_owner()
 }
 
-fn write_block<'x: 'y, 'y>(r: &mut Renderer,
-    root: &mut Varmap<'x, 'y>, items: &OwningRef<Rc<Tpl>, [Statement]>)
+fn write_block(r: &mut Renderer, root: &mut Varmap,
+    items: &OwningRef<Rc<Tpl>, [Statement]>)
     -> Result<(), fmt::Error>
 {
     use grammar::StatementCode::*;

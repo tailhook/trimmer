@@ -99,7 +99,7 @@ pub trait Variable: Debug {
 pub trait Iterator<'a> {
     /// Set apropriate variables and return `false` if previous iteration was
     /// the last one
-    fn next<'y, 'z>(&mut self, target: &mut Target<'a, 'y, 'z>)
+    fn next(&mut self, target: &mut Target)
         -> bool
     {
         return false;

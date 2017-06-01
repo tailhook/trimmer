@@ -14,14 +14,14 @@ pub enum InternalKind {
 
 /// This is an opaque type used to assign variable values into context by
 /// loop iterator
-pub struct Target<'a: 'b+'c, 'b: 'c, 'c> {
+pub struct Target<'a: 'b, 'b> {
     kind: TargetKind,
-    vars: &'c mut Varmap<'a, 'b>,
+    vars: &'b mut Varmap<'a>,
     target: &'b AssignTarget,
 }
 
-impl<'a: 'b+'c, 'b: 'c, 'c> Target<'a, 'b, 'c> {
-    pub fn set(&mut self, value: &'a Variable) {
+impl<'a, 'b> Target<'a, 'b> {
+    pub fn set(&mut self, value: &Variable) {
         match *self.target {
             AssignTarget::Var(ref name) => {
                 self.vars.set(name.clone(), value);
@@ -46,9 +46,9 @@ pub fn make_kind(target: &AssignTarget) -> TargetKind {
     }
 }
 
-pub fn make_target<'x: 'y, 'y, 'z>(target: &'y AssignTarget,
-    vars: &'z mut Varmap<'x, 'y>)
-    -> Target<'x, 'y, 'z>
+pub fn make_target<'x, 'y>(target: &'y AssignTarget,
+    vars: &'y mut Varmap<'x>)
+    -> Target<'x, 'y>
 {
     Target {
         kind: make_kind(target),

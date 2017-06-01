@@ -1,44 +1,52 @@
+use std::rc::Rc;
 use std::collections::HashMap;
 
 use {Variable};
 use render_error::DataError;
+use owning_ref::ErasedRcRef;
 
-
-#[derive(Debug)]
-pub struct Varmap { // TODO(tailhook) enum?
-    root: Rc<Variable>,
-    parent: Option<&'b Varmap<'a, 'b>>,
-    local: HashMap<String, &'a Variable>,
+enum Parent<'a> {
+    Root(Rc<Variable>),
+    Map(&'a Varmap<'a>),
 }
 
-impl<'a, 'b> Varmap<'a, 'b> {
-    pub fn new(root: &'a Variable) -> Varmap<'a, 'b> {
+#[derive(Debug)]
+pub struct Varmap<'a> {
+    parent: Parent<'a>,
+    local: HashMap<ErasedRcRef<str>, ErasedRcRef<Variable>>,
+}
+
+impl<'a> Varmap<'a> {
+    pub fn new(root: &Rc<Variable>) -> Varmap<'static> {
         Varmap {
-            root,
-            parent: None,
+            parent: Parent::Root(root.clone()),
             local: HashMap::new(),
         }
     }
-    pub fn sub(&'b self) -> Varmap<'a, 'b> {
+    pub fn sub(&self) -> Varmap {
         Varmap {
-            root: self.root,
-            parent: self.parent,
+            parent: Parent::Map(self),
             local: HashMap::new()
         }
     }
     pub fn get(&self, name: &str)
-        -> Result<&'a Variable, DataError>
+        -> Result<ErasedRcRef<Variable>, DataError>
     {
         if let Some(value) = self.local.get(name) {
             return Ok(*value);
         }
-        if let Some(ref parent) = self.parent {
-            parent.get(name)
-        } else {
-            self.root.attr(name)
+        match self.parent {
+            Parent::Root(ref var) => {
+                var.attr(name)
+            },
+            Parent::Map(ref map) => {
+                map.get(name)
+            },
         }
     }
-    pub fn set(&mut self, name: String, value: &'a Variable) {
+    pub fn set(&mut self, name: ErasedRcRef<str>,
+                          value: ErasedRcRef<Variable>)
+    {
         self.local.insert(name, value);
     }
 }
