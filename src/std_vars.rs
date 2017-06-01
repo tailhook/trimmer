@@ -13,8 +13,7 @@ struct VecIterator<'a, T: Variable + 'a> {
     index: usize,
 }
 
-/*
-impl<'a> Variable for str {
+impl<'a> Variable for &'static str {
     fn typename(&self) -> &'static str {
         "String"
     }
@@ -25,7 +24,6 @@ impl<'a> Variable for str {
         Ok(self.len() > 0)
     }
 }
-*/
 
 impl<'a> Variable for String {
     fn typename(&self) -> &'static str {

@@ -7,7 +7,7 @@ use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
 use owning::{Own, ExprCode};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED, Var};
-use varmap::Varmap;
+use varmap::Context;
 use target;
 use {Pos, Variable};
 
@@ -25,7 +25,7 @@ struct Renderer {
 
 impl Template {
     /// Render template to string
-    pub fn render(&self, root: Varmap)
+    pub fn render(&self, root: &Context)
         -> Result<String, RenderError>
     {
         let mut rnd = Renderer {
@@ -41,14 +41,14 @@ impl Template {
     }
 }
 
-fn render(r: &mut Renderer, root: &mut Varmap, t: &OwningRef<Rc<Tpl>, Tpl>)
+fn render(r: &mut Renderer, root: &mut Context, t: &OwningRef<Rc<Tpl>, Tpl>)
     -> Result<(), fmt::Error>
 {
     write_block(r, root,
         &t.clone().map(|t| &t.body.statements[..]))
 }
 
-fn eval_expr(r: &mut Renderer, root: &Varmap,
+fn eval_expr(r: &mut Renderer, root: &Context,
     expr: &OwningRef<Rc<Tpl>, Expr>)
     -> ErasedRcRef<Variable>
 {
@@ -85,7 +85,7 @@ fn eval_expr(r: &mut Renderer, root: &Varmap,
     }
 }
 
-fn write_block(r: &mut Renderer, root: &mut Varmap,
+fn write_block(r: &mut Renderer, root: &mut Context,
     items: &OwningRef<Rc<Tpl>, [Statement]>)
     -> Result<(), fmt::Error>
 {

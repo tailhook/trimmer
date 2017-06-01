@@ -1,7 +1,5 @@
-use std::collections::HashMap;
 
-
-use {Template, Parser};
+use {Template, Parser, Context};
 
 
 fn parse(template: &str) -> Template {
@@ -12,72 +10,66 @@ fn parse(template: &str) -> Template {
 fn render_json(template: &str, value: &str) -> String {
     use serde_json::{self, Value};
     let tpl = Parser::new().parse(template).unwrap();
-    let vars: Value = serde_json::from_str(value).unwrap();
+    let mut vars: Context = Context::new();
+    for (k, v) in serde_json::from_str::<serde_json::Value>(value).unwrap().as_object().unwrap() {
+        vars.set(k.clone(), v.clone());
+    }
     tpl.render(&vars).unwrap()
 }
 
 #[test]
 fn hello() {
     let t = parse("hello");
-    assert_eq!(&t.render(&HashMap::<_, String>::new()).unwrap(),
+    assert_eq!(&t.render(&Context::new()).unwrap(),
                "hello");
-}
-
-#[test]
-fn var_borrow() {
-    let t = parse("a{{ x }}b");
-    let x = String::from("+");
-    let mut c = HashMap::new();
-    c.insert("x", &x);
-    assert_eq!(&t.render(&c).unwrap(), "a+b");
 }
 
 #[test]
 fn var_owned() {
     let t = parse("a{{ y }}b");
-    let mut c = HashMap::new();
-    c.insert("y", String::from("-"));
+    let mut c = Context::new();
+    c.set("y".into(), String::from("-"));
     assert_eq!(&t.render(&c).unwrap(), "a-b");
 }
 
 #[test]
 fn var_str() {
     let t = parse("a{{ z }}b");
-    let mut c = HashMap::new();
-    c.insert("z", "*");
+    let mut c = Context::new();
+    c.set("z".into(), "*");
     assert_eq!(&t.render(&c).unwrap(), "a*b");
 }
 
 #[test]
 fn aliasing_vars() {
     let t = parse("## let x = y\na{{ x }}b");
-    let mut c = HashMap::new();
-    c.insert("y", "+");
+    let mut c = Context::new();
+    c.set("y".into(), "+");
     assert_eq!(&t.render(&c).unwrap(), "a+b");
 }
 
 #[test]
 fn const_str() {
     let t = parse(r#"a{{ " and " }}b"#);
-    let c = HashMap::<_, String>::new();
+    let c = Context::new();
     assert_eq!(&t.render(&c).unwrap(), "a and b");
 }
 
 #[test]
 fn cond() {
     let t = parse("## if x\n  y\n## endif\n");
-    let mut c = HashMap::new();
-    c.insert("x", "");
+    let mut c = Context::new();
+    c.set("x".into(), "");
     assert_eq!(&t.render(&c).unwrap(), "");
-    c.insert("x", "x");
+    c.set("x".into(), "x");
     assert_eq!(&t.render(&c).unwrap(), "  y\n");
 }
 
 #[test]
 fn iteration() {
     let t = parse("## for x in items\n  - {{ x }}\n## endfor\n");
-    let mut c = HashMap::new();
-    c.insert("items", vec!["a", "b"]);
+    let mut c = Context::new();
+    c.set("items".into(), vec!["a", "b"]);
     // TODO(tailhook) fix indentation
     assert_eq!(&t.render(&c).unwrap(), "  - a\n  - b\n");
 }

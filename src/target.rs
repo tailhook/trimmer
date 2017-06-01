@@ -1,7 +1,7 @@
 use std::fmt;
 
 use grammar::AssignTarget;
-use varmap::Varmap;
+use varmap::Context;
 use vars::Variable;
 
 #[derive(Debug, Clone, Copy)]
@@ -16,7 +16,7 @@ pub enum InternalKind {
 /// loop iterator
 pub struct Target<'a: 'b, 'b> {
     kind: TargetKind,
-    vars: &'b mut Varmap<'a>,
+    vars: &'b mut Context<'a>,
     target: &'b AssignTarget,
 }
 
@@ -48,7 +48,7 @@ pub fn make_kind(target: &AssignTarget) -> TargetKind {
 }
 
 pub fn make_target<'x, 'y>(target: &'y AssignTarget,
-    vars: &'y mut Varmap<'x>)
+    vars: &'y mut Context<'x>)
     -> Target<'x, 'y>
 {
     Target {
