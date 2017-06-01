@@ -6,7 +6,7 @@ use render_error::DataError;
 use owning_ref::ErasedRcRef;
 
 pub enum Var<'a> {
-    Ref(&'a Variable),
+    Ref(&'a (Variable + 'static)),
     Rc(ErasedRcRef<Variable>),
 }
 

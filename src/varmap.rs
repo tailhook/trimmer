@@ -7,27 +7,21 @@ use vars::{Variable, Var};
 use render_error::DataError;
 
 #[derive(Debug)]
-enum Parent<'a> {
-    Root(Rc<Box<Variable + 'static>>),
-    Map(&'a Varmap<'a>),
-}
-
-#[derive(Debug)]
 pub struct Varmap<'a> {
-    parent: Parent<'a>,
+    parent: Option<&'a Varmap<'a>>,
     local: HashMap<ErasedRcRef<str>, ErasedRcRef<Variable>>,
 }
 
 impl<'a> Varmap<'a> {
-    pub fn new<V: Variable + 'static>(root: V) -> Varmap<'static> {
+    pub fn new() -> Varmap<'static> {
         Varmap {
-            parent: Parent::Root(Rc::new(Box::new(root) as Box<Variable>)),
+            parent: None,
             local: HashMap::new(),
         }
     }
     pub fn sub(&self) -> Varmap {
         Varmap {
-            parent: Parent::Map(self),
+            parent: Some(self),
             local: HashMap::new()
         }
     }
@@ -38,29 +32,8 @@ impl<'a> Varmap<'a> {
             return Ok(value.clone());
         }
         match self.parent {
-            Parent::Root(ref var) => {
-                OwningRef::new(var.clone())
-                    .map(|v| &**v)
-                    .erase_owner();
-                    /*
-                    .try_map(|v: &(Variable + 'static)| {
-                        match v.attr(name) {
-                            Ok(Var::Ref(ref x)) => Ok(*x),
-                            Ok(Var::Rc(x)) => Err(Ok(x)),
-                            Err(e) => Err(Err(e)),
-                        }
-                    }
-                );*/
-                unimplemented!();
-                /* {
-                    Ok(x) => Ok(x.erase_owner()),
-                    Err(Ok(x)) => Ok(x),
-                    Err(Err(e)) => Err(e),
-                }*/
-            },
-            Parent::Map(ref map) => {
-                map.get(name)
-            },
+            Some(ref parent) => parent.get(name),
+            None => Err(DataError::VariableNotFound(name.to_string())),
         }
     }
     pub fn set(&mut self, name: ErasedRcRef<str>,

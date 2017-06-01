@@ -19,20 +19,21 @@ pub struct Template(Rc<Tpl>);
 struct Renderer {
     buf: String,
     errors: Vec<(Pos, DataError)>,
+    nothing: Rc<()>,
 }
 
 
 impl Template {
     /// Render template to string
-    pub fn render<V: Variable + 'static>(&self, root: V)
+    pub fn render(&self, root: Varmap)
         -> Result<String, RenderError>
     {
         let mut rnd = Renderer {
             buf: String::new(),
             errors: Vec::new(),
+            nothing: Rc::new(()),
         };
-        let mut root = Varmap::new(root);
-        render(&mut rnd, &mut root, &OwningRef::new(self.0.clone()))?;
+        render(&mut rnd, &mut root.sub(), &OwningRef::new(self.0.clone()))?;
         if rnd.errors.len() != 0 {
             return Err(RenderError::Data(rnd.errors));
         }
@@ -56,29 +57,29 @@ fn eval_expr(r: &mut Renderer, root: &Varmap,
             s.clone().map(|x| x as &Variable).erase_owner()
         },
         ExprCode::Var(ref s) => {
-            unimplemented!();
-            /*
             match root.get(s) {
                 Ok(x) => x,
                 Err(e) => {
                     r.errors.push((expr.position.0, e));
-                    UNDEFINED
+                    OwningRef::new(r.nothing.clone())
+                        .map(|_| UNDEFINED as &Variable)
+                        .erase_owner()
                 }
             }
-            */
         }
         ExprCode::Attr(ref e, ref a) => {
-            unimplemented!();
-            /*
-            match eval_expr(r, root, &expr_ref.map(|_| &**e)).attr(a) {
-                Ok(Var::Ref(x)) => x,
-                Ok(Var::Rc(_)) => unimplemented!(),
+            let value = eval_expr(r, root, e);
+            match value.try_map(|v| match v.attr(a) {
+                Ok(Var::Ref(x)) => Ok(x),
+                Ok(Var::Rc(v)) => Err(v),
                 Err(e) => {
                     r.errors.push((expr.position.0, e));
-                    UNDEFINED as &Variable
+                    Ok(UNDEFINED as &Variable)
                 }
+            }) {
+                Ok(x) => x,
+                Err(v) => v,
             }
-            */
         }
         _ => unimplemented!(),
     }

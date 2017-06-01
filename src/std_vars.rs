@@ -39,7 +39,7 @@ impl<'a> Variable for String {
     }
 }
 
-impl<V: Variable> Variable for HashMap<String, V> {
+impl<V: Variable + 'static> Variable for HashMap<String, V> {
     fn attr(&self, attr: &str)
         -> Result<Var, DataError>
     {

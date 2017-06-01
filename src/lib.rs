@@ -36,4 +36,5 @@ pub use render::Template;
 pub use validators::Validator;
 pub use vars::{Variable, Iterator};
 pub use target::{Target, TargetKind};
+pub use varmap::Varmap;
 
