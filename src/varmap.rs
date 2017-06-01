@@ -5,8 +5,8 @@ use render_error::DataError;
 
 
 #[derive(Debug)]
-pub struct Varmap<'a: 'b, 'b> { // TODO(tailhook) enum?
-    root: &'a Variable,
+pub struct Varmap { // TODO(tailhook) enum?
+    root: Rc<Variable>,
     parent: Option<&'b Varmap<'a, 'b>>,
     local: HashMap<String, &'a Variable>,
 }
