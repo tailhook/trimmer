@@ -122,15 +122,25 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                     }
                 }
             }
-            _ => unimplemented!(),
-            /*
-            Cond { ref conditional, ref otherwise } => {
-                for &(ref cond, ref branch_body) in conditional {
-                    let condval = &eval_expr(r, root, cond);
+            Cond { conditional: ref clist, ref otherwise } => {
+                for (cidx, &(ref cond, ref bbody)) in clist.iter().enumerate()
+                {
+                    let cond = items.clone().map(|x| match x[idx].code {
+                        Cond { ref conditional, .. } => &conditional[cidx].0,
+                        _ => unreachable!(),
+                    });
+                    let condval = eval_expr(r, root, &cond);
+
                     match condval.as_bool() {
                         Ok(x) if x => {
+                            let bstatements = items.clone()
+                                .map(|x| match x[idx].code {
+                                    Cond { ref conditional, .. }
+                                    => &conditional[cidx].1.statements[..],
+                                    _ => unreachable!(),
+                                });
                             let mut sub = root.sub();
-                            write_block(r, &mut sub, &branch_body.statements)?;
+                            write_block(r, &mut sub, &bstatements)?;
                             continue 'outer;
                         }
                         Ok(_) => {}
@@ -140,9 +150,17 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                         }
                     }
                 }
+                let ostatements = items.clone()
+                    .map(|x| match x[idx].code {
+                        Cond { ref otherwise, .. }
+                        => &otherwise.statements[..],
+                        _ => unreachable!(),
+                    });
                 let mut sub = root.sub();
-                write_block(r, &mut sub, &otherwise.statements)?;
+                write_block(r, &mut sub, &ostatements)?;
             }
+            _ => unimplemented!(),
+            /*
             Loop { ref target, ref iterator, ref filter, ref body } => {
                 let value = eval_expr(r, root, iterator);
                 let kind = target::make_kind(target);
