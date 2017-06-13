@@ -1,14 +1,13 @@
 use std::rc::Rc;
 use std::fmt::{self, Write};
 
-use owning_ref::{ErasedRcRef, OwningRef};
+use owning_ref::{ErasedRcRef, OwningRef, OwningRefMut, OwningHandle};
 
 use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
 use owning::{Own, ExprCode};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED, Var};
 use varmap::{Context, set};
-use target;
 use {Pos, Variable};
 
 
@@ -166,8 +165,9 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                 });
                 let value = eval_expr(r, root, &iterator);
 
-                let kind = target::make_kind(target);
-                let mut iterator = match value.iterate(kind) {
+                let mut handle = OwningHandle::new(Rc::new(::std::cell::RefCell::new(value)));
+                /*
+                {
                     Ok(iter) => iter,
                     Err(e) => {
                         r.errors.push((iterator.position.0, e));
@@ -175,19 +175,39 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                         continue 'outer;
                     }
                 };
+                */
 
                 let statements = items.clone().map(|x| match x[idx].code {
                     Loop { ref body, .. } => &body.statements[..],
                     _ => unreachable!(),
                 });
 
+                let target = items.clone().map(|x| match x[idx].code {
+                    Loop { target: AssignTarget::Var(ref var), .. } => &var[..],
+                    _ => unreachable!(),
+                }).erase_owner();
+                let handle = OwningRefMut::new(Rc::new(handle));
+
                 loop {
                     let mut sub = root.sub();
                     {
-                        let mut target = target::make_target(target, &mut sub);
-                        if !iterator.next(&mut target) {
-                            break;
-                        }
+                        let res = handle.clone().try_map(|x| match x.next() {
+                                Some(Var::Ref(r)) => Ok(r),
+                                Some(Var::Rc(r)) => Err(Err(r)),
+                                None => Err(Ok(())),
+                            });
+                        let val = match res {
+                            Ok(x) => x.erase_owner(),
+                            Err(v) => unimplemented!(),
+                            Err(Ok(())) => break,
+                        };
+                            /*
+                        {
+                            Some(Var::Ref(r)) => OwningRef(r,
+                            Some(Var::Rc(r)) => r,
+                            None => break,
+                        };*/
+                        set(&mut sub, target.clone(), val);
                     }
                     write_block(r, &mut sub, &statements)?;
                 }

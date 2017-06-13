@@ -1,7 +1,6 @@
 use std::rc::Rc;
 use std::fmt::{Display, Debug};
 
-use target::{Target, TargetKind};
 use render_error::DataError;
 use owning_ref::ErasedRcRef;
 
@@ -82,27 +81,10 @@ pub trait Variable: Debug {
     }
 
     /// Return iterator over the value if appropriate
-    ///
-    /// Iterator should be smart enough to find out whether iterator over
-    /// key-value pairs or keys is expected. You can also optimize tuple
-    /// unpacking in the iterator itself
-    fn iterate<'x>(&'x self, target: TargetKind)
-        -> Result<Box<Iterator<'x> + 'x>, DataError>
+    fn iterate<'x>(&'x self)
+        -> Result<Box<Iterator<Item=Var<'x>> + 'x>, DataError>
     {
-        Err(DataError::IterationUnsupported(self.typename(), target))
-    }
-}
-/// A trait that represents iterator over variable
-///
-/// Note: currently it contains only `next` item but in future we will add
-/// more methods that allow `loop.*` variables to work.
-pub trait Iterator<'a> {
-    /// Set apropriate variables and return `false` if previous iteration was
-    /// the last one
-    fn next(&mut self, target: &mut Target)
-        -> bool
-    {
-        return false;
+        Err(DataError::IterationUnsupported(self.typename()))
     }
 }
 

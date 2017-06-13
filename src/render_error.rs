@@ -1,7 +1,7 @@
 use std::fmt;
 use std::io;
 
-use {Pos, TargetKind};
+use Pos;
 
 
 quick_error! {
@@ -47,10 +47,9 @@ quick_error! {
             display("can't treat object of type {} as bool", typename)
         }
         /// The object can't be boolean
-        IterationUnsupported(typename: &'static str, kind: TargetKind) {
+        IterationUnsupported(typename: &'static str) {
             description("can't iterate over the object")
-            display("can't iterate over the object of type {}, \
-                (kind {})", typename, kind)
+            display("can't iterate over the object of type {}", typename)
         }
         /// Variable or attribute not found
         VariableNotFound(name: String) {
