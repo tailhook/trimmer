@@ -22,7 +22,6 @@ struct Renderer {
     nothing: Rc<()>,
 }
 
-
 impl Template {
     /// Render template to string
     pub fn render(&self, root: &Context)
@@ -223,4 +222,12 @@ pub fn template(imp: grammar::Template) -> Template {
 pub fn extract(tpl: Template) -> grammar::Template {
     Rc::try_unwrap(tpl.0)
         .unwrap_or_else(|_| panic!("Can only extract uncloned template"))
+}
+
+impl fmt::Debug for Template {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // TODO(tailhook) show some info about template
+        f.debug_struct("Template")
+         .finish()
+    }
 }
