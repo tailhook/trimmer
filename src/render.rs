@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::mem::transmute;
 use std::fmt::{self, Write};
 
 use owning_ref::{ErasedRcRef, OwningRef, OwningRefMut, OwningHandle};
@@ -164,10 +165,7 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                     _ => unreachable!(),
                 });
                 let value = eval_expr(r, root, &iterator);
-
-                let mut handle = OwningHandle::new(Rc::new(::std::cell::RefCell::new(value)));
-                /*
-                {
+                let mut iter = match value.iterate() {
                     Ok(iter) => iter,
                     Err(e) => {
                         r.errors.push((iterator.position.0, e));
@@ -175,7 +173,6 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                         continue 'outer;
                     }
                 };
-                */
 
                 let statements = items.clone().map(|x| match x[idx].code {
                     Loop { ref body, .. } => &body.statements[..],
@@ -186,27 +183,29 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                     Loop { target: AssignTarget::Var(ref var), .. } => &var[..],
                     _ => unreachable!(),
                 }).erase_owner();
-                let handle = OwningRefMut::new(Rc::new(handle));
 
                 loop {
                     let mut sub = root.sub();
                     {
-                        let res = handle.clone().try_map(|x| match x.next() {
-                                Some(Var::Ref(r)) => Ok(r),
+                        let res: Result<ErasedRcRef<Variable>, _> =
+                            value.clone()
+                            .try_map(|x| match iter.next() {
+                                Some(Var::Ref(r)) => {
+                                    // This transmute should be safe,
+                                    // because we only transmute lifetime
+                                    // and x and r have basically same lifetime
+                                    // because are both tied to the lifetime
+                                    // of `value` even if rust doesn't think so
+                                    Ok(unsafe { transmute(r) })
+                                }
                                 Some(Var::Rc(r)) => Err(Err(r)),
                                 None => Err(Ok(())),
                             });
                         let val = match res {
-                            Ok(x) => x.erase_owner(),
-                            Err(v) => unimplemented!(),
+                            Ok(x) => x,
+                            Err(Err(v)) => v,
                             Err(Ok(())) => break,
                         };
-                            /*
-                        {
-                            Some(Var::Ref(r)) => OwningRef(r,
-                            Some(Var::Rc(r)) => r,
-                            None => break,
-                        };*/
                         set(&mut sub, target.clone(), val);
                     }
                     write_block(r, &mut sub, &statements)?;

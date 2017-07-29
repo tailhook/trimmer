@@ -55,18 +55,8 @@ impl<'a, T: Variable + 'static> Variable for Vec<T> {
         Ok(self.len() > 0)
     }
     fn iterate<'x>(&'x self)
-        -> Result<Box<Iterator<Item=Var<'x>> + 'x>, DataError>
+        -> Result<Box<Iterator<Item=Var<'x>>+'x>, DataError>
     {
-
-        struct VecIter<'a, T: 'a>(Iter<'a, T>);
-
-        impl<'a, T: Variable + 'static> Iterator for VecIter<'a, T> {
-            type Item = Var<'a>;
-            fn next(&mut self) -> Option<Var<'a>> {
-                self.0.next().map(|x| Var::Ref(x as &Variable))
-            }
-        }
-
-        Ok(Box::new(VecIter(self.iter())))
+        Ok(Box::new(self.iter().map(|x| Var::Ref(x as &Variable))))
     }
 }

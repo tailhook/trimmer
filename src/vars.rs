@@ -82,7 +82,7 @@ pub trait Variable: Debug {
 
     /// Return iterator over the value if appropriate
     fn iterate<'x>(&'x self)
-        -> Result<Box<Iterator<Item=Var<'x>> + 'x>, DataError>
+        -> Result<Box<Iterator<Item=Var<'x>>+'x>, DataError>
     {
         Err(DataError::IterationUnsupported(self.typename()))
     }
