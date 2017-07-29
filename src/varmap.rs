@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use owning_ref::{ErasedRcRef, OwningRef};
 
-use vars::{Variable, Var};
+use vars::{Variable};
 use render_error::DataError;
 
 /// A set of variables passed to a template

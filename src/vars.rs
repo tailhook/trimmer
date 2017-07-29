@@ -4,6 +4,11 @@ use std::fmt::{Display, Debug};
 use render_error::DataError;
 use owning_ref::{ErasedRcRef, OwningRef};
 
+/// Variable reference returned from methods of Variable trait
+///
+/// It can contain borrowed reference from curret variable or
+/// owned (reference counted) box to another object
+// TODO(tailhook) maybe completely hide thing
 pub enum Var<'a> {
     #[doc(hidden)]
     Ref(&'a (Variable + 'static)),
@@ -113,22 +118,30 @@ impl Variable for Undefined {
 }
 
 impl<'a> Var<'a> {
+    /// Embed and owned reference to a value
     pub fn owned<T: Variable + 'static>(x: T) -> Var<'static> {
         Var::Rc(OwningRef::new(Rc::new(x))
                 .map(|x| x as &Variable).erase_owner())
     }
+    /// Embed a static string as a variable
+    ///
+    /// Currently this uses reference counted object that contains pointer,
+    /// but we want to figure out better way to reference static strings
     pub fn str(x: &'static str) -> Var<'static> {
         // This is a limitation of a rust type system
         Var::Rc(OwningRef::new(Rc::new(x))
                 .map(|x| x as &Variable)
                 .erase_owner())
     }
+    /// Create a borrowed reference to the variable
     pub fn borrow<'x, T: Variable + 'static>(x: &'x T) -> Var<'x> {
         Var::Ref(x)
     }
+    /// Create an undefined variable reference
     pub fn undefined() -> Var<'static> {
         Var::Ref(UNDEFINED)
     }
+    /// Create a variable that contains an empty string
     pub fn empty() -> Var<'static> {
         Var::Ref(EMPTY)
     }

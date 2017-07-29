@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use combine::{Parser, ConsumedResult, satisfy, skip_many};
-use combine::combinator::{SkipMany, Or};
+use combine::combinator::{SkipMany};
 use combine::primitives::{ParseError, Error, Info};
 
 use tokenizer::{TokenStream, Kind, Token};

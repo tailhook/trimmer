@@ -1,18 +1,16 @@
-use std::collections::HashMap;
-
 use combine::{Parser as CombineParser, ParseResult};
 use combine::combinator::{position, parser, many};
 
 use oneline;
 use parse_error::ParseError;
 use preparser::{Preparser, Options, Syntax};
-use regex::Regex;
 use render::{self, template};
 use tokenizer::{Tokenizer, TokenStream, Token, Kind};
 use {Pos};
 
 
 #[derive(Debug, PartialEq)]
+#[allow(dead_code)] // TODO(tailhook)
 pub enum ExprCode {
     // Constants
     Str(String),
@@ -324,7 +322,7 @@ pub fn optimize_statements(src: Vec<Statement>) -> Vec<Statement> {
                     code: OutputRaw(ref next),
                 },
                 Some(&mut Statement {
-                    position: (s, ref mut old_end),
+                    position: (_, ref mut old_end),
                     code: OutputRaw(ref mut prev),
                 })
             ) => {

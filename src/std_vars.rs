@@ -1,20 +1,13 @@
 use std::fmt::Display;
 use std::collections::HashMap;
-use std::slice::Iter;
 
 use render_error::DataError;
 use vars::{Variable, Var};
 
 
-impl<'a> Variable for &'a Variable {
-    fn typename(&self) -> &'static str {
-        (*self).typename()
-    }
-}
-
 impl Variable for &'static str {
     fn typename(&self) -> &'static str {
-        (*self).typename()
+        "str"
     }
     fn output(&self) -> Result<&Display, DataError> {
         Ok(self)

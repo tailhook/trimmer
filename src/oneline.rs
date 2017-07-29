@@ -1,17 +1,8 @@
 use grammar::{Body, Statement};
 use preparser::Options;
-use regex::Regex;
 
 
 pub struct Postprocess {
-}
-
-fn empty(x: &Statement) -> bool {
-    use grammar::StatementCode::OutputRaw;
-    match x.code {
-        OutputRaw(ref data) if data == "" => false,
-        _ => true
-    }
 }
 
 impl Postprocess {
@@ -22,7 +13,7 @@ impl Postprocess {
     fn visit_body(&self, body: Body, top: bool) -> Body {
         use grammar::StatementCode::*;
 
-        let mut statements = body.statements;
+        let statements = body.statements;
         let last = statements.len().saturating_sub(1);
         let s = statements.into_iter().enumerate().filter_map(|(i, s)| {
             let code = match s.code {
@@ -71,7 +62,7 @@ impl Postprocess {
         }
     }
 
-    pub fn process(&self, opt: &Options, body: Body) -> Body {
+    pub fn process(&self, _opt: &Options, body: Body) -> Body {
         self.visit_body(body, true)
     }
 

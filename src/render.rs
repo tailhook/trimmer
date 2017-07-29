@@ -3,7 +3,7 @@ use std::mem::transmute;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use owning_ref::{ErasedRcRef, OwningRef, OwningRefMut, OwningHandle};
+use owning_ref::{ErasedRcRef, OwningRef};
 
 use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
 use owning::{Own, ExprCode};
@@ -124,8 +124,8 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                     }
                 }
             }
-            Cond { conditional: ref clist, ref otherwise } => {
-                for (cidx, &(ref cond, ref bbody)) in clist.iter().enumerate()
+            Cond { conditional: ref clist, .. } => {
+                for (cidx, _) in clist.iter().enumerate()
                 {
                     let cond = items.clone().map(|x| match x[idx].code {
                         Cond { ref conditional, .. } => &conditional[cidx].0,
@@ -161,7 +161,7 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                 let mut sub = root.sub();
                 write_block(r, &mut sub, &ostatements)?;
             }
-            Loop { ref target, ref iterator, ref filter, ref body } => {
+            Loop { .. } => {
                 let iterator = items.clone().map(|x| match x[idx].code {
                     Loop { ref iterator, .. } => iterator,
                     _ => unreachable!(),
@@ -191,7 +191,7 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                     {
                         let res: Result<ErasedRcRef<Variable>, _> =
                             value.clone()
-                            .try_map(|x| match iter.next() {
+                            .try_map(|_value| match iter.next() {
                                 Some(Var::Ref(r)) => {
                                     // This transmute should be safe,
                                     // because we only transmute lifetime
@@ -222,6 +222,7 @@ pub fn template(imp: grammar::Template) -> Template {
     Template(Arc::new(imp))
 }
 
+#[cfg(test)]
 pub fn extract(tpl: Template) -> grammar::Template {
     Arc::try_unwrap(tpl.0)
         .unwrap_or_else(|_| panic!("Can only extract uncloned template"))

@@ -8,7 +8,7 @@ fn parse(template: &str) -> Template {
 
 #[cfg(feature="serde")]
 fn render_json(template: &str, value: &str) -> String {
-    use serde_json::{self, Value};
+    use serde_json;
     let tpl = Parser::new().parse(template).unwrap();
     let mut vars: Context = Context::new();
     for (k, v) in serde_json::from_str::<serde_json::Value>(value).unwrap().as_object().unwrap() {

@@ -1,18 +1,12 @@
 use tests::assert_eq;
 
 use render::extract;
-use grammar::ExprCode::*;
 use grammar::StatementCode::*;
-use grammar::{Parser, Statement, Expr};
+use grammar::{Parser, Statement};
 use {Pos};
 
 fn parse(data: &'static str) -> Vec<Statement> {
     extract(Parser::new().parse(data).unwrap()).body.statements
-}
-
-fn line(line_no: usize, start: usize, end: usize) ->  (Pos, Pos) {
-    (Pos { line: line_no, column: start },
-     Pos { line: line_no, column: end })
 }
 
 fn lines(line_st: usize, start: usize, line_end: usize, end: usize)

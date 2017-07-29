@@ -13,6 +13,7 @@ pub trait Own {
 
 type Owned<T> = OwningRef<Rc<Arc<Tpl>>, T>;
 
+#[allow(dead_code)] // TODO(tailhook)
 pub enum ExprCode {
     Str(Owned<String>),
     Int(i64),
