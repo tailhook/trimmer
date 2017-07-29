@@ -1,5 +1,5 @@
 use grammar::{Body, Statement};
-use preparser::Options;
+use {Options};
 
 
 pub struct Postprocess {

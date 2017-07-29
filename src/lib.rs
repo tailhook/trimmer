@@ -11,6 +11,9 @@ extern crate regex;
 
 mod grammar;
 mod helpers;
+mod oneline;
+mod options;
+mod owning;
 mod parse_error;
 mod position;
 mod preparser;
@@ -19,13 +22,10 @@ mod render_error;
 mod std_vars;
 mod tokenizer;
 mod validators;
-mod vars;
 mod varmap;
-mod owning;
-mod oneline;
+mod vars;
 #[cfg(feature="serde")] mod serde;
 #[cfg(test)] mod tests;
-
 
 pub use grammar::Parser;
 pub use parse_error::ParseError;
@@ -35,3 +35,24 @@ pub use render::Template;
 pub use vars::{Variable, Var};
 pub use varmap::Context;
 
+use std::collections::HashMap;
+
+#[derive(Debug, Clone)]
+/// Options of the template
+///
+/// Usually all options are set in the template itself using
+/// `## syntax ...` and `## validator...` directives, but this object
+/// can be prefilled with better default that suit your application. For
+/// example, if you use template for a log message it's good idea to use
+/// `## syntax: oneline` but it's tedious to write it every time.
+pub struct Options {
+    syntax: preparser::Syntax,
+    new_line_at_eof: Option<bool>,
+    // parenthesis
+    curly: bool,
+    square: bool,
+    round: bool,
+
+    default_validator: validators::Validator,
+    validators: HashMap<String, validators::Validator>,
+}

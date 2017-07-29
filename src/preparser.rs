@@ -1,9 +1,7 @@
-use std::collections::HashMap;
-
 use regex::{Regex, RegexSet};
 
 use parse_error::{ParseError, ParseErrorEnum};
-use validators::Validator;
+use {Options};
 
 
 pub struct Preparser {
@@ -16,19 +14,6 @@ pub enum Syntax {
     Plain,
     Indent,
     Oneline,
-}
-
-#[derive(Debug)]
-pub struct Options {
-    pub syntax: Syntax,
-    pub new_line_at_eof: Option<bool>,
-    // parenthesis
-    pub curly: bool,
-    pub square: bool,
-    pub round: bool,
-
-    pub default_validator: Validator,
-    pub validators: HashMap<String, Validator>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -57,9 +42,11 @@ impl Preparser {
         }
     }
 
-    pub fn scan(&self, data: &str) -> Result<Options, ParseError> {
+    pub fn scan(&self, data: &str, defaults: Options)
+        -> Result<Options, ParseError>
+    {
+        let mut options = defaults;
         let mut has_syntax = false;
-        let mut options = Options::default();
         let mut cur = data;
         loop {
             match self.set.matches(cur).into_iter().next() {
@@ -100,29 +87,17 @@ impl Preparser {
     }
 }
 
-impl Default for Options {
-    fn default() -> Options {
-        Options {
-            syntax: Syntax::Plain,
-            new_line_at_eof: None,
-            curly: false,
-            square: false,
-            round: false,
-            default_validator: Validator::Anything,
-            validators: HashMap::new(),
-        }
-    }
-}
-
 
 #[cfg(test)]
 mod test {
     use validators::Validator;
     use super::{Preparser, Syntax};
+    use {Options};
 
     #[test]
     fn indent() {
-        let opt = Preparser::new().scan("## syntax: indent\n").unwrap();
+        let opt = Preparser::new().scan("## syntax: indent\n",
+            Options::new().clone()).unwrap();
         assert_eq!(opt.syntax, Syntax::Indent);
         assert!(matches!(opt.default_validator, Validator::Anything));
         assert_eq!(opt.validators.len(), 0);
@@ -130,15 +105,37 @@ mod test {
 
     #[test]
     fn oneline() {
-        let opt = Preparser::new().scan("## syntax: oneline\n").unwrap();
+        let opt = Preparser::new().scan("## syntax: oneline\n",
+            Options::new().clone()).unwrap();
         assert_eq!(opt.syntax, Syntax::Oneline);
         assert!(matches!(opt.default_validator, Validator::Anything));
         assert_eq!(opt.validators.len(), 0);
     }
 
     #[test]
+    fn default_oneline_approve() {
+        let opt = Preparser::new().scan("## syntax: oneline\n",
+            Options::new().syntax_oneline().clone()).unwrap();
+        assert_eq!(opt.syntax, Syntax::Oneline);
+    }
+
+    #[test]
+    fn default_oneline_override() {
+        let opt = Preparser::new().scan("## syntax: indent\n",
+            Options::new().syntax_oneline().clone()).unwrap();
+        assert_eq!(opt.syntax, Syntax::Indent);
+    }
+
+    #[test]
+    fn default_oneline() {
+        let opt = Preparser::new().scan("xxxx\n",
+            Options::new().syntax_oneline().clone()).unwrap();
+        assert_eq!(opt.syntax, Syntax::Oneline);
+    }
+
+    #[test]
     fn minimal() {
-        let opt = Preparser::new().scan("").unwrap();
+        let opt = Preparser::new().scan("", Options::new()).unwrap();
         assert_eq!(opt.syntax, Syntax::Plain);
     }
 }

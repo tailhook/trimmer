@@ -3,10 +3,10 @@ use combine::combinator::{position, parser, many};
 
 use oneline;
 use parse_error::ParseError;
-use preparser::{Preparser, Options, Syntax};
+use preparser::{Preparser, Syntax};
 use render::{self, template};
 use tokenizer::{Tokenizer, TokenStream, Token, Kind};
-use {Pos};
+use {Options, Pos};
 
 
 #[derive(Debug, PartialEq)]
@@ -352,11 +352,17 @@ impl Parser {
     }
     /// Parse and compile a template
     pub fn parse(&self, data: &str) -> Result<render::Template, ParseError> {
+        self.parse_with_options(&Options::new(), data)
+    }
+    /// Parse and compile a template with some predefined options set
+    pub fn parse_with_options(&self, options: &Options, data: &str)
+        -> Result<render::Template, ParseError>
+    {
         use combine::combinator::{skip_many, parser, satisfy};
         use tokenizer::Kind::Newline;
         use helpers::{kind, st_start};
 
-        let options = self.pre.scan(data)?;
+        let options = self.pre.scan(data, options.clone())?;
         let s = self.tok.scan(data);
 
         let mut p =
