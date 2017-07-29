@@ -350,13 +350,19 @@ impl Parser {
     }
     /// Parse and compile a template
     pub fn parse(&self, data: &str) -> Result<render::Template, ParseError> {
-        use combine::combinator::*;
-        use helpers::kind;
+        use combine::combinator::{skip_many, parser, satisfy};
+        use tokenizer::Kind::Newline;
+        use helpers::{kind, st_start};
 
         let options = self.pre.scan(data)?;
         let s = self.tok.scan(data);
 
-        let mut p = parser(body).skip(kind(Kind::Eof));
+        let mut p =
+            skip_many(
+                st_start("syntax")
+                .skip(skip_many(satisfy(|x: Token| x.kind != Newline)))
+                .skip(kind(Newline)))
+            .with(parser(body)).skip(kind(Kind::Eof));
 
         let (body, _) = p.parse(s)?;
         let tpl = Template {
