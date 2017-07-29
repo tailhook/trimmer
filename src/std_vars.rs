@@ -5,7 +5,29 @@ use std::slice::Iter;
 use render_error::DataError;
 use vars::{Variable, Var};
 
-impl<'a> Variable for &'static str {
+
+impl<'a> Variable for &'a Variable {
+    fn typename(&self) -> &'static str {
+        (*self).typename()
+    }
+}
+
+impl Variable for &'static str {
+    fn typename(&self) -> &'static str {
+        (*self).typename()
+    }
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(self)
+    }
+    fn as_str_key(&self) -> Result<&str, DataError> {
+        Ok(self)
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(self.len() > 0)
+    }
+}
+
+impl Variable for String {
     fn typename(&self) -> &'static str {
         "String"
     }
@@ -17,15 +39,15 @@ impl<'a> Variable for &'static str {
     }
 }
 
-impl<'a> Variable for String {
+impl Variable for u16 {
     fn typename(&self) -> &'static str {
-        "String"
+        "u16"
     }
     fn output(&self) -> Result<&Display, DataError> {
         Ok(self)
     }
     fn as_bool(&self) -> Result<bool, DataError> {
-        Ok(self.len() > 0)
+        Ok(*self != 0)
     }
 }
 

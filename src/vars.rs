@@ -2,10 +2,12 @@ use std::rc::Rc;
 use std::fmt::{Display, Debug};
 
 use render_error::DataError;
-use owning_ref::ErasedRcRef;
+use owning_ref::{ErasedRcRef, OwningRef};
 
 pub enum Var<'a> {
+    #[doc(hidden)]
     Ref(&'a (Variable + 'static)),
+    #[doc(hidden)]
     Rc(ErasedRcRef<Variable>),
 }
 
@@ -39,8 +41,8 @@ pub trait Variable: Debug {
     ///
     /// Note that actual key may have a (rust) type that is different from
     /// type of self (i.e. may come from different library).
-    fn index(&self, _key: &Variable)
-        -> Result<Var, DataError>
+    fn index<'x>(&'x self, _key: &Variable)
+        -> Result<Var<'x>, DataError>
     {
         Err(DataError::IndexUnsupported(self.typename()))
     }
@@ -62,7 +64,7 @@ pub trait Variable: Debug {
     /// String keys are used for indexing dicts
     ///
     /// It's okay not to implement this method for complex variables
-    fn as_str_key(&self) -> Result<&str, DataError> {
+    fn as_str_key<'x>(&'x self) -> Result<&'x str, DataError> {
         Err(DataError::StrKeyUnsupported(self.typename()))
     }
     /// Return intenger value of the variable used as key
@@ -107,5 +109,18 @@ impl Variable for Undefined {
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(false)
+    }
+}
+
+impl<'a> Var<'a> {
+    pub fn owned<T: Variable + 'static>(x: T) -> Var<'static> {
+        Var::Rc(OwningRef::new(Rc::new(x))
+                .map(|x| x as &Variable).erase_owner())
+    }
+    pub fn str(x: &'static str) -> Var<'static> {
+        // This is a limitation of a rust type system
+        Var::Rc(OwningRef::new(Rc::new(x))
+                .map(|x| x as &Variable)
+                .erase_owner())
     }
 }

@@ -31,6 +31,6 @@ pub use parse_error::ParseError;
 pub use position::Pos;
 pub use render_error::{RenderError, DataError};
 pub use render::Template;
-pub use vars::Variable;
+pub use vars::{Variable, Var};
 pub use varmap::Context;
 
