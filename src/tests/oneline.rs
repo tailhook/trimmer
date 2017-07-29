@@ -83,3 +83,12 @@ fn few_vars() {
     "#, r#"{"hello": 1, "world": 2, "x": "3" }"#),
     "1 / 8 - 2+3");
 }
+
+#[test]
+fn if_spaces() {
+    assert_eq!(stdvars(r#"
+## if x
+            {{ x }}
+## endif
+    "#), "1");
+}

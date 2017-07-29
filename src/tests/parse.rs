@@ -20,6 +20,16 @@ fn syntax_plain() {
 }
 
 #[test]
+fn syntax_if_at_start() {
+    parse("## if x\n## endif\n");
+}
+
+#[test]
+fn syntax_if_not_at_start() {
+    parse("\n    ## if x\n    ## endif\n");
+}
+
+#[test]
 #[should_panic(expected="InvalidSyntaxDirective")]
 fn syntax_unknown() {
     parse("## syntax: unknown\n");

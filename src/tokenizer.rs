@@ -204,7 +204,12 @@ impl<'a> TokenStream<'a> {
             }
             self.position.column = num;
         } else {
-            self.position.column += val.chars().count();
+            let num = val.chars().count();
+            if result.is_some() && val.as_bytes().iter().all(|&x| x == b' ') {
+                debug_assert!(result == Some(0));
+                self.indent = Some(num);
+            }
+            self.position.column += num;
         }
         return result;
     }

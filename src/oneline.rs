@@ -20,14 +20,14 @@ impl Postprocess {
     }
 
     fn visit_body(&self, body: Body, top: bool) -> Body {
-        use grammar::StatementCode::OutputRaw;
+        use grammar::StatementCode::*;
 
         let mut statements = body.statements;
         let last = statements.len().saturating_sub(1);
-        for i in 0..statements.len() {
-            match &mut statements[i].code {
-                &mut OutputRaw(ref mut val) if val == "" => {}
-                &mut OutputRaw(ref mut val) => {
+        let s = statements.into_iter().enumerate().filter_map(|(i, s)| {
+            let code = match s.code {
+                OutputRaw(ref val) if val == "" => return None,
+                OutputRaw(val) => {
                     let mut res = String::with_capacity(val.len());
                     let first_c = val.chars().next().unwrap();
                     let last_c = val.chars().rev().next().unwrap();
@@ -39,16 +39,34 @@ impl Postprocess {
                         }
                         res.push_str(item);
                     }
-                    if end_ws && res.len() > 0 {
-                        res.push(' ');
+                    if res.len() > 0 {
+                        if end_ws {
+                            res.push(' ');
+                        }
+                        OutputRaw(res)
+                    } else {
+                        return None;
                     }
-                    *val = res;
                 }
-                other => {},
-            }
-        }
+                s@Alias { .. } | s@Output(..) => s,
+                Cond { conditional, otherwise } => Cond {
+                    conditional: conditional.into_iter().map(|(e, b)| {
+                        (e, self.visit_body(b, false))
+                    }).collect(),
+                    otherwise: self.visit_body(otherwise, false),
+                },
+                Loop { target, iterator, filter, body } => Loop {
+                    target, iterator, filter,
+                    body: self.visit_body(body, false),
+                }
+            };
+            Some(Statement {
+                code: code,
+                .. s
+            })
+        }).collect();
         Body {
-            statements: statements.into_iter().filter(empty).collect(),
+            statements: s,
             .. body
         }
     }
