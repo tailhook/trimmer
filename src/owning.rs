@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::sync::Arc;
 
 use owning_ref::OwningRef;
 
@@ -10,7 +11,7 @@ pub trait Own {
     fn own(&self) -> Self::Owned;
 }
 
-type Owned<T> = OwningRef<Rc<Tpl>, T>;
+type Owned<T> = OwningRef<Rc<Arc<Tpl>>, T>;
 
 pub enum ExprCode {
     Str(Owned<String>),
@@ -86,7 +87,7 @@ macro_rules! omap {
     };
 }
 
-impl Own for OwningRef<Rc<Tpl>, grammar::ExprCode> {
+impl Own for OwningRef<Rc<Arc<Tpl>>, grammar::ExprCode> {
     type Owned = ExprCode;
     fn own(&self) -> ExprCode {
         use grammar::ExprCode as I;

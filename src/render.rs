@@ -1,6 +1,7 @@
-use std::rc::Rc;
-use std::mem::transmute;
 use std::fmt::{self, Write};
+use std::mem::transmute;
+use std::rc::Rc;
+use std::sync::Arc;
 
 use owning_ref::{ErasedRcRef, OwningRef, OwningRefMut, OwningHandle};
 
@@ -13,7 +14,7 @@ use {Pos, Variable};
 
 
 /// A parsed template code that can be rendered
-pub struct Template(Rc<Tpl>);
+pub struct Template(Arc<Tpl>);
 
 
 struct Renderer {
@@ -32,7 +33,8 @@ impl Template {
             errors: Vec::new(),
             nothing: Rc::new(()),
         };
-        render(&mut rnd, &mut root.sub(), &OwningRef::new(self.0.clone()))?;
+        render(&mut rnd, &mut root.sub(),
+            &OwningRef::new(Rc::new(self.0.clone())).map(|x| &**x))?;
         if rnd.errors.len() != 0 {
             return Err(RenderError::Data(rnd.errors));
         }
@@ -40,7 +42,8 @@ impl Template {
     }
 }
 
-fn render(r: &mut Renderer, root: &mut Context, t: &OwningRef<Rc<Tpl>, Tpl>)
+fn render(r: &mut Renderer, root: &mut Context,
+    t: &OwningRef<Rc<Arc<Tpl>>, Tpl>)
     -> Result<(), fmt::Error>
 {
     write_block(r, root,
@@ -48,7 +51,7 @@ fn render(r: &mut Renderer, root: &mut Context, t: &OwningRef<Rc<Tpl>, Tpl>)
 }
 
 fn eval_expr(r: &mut Renderer, root: &Context,
-    expr: &OwningRef<Rc<Tpl>, Expr>)
+    expr: &OwningRef<Rc<Arc<Tpl>>, Expr>)
     -> ErasedRcRef<Variable>
 {
     match expr.clone().map(|e| &e.code).own() {
@@ -85,7 +88,7 @@ fn eval_expr(r: &mut Renderer, root: &Context,
 }
 
 fn write_block(r: &mut Renderer, root: &mut Context,
-    items: &OwningRef<Rc<Tpl>, [Statement]>)
+    items: &OwningRef<Rc<Arc<Tpl>>, [Statement]>)
     -> Result<(), fmt::Error>
 {
     use grammar::StatementCode::*;
@@ -216,11 +219,11 @@ fn write_block(r: &mut Renderer, root: &mut Context,
 }
 
 pub fn template(imp: grammar::Template) -> Template {
-    Template(Rc::new(imp))
+    Template(Arc::new(imp))
 }
 
 pub fn extract(tpl: Template) -> grammar::Template {
-    Rc::try_unwrap(tpl.0)
+    Arc::try_unwrap(tpl.0)
         .unwrap_or_else(|_| panic!("Can only extract uncloned template"))
 }
 

@@ -24,3 +24,12 @@ fn syntax_plain() {
 fn syntax_unknown() {
     parse("## syntax: unknown\n");
 }
+
+#[test]
+fn send_and_sync() {
+    fn send<T: Send>(_: &T) {}
+    fn sync<T: Sync>(_: &T) {}
+    let t = parse("");
+    send(&t);
+    sync(&t);
+}
