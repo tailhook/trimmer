@@ -79,6 +79,14 @@ pub fn operator<'x>(value: &'static str) -> Value<'x> {
     }
 }
 
+pub fn paren<'x>(value: &'static str) -> Value<'x> {
+    Value {
+        kind: Kind::Paren,
+        value: value,
+        phantom: PhantomData,
+    }
+}
+
 impl<'a> Parser for Value<'a> {
     type Input = TokenStream<'a>;
     type Output = Token<'a>;

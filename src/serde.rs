@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::usize;
 
 use serde_json::Value;
 
@@ -39,6 +40,24 @@ impl Variable for Value {
                 .ok_or(DataError::IndexNotFound)
             }
             _ => Err(DataError::IndexUnsupported(self.typename()))
+        }
+    }
+    fn as_str_key<'x>(&'x self) -> Result<&'x str, DataError> {
+        use serde_json::Value::*;
+        match *self {
+            String(ref s) => Ok(s),
+            _ => Err(DataError::StrKeyUnsupported(self.typename())),
+        }
+    }
+    fn as_int_key(&self) -> Result<usize, DataError> {
+        use serde_json::Value::*;
+        match *self {
+            I64(val) if val >= 0 && val as u64 <= usize::MAX as u64
+            => Ok(val as usize),
+            U64(val) if val <= usize::MAX as u64 => Ok(val as usize),
+            // TODO(tailhook) try use float too
+            // TODO(tailhook) show out of range int error
+            _ => Err(DataError::IntKeyUnsupported(self.typename())),
         }
     }
     fn output(&self) -> Result<&Display, DataError> {

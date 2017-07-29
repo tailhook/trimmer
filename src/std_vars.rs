@@ -24,6 +24,9 @@ impl Variable for String {
     fn typename(&self) -> &'static str {
         "String"
     }
+    fn as_str_key(&self) -> Result<&str, DataError> {
+        Ok(&self[..])
+    }
     fn output(&self) -> Result<&Display, DataError> {
         Ok(self)
     }
@@ -35,6 +38,9 @@ impl Variable for String {
 impl Variable for u16 {
     fn typename(&self) -> &'static str {
         "u16"
+    }
+    fn as_int_key(&self) -> Result<usize, DataError> {
+        Ok(*self as usize)
     }
     fn output(&self) -> Result<&Display, DataError> {
         Ok(self)
@@ -51,6 +57,13 @@ impl<V: Variable + 'static> Variable for HashMap<String, V> {
         self.get(attr)
         .map(|x| Var::borrow(x))
         .ok_or_else(|| DataError::VariableNotFound(attr.to_string()))
+    }
+    fn index(&self, index: &Variable)
+        -> Result<Var, DataError>
+    {
+        self.get(index.as_str_key()?)
+        .map(|x| Var::borrow(x))
+        .ok_or(DataError::IndexNotFound)
     }
     fn typename(&self) -> &'static str {
         "HashMap"
@@ -73,5 +86,12 @@ impl<'a, T: Variable + 'static> Variable for Vec<T> {
         -> Result<Box<Iterator<Item=Var<'x>>+'x>, DataError>
     {
         Ok(Box::new(self.iter().map(|x| Var::borrow(x))))
+    }
+    fn index(&self, index: &Variable)
+        -> Result<Var, DataError>
+    {
+        self.get(index.as_int_key()?)
+        .map(|x| Var::borrow(x))
+        .ok_or(DataError::IndexNotFound)
     }
 }

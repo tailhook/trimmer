@@ -83,6 +83,21 @@ fn eval_expr(r: &mut Renderer, root: &Context,
                 Err(v) => v,
             }
         }
+        ExprCode::Item(ref e, ref a) => {
+            let value = eval_expr(r, root, e);
+            let index = eval_expr(r, root, a);
+            match value.try_map(|v| match v.index(&*index) {
+                Ok(Var::Ref(x)) => Ok(x),
+                Ok(Var::Rc(v)) => Err(v),
+                Err(e) => {
+                    r.errors.push((expr.position.0, e));
+                    Ok(UNDEFINED as &Variable)
+                }
+            }) {
+                Ok(x) => x,
+                Err(v) => v,
+            }
+        }
         _ => unimplemented!(),
     }
 }

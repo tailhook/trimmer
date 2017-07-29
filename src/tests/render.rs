@@ -82,3 +82,12 @@ fn attr() {
             r#"{"x": {"a": 2, "b": 73}}"#),
         "2 + 73");
 }
+
+#[test]
+#[cfg(feature="serde")]
+fn item() {
+    assert_eq!(
+        render_json(r#"{{ x["a"] }} + {{ x[key] }}"#,
+            r#"{"x": {"a": 2, "b": 73}, "key": "b"}"#),
+        "2 + 73");
+}

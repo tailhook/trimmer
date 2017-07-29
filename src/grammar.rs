@@ -154,14 +154,33 @@ fn attr<'a>(input: TokenStream<'a>)
 {
     use tokenizer::Kind::*;
     use helpers::*;
+
+    enum Suffix<'a> {
+        Attr(Token<'a>),
+        Item(Expr),
+    }
+
     parser(atom)
-    .and(many(kind(Operator).with(kind(Ident)).and(position())))
-    .map(|(atom, vec):(_, Vec<_>)| {
-        vec.into_iter().fold(atom, |expr: Expr, (ident, e): (Token<'a>, _)| {
+    .and(many(
+        operator(".").with(kind(Ident)).map(Suffix::Attr).or(
+            paren("[")
+            .with(parser(top_level_expression))
+            .skip(paren("]"))
+            .map(Suffix::Item)
+        ).and(position())))
+    .map(|(atom, vec): (_, Vec<_>)| {
+        vec.into_iter().fold(atom,
+        |expr: Expr, (suffix, e): (Suffix<'a>, _)| {
             Expr {
                 position: (expr.position.0, e),
-                code: ExprCode::Attr(Box::new(expr),
-                                     ident.value.to_string())
+                code: match suffix {
+                    Suffix::Attr(ident) => {
+                        ExprCode::Attr(Box::new(expr), ident.value.to_string())
+                    }
+                    Suffix::Item(item) => {
+                        ExprCode::Item(Box::new(expr), Box::new(item))
+                    }
+                },
             }
         })
     })
