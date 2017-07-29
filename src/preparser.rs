@@ -11,9 +11,16 @@ pub struct Preparser {
     list: Vec<(Regex, Token)>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Syntax {
+    Plain,
+    Indent,
+    Oneline,
+}
+
 #[derive(Debug)]
 pub struct Options {
-    pub indent: bool,
+    pub syntax: Syntax,
     pub default_validator: Validator,
     pub validators: HashMap<String, Validator>,
 }
@@ -64,7 +71,9 @@ impl Preparser {
                             has_syntax = true;
                             let kind = m.get(1).unwrap().as_str();
                             if kind == "indent" {
-                                options.indent = true;
+                                options.syntax = Syntax::Indent;
+                            } else if kind == "oneline" {
+                                options.syntax = Syntax::Oneline;
                             } else {
                                 return Err(
                                     ParseErrorEnum::InvalidSyntaxDirective
@@ -81,9 +90,6 @@ impl Preparser {
                 }
             }
         }
-        if !options.indent {
-            return Err(ParseErrorEnum::UnsupportedSyntax.into());
-        }
         Ok(options)
     }
 }
@@ -91,7 +97,7 @@ impl Preparser {
 impl Default for Options {
     fn default() -> Options {
         Options {
-            indent: false,
+            syntax: Syntax::Plain,
             default_validator: Validator::Anything,
             validators: HashMap::new(),
         }
@@ -102,19 +108,27 @@ impl Default for Options {
 #[cfg(test)]
 mod test {
     use validators::Validator;
-    use super::Preparser;
+    use super::{Preparser, Syntax};
 
     #[test]
-    fn minimal() {
+    fn indent() {
         let opt = Preparser::new().scan("## syntax: indent\n").unwrap();
-        assert!(opt.indent, true);
+        assert_eq!(opt.syntax, Syntax::Indent);
         assert!(matches!(opt.default_validator, Validator::Anything));
         assert_eq!(opt.validators.len(), 0);
     }
 
     #[test]
-    #[should_panic(expected="UnsupportedSyntax")]
-    fn no_syntax() {
-        Preparser::new().scan("").unwrap();
+    fn oneline() {
+        let opt = Preparser::new().scan("## syntax: oneline\n").unwrap();
+        assert_eq!(opt.syntax, Syntax::Oneline);
+        assert!(matches!(opt.default_validator, Validator::Anything));
+        assert_eq!(opt.validators.len(), 0);
+    }
+
+    #[test]
+    fn minimal() {
+        let opt = Preparser::new().scan("").unwrap();
+        assert_eq!(opt.syntax, Syntax::Plain);
     }
 }
