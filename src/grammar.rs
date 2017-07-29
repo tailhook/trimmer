@@ -3,11 +3,12 @@ use std::collections::HashMap;
 use combine::{Parser as CombineParser, ParseResult};
 use combine::combinator::{position, parser, many};
 
+use oneline;
+use parse_error::ParseError;
+use preparser::{Preparser, Options, Syntax};
 use regex::Regex;
 use render::{self, template};
-use preparser::{Preparser, Options};
 use tokenizer::{Tokenizer, TokenStream, Token, Kind};
-use parse_error::ParseError;
 use {Pos};
 
 
@@ -87,6 +88,7 @@ pub struct Statement {
     pub code: StatementCode,
 }
 
+#[derive(Debug)]
 pub struct Template {
     pub options: Options,
     pub body: Body,
@@ -99,6 +101,7 @@ pub struct Template {
 pub struct Parser {
     pre: Preparser,
     tok: Tokenizer,
+    oneline_post: oneline::Postprocess,
 }
 
 // TODO(tailhook) allow escaping errors
@@ -346,6 +349,7 @@ impl Parser {
         Parser {
             pre: Preparser::new(),
             tok: Tokenizer::new(),
+            oneline_post: oneline::Postprocess::new(),
         }
     }
     /// Parse and compile a template
@@ -365,6 +369,15 @@ impl Parser {
             .with(parser(body)).skip(kind(Kind::Eof));
 
         let (body, _) = p.parse(s)?;
+        let body = match options.syntax {
+            Syntax::Oneline => {
+                self.oneline_post.process(&options, body)
+            }
+            Syntax::Indent => {
+                body
+            }
+            Syntax::Plain => body,
+        };
         let tpl = Template {
             options: options,
             body: body,
