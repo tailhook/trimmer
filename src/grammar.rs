@@ -5,20 +5,11 @@ use combine::combinator::{position, parser, many};
 
 use regex::Regex;
 use render::{self, template};
+use preparser::{Preparser, Options};
 use tokenizer::{Tokenizer, TokenStream, Token, Kind};
 use parse_error::ParseError;
 use {Pos};
 
-
-#[derive(Debug, PartialEq)]
-pub struct Syntax {
-    indent: bool,
-    new_line_at_eof: bool,
-    // parenthesis
-    curly: bool,
-    square: bool,
-    round: bool,
-}
 
 #[derive(Debug, PartialEq)]
 pub enum ExprCode {
@@ -97,8 +88,7 @@ pub struct Statement {
 }
 
 pub struct Template {
-    pub check: Syntax,
-    pub validators: HashMap<String, Regex>,
+    pub options: Options,
     pub body: Body,
 }
 
@@ -107,6 +97,7 @@ pub struct Template {
 /// Instance of this class must (and should) be reused for compiling multiple
 /// templates
 pub struct Parser {
+    pre: Preparser,
     tok: Tokenizer,
 }
 
@@ -353,6 +344,7 @@ impl Parser {
     /// to compile multiple templates.
     pub fn new() -> Parser {
         Parser {
+            pre: Preparser::new(),
             tok: Tokenizer::new(),
         }
     }
@@ -361,29 +353,18 @@ impl Parser {
         use combine::combinator::*;
         use helpers::kind;
 
+        let options = self.pre.scan(data)?;
         let s = self.tok.scan(data);
 
-        let mut p = parser(body).map(|body| Template {
-            check: Syntax::new(),  // TODO(tailhook)
-            validators: HashMap::new(),  // TODO(tailhook)
-            body: body,
-        }).skip(kind(Kind::Eof));
+        let mut p = parser(body).skip(kind(Kind::Eof));
 
-        let (tpl, _) = p.parse(s)?;
+        let (body, _) = p.parse(s)?;
+        let tpl = Template {
+            options: options,
+            body: body,
+        };
         // TODO(tailhook) should we assert EOF?
         // TODO(tailhook) execute checks
         return Ok(template(tpl));
-    }
-}
-
-impl Syntax {
-    fn new() -> Syntax {
-        Syntax {
-            indent: false,
-            new_line_at_eof: true,
-            curly: false,
-            square: false,
-            round: false,
-        }
     }
 }

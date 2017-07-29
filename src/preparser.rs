@@ -21,6 +21,12 @@ pub enum Syntax {
 #[derive(Debug)]
 pub struct Options {
     pub syntax: Syntax,
+    pub new_line_at_eof: Option<bool>,
+    // parenthesis
+    pub curly: bool,
+    pub square: bool,
+    pub round: bool,
+
     pub default_validator: Validator,
     pub validators: HashMap<String, Validator>,
 }
@@ -98,6 +104,10 @@ impl Default for Options {
     fn default() -> Options {
         Options {
             syntax: Syntax::Plain,
+            new_line_at_eof: None,
+            curly: false,
+            square: false,
+            round: false,
             default_validator: Validator::Anything,
             validators: HashMap::new(),
         }
