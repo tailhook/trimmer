@@ -56,7 +56,7 @@ impl<V: Variable + 'static> Variable for HashMap<String, V> {
         -> Result<Var, DataError>
     {
         self.get(attr)
-        .map(|x| Var::Ref(x as &Variable))
+        .map(|x| Var::borrow(x))
         .ok_or_else(|| DataError::VariableNotFound(attr.to_string()))
     }
     fn typename(&self) -> &'static str {
@@ -79,6 +79,6 @@ impl<'a, T: Variable + 'static> Variable for Vec<T> {
     fn iterate<'x>(&'x self)
         -> Result<Box<Iterator<Item=Var<'x>>+'x>, DataError>
     {
-        Ok(Box::new(self.iter().map(|x| Var::Ref(x as &Variable))))
+        Ok(Box::new(self.iter().map(|x| Var::borrow(x))))
     }
 }

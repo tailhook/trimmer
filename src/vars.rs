@@ -94,12 +94,12 @@ impl Variable for Undefined {
     fn attr<'x>(&'x self, _attr: &str)
         -> Result<Var<'x>, DataError>
     {
-        Ok(Var::Ref(UNDEFINED))
+        Ok(Var::undefined())
     }
     fn index<'x>(&'x self,  _key: &Variable)
         -> Result<Var<'x>, DataError>
     {
-        Ok(Var::Ref(UNDEFINED))
+        Ok(Var::undefined())
     }
     fn output(&self) -> Result<&Display, DataError> {
         Ok(EMPTY)
@@ -122,5 +122,14 @@ impl<'a> Var<'a> {
         Var::Rc(OwningRef::new(Rc::new(x))
                 .map(|x| x as &Variable)
                 .erase_owner())
+    }
+    pub fn borrow<'x, T: Variable + 'static>(x: &'x T) -> Var<'x> {
+        Var::Ref(x)
+    }
+    pub fn undefined() -> Var<'static> {
+        Var::Ref(UNDEFINED)
+    }
+    pub fn empty() -> Var<'static> {
+        Var::Ref(EMPTY)
     }
 }

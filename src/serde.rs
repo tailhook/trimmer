@@ -17,7 +17,7 @@ impl Variable for Value {
         match *self {
             Object(ref x) => {
                 x.get(attr)
-                .map(|x| Var::Ref(x as &Variable))
+                .map(|x| Var::borrow(x))
                 .ok_or(DataError::AttrNotFound)
             }
             _ => Err(DataError::AttrUnsupported(self.typename()))
@@ -30,12 +30,12 @@ impl Variable for Value {
         match *self {
             Object(ref x) => {
                 x.get(key.as_str_key()?)
-                .map(|x| Var::Ref(x as &Variable))
+                .map(|x| Var::borrow(x))
                 .ok_or(DataError::AttrNotFound)
             }
             Array(ref x) => {
                 x.get(key.as_int_key()?)
-                .map(|x| Var::Ref(x as &Variable))
+                .map(|x| Var::borrow(x))
                 .ok_or(DataError::IndexNotFound)
             }
             _ => Err(DataError::IndexUnsupported(self.typename()))
