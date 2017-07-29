@@ -8,7 +8,7 @@ use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
 use owning::{Own, ExprCode};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED, Var};
-use varmap::{Context, set};
+use varmap::{Context, set, get};
 use {Pos, Variable};
 
 
@@ -57,7 +57,7 @@ fn eval_expr(r: &mut Renderer, root: &Context,
             s.clone().map(|x| x as &Variable).erase_owner()
         },
         ExprCode::Var(ref s) => {
-            match root.get(s) {
+            match get(root, s) {
                 Ok(x) => x,
                 Err(e) => {
                     r.errors.push((expr.position.0, e));

@@ -29,10 +29,8 @@ mod owning;
 pub use grammar::Parser;
 pub use parse_error::ParseError;
 pub use position::Pos;
-pub use preparser::Options;
 pub use render_error::{RenderError, DataError};
 pub use render::Template;
-pub use validators::Validator;
 pub use vars::Variable;
 pub use varmap::Context;
 
