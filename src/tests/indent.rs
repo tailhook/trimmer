@@ -61,3 +61,47 @@ hello:
     y: 2+x
 ".lines().collect());
 }
+
+#[test]
+#[cfg(feature="serde")]
+fn nested_blocks() {
+    assert_eq(
+        render_json(r#"
+hello:
+    a: 1
+    ## if x
+        {{ x }}: 2
+        ## if y
+            y: {{ x }}+x
+        ## endif
+    ## endif
+"#, r#"{"x": "x", "y": true}"#).lines().collect(),
+        "
+hello:
+    a: 1
+    x: 2
+    y: x+x
+".lines().collect());
+}
+
+#[test]
+#[cfg(feature="serde")]
+fn directly_nested_blocks() {
+    assert_eq(
+        render_json(r#"
+hello:
+    a: 1
+    ## if x
+        ## if y
+            x: {{ x }}
+            y: {{ x }}+x
+        ## endif
+    ## endif
+"#, r#"{"x": 2, "y": true}"#).lines().collect(),
+        "
+hello:
+    a: 1
+    x: 2
+    y: 2+x
+".lines().collect());
+}
