@@ -11,7 +11,9 @@ extern crate regex;
 
 mod grammar;
 mod helpers;
+mod indent;
 mod oneline;
+mod optimize;
 mod options;
 mod owning;
 mod parse_error;

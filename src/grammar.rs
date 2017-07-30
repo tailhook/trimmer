@@ -1,7 +1,9 @@
 use combine::{Parser as CombineParser, ParseResult};
 use combine::combinator::{position, parser, many};
 
+use indent;
 use oneline;
+use optimize;
 use parse_error::ParseError;
 use preparser::{Preparser, Syntax};
 use render::{self, template};
@@ -60,10 +62,12 @@ pub enum StatementCode {
     OutputRaw(String),
     Output(Expr),
     Cond {
+        indent: usize,
         conditional: Vec<(Expr, Body)>,
         otherwise: Body,
     },
     Loop {
+        indent: usize,
         target: AssignTarget,
         iterator: Expr,
         filter: Option<Expr>,
@@ -99,6 +103,8 @@ pub struct Template {
 pub struct Parser {
     pre: Preparser,
     tok: Tokenizer,
+    optimizer: optimize::Optimizer,
+    indent_post: indent::Postprocess,
     oneline_post: oneline::Postprocess,
 }
 
@@ -224,13 +230,14 @@ fn if_stmt<'a>(input: TokenStream<'a>)
 
     st_start("if")
         .skip(ws())
-        .with(parser(top_level_expression))
+        .and(parser(top_level_expression))
         .skip(ws())
         .skip(kind(Newline))
     .and(parser(body))
     .skip(st_start("endif")).skip(ws()).skip(kind(Newline))
-    .map(|(condition, block)| {
+    .map(|((if_token, condition), block)| {
         Cond {
+            indent: if_token.value.len() - if_token.value.trim_left().len(),
             conditional: vec![
                 (condition, block),
             ],
@@ -250,7 +257,7 @@ fn for_stmt<'a>(input: TokenStream<'a>)
 
     st_start("for")
         .skip(ws())
-        .with(parser(assign_target))
+        .and(parser(assign_target))
         .skip(ws())
         .skip(keyword("in"))
         .skip(ws())
@@ -259,8 +266,9 @@ fn for_stmt<'a>(input: TokenStream<'a>)
         .skip(kind(Newline))
     .and(parser(body))
     .skip(st_start("endfor")).skip(ws()).skip(kind(Newline))
-    .map(|((target, list), block)| {
+    .map(|(((for_token, target), list), block)| {
         Loop {
+            indent: for_token.value.len() - for_token.value.trim_left().len(),
             target: target,
             iterator: list,
             filter: None,
@@ -325,35 +333,9 @@ fn body<'a>(input: TokenStream<'a>)
 {
     many(parser(statement)).map(|x| {
         Body {
-            statements: optimize_statements(x),
+            statements: x,
         }
     }).parse_stream(input)
-}
-
-pub fn optimize_statements(src: Vec<Statement>) -> Vec<Statement> {
-    use self::StatementCode::OutputRaw;
-    let mut dst = Vec::with_capacity(src.len());
-    for item in src.into_iter() {
-        match (&item, dst.last_mut()) {
-            (
-                &Statement {
-                    position: (_, new_end),
-                    code: OutputRaw(ref next),
-                },
-                Some(&mut Statement {
-                    position: (_, ref mut old_end),
-                    code: OutputRaw(ref mut prev),
-                })
-            ) => {
-                *old_end = new_end;
-                prev.push_str(next);
-                continue;
-            }
-            _ => {}
-        }
-        dst.push(item);
-    }
-    return dst;
 }
 
 impl Parser {
@@ -366,7 +348,9 @@ impl Parser {
         Parser {
             pre: Preparser::new(),
             tok: Tokenizer::new(),
+            optimizer: optimize::Optimizer::new(),
             oneline_post: oneline::Postprocess::new(),
+            indent_post: indent::Postprocess::new(),
         }
     }
     /// Parse and compile a template
@@ -394,12 +378,18 @@ impl Parser {
         let (body, _) = p.parse(s)?;
         let body = match options.syntax {
             Syntax::Oneline => {
+                // easier after optimizer
+                let body = self.optimizer.optimize(&options, body);
                 self.oneline_post.process(&options, body)
             }
             Syntax::Indent => {
-                body
+                // easier before optimizer
+                let body = self.indent_post.process(&options, body)?;
+                self.optimizer.optimize(&options, body)
             }
-            Syntax::Plain => body,
+            Syntax::Plain => {
+                self.optimizer.optimize(&options, body)
+            }
         };
         let tpl = Template {
             options: options,

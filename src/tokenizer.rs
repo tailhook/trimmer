@@ -74,7 +74,8 @@ impl<'a> StreamOnce for TokenStream<'a> {
             State::Top => {
                 let tok = self.match_top();
 
-                let indent = self.update_pos(tok.value);
+                let col = self.position.column;
+                self.update_pos(tok.value);
 
                 match tok.kind {
                     CommentStart => unimplemented!(),
@@ -82,7 +83,7 @@ impl<'a> StreamOnce for TokenStream<'a> {
                         self.state = State::Expr;
                     }
                     StStart => {
-                        if indent.is_none() {
+                        if col != 1 {
                             return Err(Error::Message(
                                 Info::Borrowed("Statement must start at the \
                                     beginning of the line")));
@@ -189,8 +190,7 @@ impl<'a> TokenStream<'a> {
             }
         }
     }
-    fn update_pos(&mut self, val: &str) -> Option<usize> {
-        let result = self.indent.take();
+    fn update_pos(&mut self, val: &str) {
         self.off += val.len();
         let lines = val.as_bytes().iter().filter(|&&x| x == b'\n').count();
         self.position.line += lines;
@@ -202,16 +202,11 @@ impl<'a> TokenStream<'a> {
             if indent {
                 self.indent = Some(num);
             }
-            self.position.column = num;
+            self.position.column = num+1;
         } else {
             let num = val.chars().count();
-            if result.is_some() && val.as_bytes().iter().all(|&x| x == b' ') {
-                debug_assert!(result == Some(0));
-                self.indent = Some(num);
-            }
             self.position.column += num;
         }
-        return result;
     }
 }
 
@@ -221,8 +216,8 @@ impl Tokenizer {
         let top = &[
             (r"\{\{[+-]?", ExprStart),
             (r"\{#", CommentStart),
-            (r"##\s*(\w*)", StStart),
             (r"\n", Newline),
+            (r"^\s*##\s*(\w*)", StStart),
             (r"[ \t]+", Whitespace),
         ];
         let expr_common = &[

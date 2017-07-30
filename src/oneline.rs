@@ -40,14 +40,15 @@ impl Postprocess {
                     }
                 }
                 s@Alias { .. } | s@Output(..) => s,
-                Cond { conditional, otherwise } => Cond {
+                Cond { indent, conditional, otherwise } => Cond {
+                    indent,
                     conditional: conditional.into_iter().map(|(e, b)| {
                         (e, self.visit_body(b, false))
                     }).collect(),
                     otherwise: self.visit_body(otherwise, false),
                 },
-                Loop { target, iterator, filter, body } => Loop {
-                    target, iterator, filter,
+                Loop { indent, target, iterator, filter, body } => Loop {
+                    indent, target, iterator, filter,
                     body: self.visit_body(body, false),
                 }
             };

@@ -69,19 +69,54 @@ fn condition() {
 
     assert_eq(parse("a\n## if x\n  b\n## endif\n"), vec![
         Statement {
-            position: lines(1, 1, 2, 0),
+            position: lines(1, 1, 2, 1),
             code: OutputRaw("a\n".into()),
         },
         Statement {
-            position: lines(2, 0, 5, 0),
+            position: lines(2, 1, 5, 1),
             code: Cond {
+                indent: 0,
                 conditional: vec![
                     (Expr {
-                        position: line(2, 6, 7),
+                        position: line(2, 7, 8),
                         code: Var("x".into()),
                     }, Body {
                         statements: vec![Statement {
-                            position: lines(3, 0, 4, 0),
+                            position: lines(3, 1, 4, 1),
+                            // TODO(tailhook) no indent
+                            code: OutputRaw("  b\n".into()),
+                        }],
+                    }),
+                ],
+                otherwise: Body {
+                    statements: vec![],
+                },
+            }
+        },
+    ]);
+}
+
+#[test]
+fn indented_condition() {
+    use grammar::StatementCode::*;
+    use grammar::ExprCode::*;
+
+    assert_eq(parse("a\n    ## if x\n  b\n    ## endif\n"), vec![
+        Statement {
+            position: lines(1, 1, 2, 1),
+            code: OutputRaw("a\n".into()),
+        },
+        Statement {
+            position: lines(2, 1, 5, 1),
+            code: Cond {
+                indent: 4,
+                conditional: vec![
+                    (Expr {
+                        position: line(2, 11, 12),
+                        code: Var("x".into()),
+                    }, Body {
+                        statements: vec![Statement {
+                            position: lines(3, 1, 4, 1),
                             // TODO(tailhook) no indent
                             code: OutputRaw("  b\n".into()),
                         }],
@@ -103,35 +138,36 @@ fn iteration() {
 
     assert_eq(parse("a\n## for x in y\n  - {{ x }}\n## endfor\n"), vec![
         Statement {
-            position: lines(1, 1, 2, 0),
+            position: lines(1, 1, 2, 1),
             code: OutputRaw("a\n".into()),
         },
         Statement {
-            position: lines(2, 0, 5, 0),
+            position: lines(2, 1, 5, 1),
             code: Loop {
+                indent: 0,
                 target: AssignTarget::Var("x".into()),
                 iterator: Expr {
-                    position: line(2, 12, 13),
+                    position: line(2, 13, 14),
                     code: Var("y".into()),
                 },
                 filter: None,
                 body: Body {
                     statements: vec![
                         Statement {
-                            position: line(3, 0, 4),
+                            position: line(3, 1, 5),
                             // TODO(tailhook) no indent
                             code: OutputRaw("  - ".into()),
                         },
                         Statement {
-                            position: line(3, 4, 11),
+                            position: line(3, 5, 12),
                             // TODO(tailhook) no indent
                             code: Output(Expr {
-                                position: line(3, 7, 8),
+                                position: line(3, 8, 9),
                                 code: Var("x".into()),
                             }),
                         },
                         Statement {
-                            position: lines(3, 11, 4, 0),
+                            position: lines(3, 12, 4, 1),
                             code: OutputRaw("\n".into()),
                         },
                     ],
@@ -149,7 +185,7 @@ fn assign() {
 
     assert_eq(parse("## let x = y\n"), vec![
         Statement {
-            position: lines(1, 1, 2, 0),
+            position: lines(1, 1, 2, 1),
             code: Alias {
                 target: AssignTarget::Var("x".into()),
                 value: Expr {
