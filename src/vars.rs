@@ -104,13 +104,13 @@ pub trait Variable<'render>: Debug {
 impl<'a> Variable<'a> for Undefined {
     fn attr<'x>(&'x self, _attr: &str)
         -> Result<Var<'x, 'a>, DataError>
-        where 'static: 'x
+        where 'a: 'x
     {
         Ok(Var::undefined())
     }
     fn index<'x>(&'x self,  _key: &Variable)
         -> Result<Var<'x, 'a>, DataError>
-        where 'static: 'x
+        where 'a: 'x
     {
         Ok(Var::undefined())
     }
@@ -137,7 +137,7 @@ impl<'a, 'render> Var<'a, 'render> {
     ///
     /// Currently this uses reference counted object that contains pointer,
     /// but we want to figure out better way to reference static strings
-    pub fn str(x: &'static str) -> Var<'static, 'static> {
+    pub fn str(x: &'static str) -> Var<'a, 'render> {
         // This is a limitation of a rust type system
         Var::Rc(OwningRef::new(Rc::new(x))
                 .map(|x| x as &Variable)
