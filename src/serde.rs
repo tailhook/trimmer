@@ -10,9 +10,10 @@ pub const TRUE: &'static &'static str = &"true";
 pub const FALSE: &'static &'static str = &"false";
 
 
-impl Variable for Value {
+impl<'render> Variable<'render> for Value {
     fn attr<'x>(&'x self, attr: &str)
-        -> Result<Var<'x>, DataError>
+        -> Result<Var<'x, 'render>, DataError>
+        where 'render: 'x
     {
         use serde_json::Value::*;
         match *self {
@@ -24,8 +25,9 @@ impl Variable for Value {
             _ => Err(DataError::AttrUnsupported(self.typename()))
         }
     }
-    fn index<'x>(&'x self, key: &Variable)
-        -> Result<Var<'x>, DataError>
+    fn index<'x>(&'x self, key: &Variable<'render>)
+        -> Result<Var<'x, 'render>, DataError>
+        where 'render: 'x
     {
         use serde_json::Value::*;
         match *self {

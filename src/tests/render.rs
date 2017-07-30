@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 
 use {Template, Parser, Context};
 
@@ -30,6 +31,25 @@ fn var_owned() {
     let mut c = Context::new();
     c.set("y".into(), String::from("-"));
     assert_eq!(&t.render(&c).unwrap(), "a-b");
+}
+
+#[test]
+fn var_borrow_static() {
+    let t = parse("a{{ y }}b");
+    let mut c = Context::new();
+    c.set("y".into(), " / ");
+    assert_eq!(&t.render(&c).unwrap(), "a / b");
+}
+
+#[test]
+fn var_borrow_hashmap() {
+    let t = parse("k1: {{ map.k1 }}, k2: {{ map.k2 }}");
+    let mut c = Context::new();
+    let mut map = HashMap::new();
+    map.insert("k1", "x");
+    map.insert("k2", "y");
+    c.set("map".into(), map);
+    assert_eq!(&t.render(&c).unwrap(), "k1: x, k2: y");
 }
 
 #[test]

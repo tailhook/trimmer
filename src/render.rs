@@ -3,12 +3,12 @@ use std::mem::transmute;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use owning_ref::{ErasedRcRef, OwningRef};
+use owning_ref::{OwningRef, Erased};
 
 use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
 use owning::{Own, ExprCode};
 use render_error::{RenderError, DataError};
-use vars::{UNDEFINED, Var};
+use vars::{UNDEFINED, Var, VarRef};
 use varmap::{Context, set, get};
 use {Pos, Variable};
 
@@ -50,9 +50,15 @@ fn render(r: &mut Renderer, root: &mut Context,
         &t.clone().map(|t| &t.body.statements[..]))
 }
 
-fn eval_expr(r: &mut Renderer, root: &Context,
+fn nothing<'x, 'y, 'render: 'x>(n: &'x Rc<()>, _: &Context<'y, 'render>)
+    -> Rc<Erased+'render>
+{
+    n.clone()
+}
+
+fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &Context<'x, 'render>,
     expr: &OwningRef<Rc<Arc<Tpl>>, Expr>)
-    -> ErasedRcRef<Variable>
+    -> VarRef<'render>
 {
     match expr.clone().map(|e| &e.code).own() {
         ExprCode::Str(ref s) => {
@@ -63,9 +69,8 @@ fn eval_expr(r: &mut Renderer, root: &Context,
                 Ok(x) => x,
                 Err(e) => {
                     r.errors.push((expr.position.0, e));
-                    OwningRef::new(r.nothing.clone())
+                    OwningRef::new(nothing(&r.nothing, root))
                         .map(|_| UNDEFINED as &Variable)
-                        .erase_owner()
                 }
             }
         }
@@ -76,7 +81,8 @@ fn eval_expr(r: &mut Renderer, root: &Context,
                 Ok(Var::Rc(v)) => Err(v),
                 Err(e) => {
                     r.errors.push((expr.position.0, e));
-                    Ok(UNDEFINED as &Variable)
+                    Err(OwningRef::new(nothing(&r.nothing, root))
+                        .map(|_| UNDEFINED as &Variable))
                 }
             }) {
                 Ok(x) => x,
@@ -91,7 +97,8 @@ fn eval_expr(r: &mut Renderer, root: &Context,
                 Ok(Var::Rc(v)) => Err(v),
                 Err(e) => {
                     r.errors.push((expr.position.0, e));
-                    Ok(UNDEFINED as &Variable)
+                    Err(OwningRef::new(nothing(&r.nothing, root))
+                        .map(|_| UNDEFINED as &Variable))
                 }
             }) {
                 Ok(x) => x,
@@ -102,7 +109,7 @@ fn eval_expr(r: &mut Renderer, root: &Context,
     }
 }
 
-fn write_block(r: &mut Renderer, root: &mut Context,
+fn write_block<'x, 'render>(r: &mut Renderer, root: &mut Context<'x, 'render>,
     items: &OwningRef<Rc<Arc<Tpl>>, [Statement]>)
     -> Result<(), fmt::Error>
 {
@@ -204,7 +211,7 @@ fn write_block(r: &mut Renderer, root: &mut Context,
                 loop {
                     let mut sub = root.sub();
                     {
-                        let res: Result<ErasedRcRef<Variable>, _> =
+                        let res: Result<VarRef<'render>, _> =
                             value.clone()
                             .try_map(|_value| match iter.next() {
                                 Some(Var::Ref(r)) => {

@@ -2,19 +2,22 @@ use std::rc::Rc;
 use std::fmt::{Display, Debug};
 
 use render_error::DataError;
-use owning_ref::{ErasedRcRef, OwningRef};
+use owning_ref::{OwningRef, Erased};
+
+pub type VarRef<'render> = OwningRef<Rc<Erased+'render>, Variable<'render>+'render>;
 
 /// Variable reference returned from methods of Variable trait
 ///
 /// It can contain borrowed reference from curret variable or
 /// owned (reference counted) box to another object
 // TODO(tailhook) maybe completely hide thing
-pub enum Var<'a> {
+pub enum Var<'a, 'render: 'a> {
     #[doc(hidden)]
-    Ref(&'a (Variable + 'static)),
+    Ref(&'a (Variable<'render> + 'render)),
     #[doc(hidden)]
-    Rc(ErasedRcRef<Variable>),
+    Rc(VarRef<'render>),
 }
+
 
 #[derive(Debug)]
 pub struct Undefined;
@@ -26,13 +29,14 @@ pub const EMPTY: &'static &'static str = &"";
 /// context
 ///
 /// Note: by default all operations return unsupported error
-pub trait Variable: Debug {
+pub trait Variable<'render>: Debug {
     /// Evaluates `a.b` operation
     ///
     /// Depending on your domain `a.x` may be equivalent of `a["x"]` or
     /// maybe not. Integer arguments `a.0` are not supported.
     fn attr<'x>(&'x self,  _attr: &str)
-        -> Result<Var<'x>, DataError>
+        -> Result<Var<'x, 'render>, DataError>
+        where 'render: 'x
     {
         Err(DataError::AttrUnsupported(self.typename()))
     }
@@ -46,8 +50,9 @@ pub trait Variable: Debug {
     ///
     /// Note that actual key may have a (rust) type that is different from
     /// type of self (i.e. may come from different library).
-    fn index<'x>(&'x self, _key: &Variable)
-        -> Result<Var<'x>, DataError>
+    fn index<'x>(&'x self, _key: &(Variable<'render> + 'render))
+        -> Result<Var<'x, 'render>, DataError>
+        where 'render: 'x
     {
         Err(DataError::IndexUnsupported(self.typename()))
     }
@@ -89,20 +94,23 @@ pub trait Variable: Debug {
 
     /// Return iterator over the value if appropriate
     fn iterate<'x>(&'x self)
-        -> Result<Box<Iterator<Item=Var<'x>>+'x>, DataError>
+        -> Result<Box<Iterator<Item=Var<'x, 'render>>+'x>, DataError>
+        where 'render: 'x
     {
         Err(DataError::IterationUnsupported(self.typename()))
     }
 }
 
-impl Variable for Undefined {
+impl<'a> Variable<'a> for Undefined {
     fn attr<'x>(&'x self, _attr: &str)
-        -> Result<Var<'x>, DataError>
+        -> Result<Var<'x, 'a>, DataError>
+        where 'static: 'x
     {
         Ok(Var::undefined())
     }
     fn index<'x>(&'x self,  _key: &Variable)
-        -> Result<Var<'x>, DataError>
+        -> Result<Var<'x, 'a>, DataError>
+        where 'static: 'x
     {
         Ok(Var::undefined())
     }
@@ -117,9 +125,11 @@ impl Variable for Undefined {
     }
 }
 
-impl<'a> Var<'a> {
+impl<'a, 'render> Var<'a, 'render> {
     /// Embed and owned reference to a value
-    pub fn owned<T: Variable + 'static>(x: T) -> Var<'static> {
+    pub fn owned<'x, 'y: 'x, T: Variable<'y>+'y>(x: T) -> Var<'x, 'y>
+        where 'y: 'x, T: 'y
+    {
         Var::Rc(OwningRef::new(Rc::new(x))
                 .map(|x| x as &Variable).erase_owner())
     }
@@ -127,22 +137,27 @@ impl<'a> Var<'a> {
     ///
     /// Currently this uses reference counted object that contains pointer,
     /// but we want to figure out better way to reference static strings
-    pub fn str(x: &'static str) -> Var<'static> {
+    pub fn str(x: &'static str) -> Var<'static, 'static> {
         // This is a limitation of a rust type system
         Var::Rc(OwningRef::new(Rc::new(x))
                 .map(|x| x as &Variable)
                 .erase_owner())
     }
     /// Create a borrowed reference to the variable
-    pub fn borrow<'x, T: Variable + 'static>(x: &'x T) -> Var<'x> {
+    pub fn borrow<'x, T: Variable<'render>+'render>(x: &'x T)
+        -> Var<'x, 'render>
+        where 'render: 'x
+    {
         Var::Ref(x)
     }
     /// Create an undefined variable reference
-    pub fn undefined() -> Var<'static> {
+    pub fn undefined<'x, 'y: 'x>() -> Var<'x, 'y> {
         Var::Ref(UNDEFINED)
     }
+    /*
     /// Create a variable that contains an empty string
-    pub fn empty() -> Var<'static> {
+    pub fn empty<'x, 'y: 'x>() -> Var<'x, 'y> {
         Var::Ref(EMPTY)
     }
+    */
 }
