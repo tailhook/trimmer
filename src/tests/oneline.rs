@@ -7,10 +7,10 @@ fn render_json(template: &str, value: &str) -> String {
     let tpl = Parser::new().parse(template).unwrap();
     println!("Template {:#?}", extract(tpl));
     let tpl = Parser::new().parse(template).unwrap();
+    let json = serde_json::from_str::<serde_json::Value>(value).unwrap();
     let mut vars: Context = Context::new();
-    for (k, v) in serde_json::from_str::<serde_json::Value>(value)
-        .unwrap().as_object().unwrap() {
-        vars.set(k.clone(), v.clone());
+    for (k, v) in json.as_object().unwrap() {
+        vars.set(k, v);
     }
     tpl.render(&vars).unwrap()
 }

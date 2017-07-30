@@ -11,9 +11,10 @@ fn parse(template: &str) -> Template {
 fn render_json(template: &str, value: &str) -> String {
     use serde_json;
     let tpl = Parser::new().parse(template).unwrap();
+    let json = serde_json::from_str::<serde_json::Value>(value).unwrap();
     let mut vars: Context = Context::new();
-    for (k, v) in serde_json::from_str::<serde_json::Value>(value).unwrap().as_object().unwrap() {
-        vars.set(k.clone(), v.clone());
+    for (k, v) in json.as_object().unwrap() {
+        vars.set(k, v);
     }
     tpl.render(&vars).unwrap()
 }
@@ -25,6 +26,7 @@ fn hello() {
                "hello");
 }
 
+/*
 #[test]
 fn var_owned() {
     let t = parse("a{{ y }}b");
@@ -32,39 +34,43 @@ fn var_owned() {
     c.set("y".into(), String::from("-"));
     assert_eq!(&t.render(&c).unwrap(), "a-b");
 }
+*/
 
 #[test]
 fn var_borrow_static() {
     let t = parse("a{{ y }}b");
+    let ptr = " / ";
     let mut c = Context::new();
-    c.set("y".into(), " / ");
+    c.set("y", &ptr);
     assert_eq!(&t.render(&c).unwrap(), "a / b");
 }
 
 #[test]
 fn var_borrow_hashmap() {
     let t = parse("k1: {{ map.k1 }}, k2: {{ map.k2 }}");
-    let mut c = Context::new();
     let mut map = HashMap::new();
+    let mut c = Context::new();
     map.insert("k1", "x");
     map.insert("k2", "y");
-    c.set("map".into(), map);
+    c.set("map", &map);
     assert_eq!(&t.render(&c).unwrap(), "k1: x, k2: y");
 }
 
 #[test]
 fn var_str() {
     let t = parse("a{{ z }}b");
+    let star = "*";
     let mut c = Context::new();
-    c.set("z".into(), "*");
+    c.set("z", &star);
     assert_eq!(&t.render(&c).unwrap(), "a*b");
 }
 
 #[test]
 fn aliasing_vars() {
     let t = parse("## let x = y\na{{ x }}b");
+    let plus = "+";
     let mut c = Context::new();
-    c.set("y".into(), "+");
+    c.set("y", &plus);
     assert_eq!(&t.render(&c).unwrap(), "a+b");
 }
 
@@ -78,18 +84,21 @@ fn const_str() {
 #[test]
 fn cond() {
     let t = parse("## if x\n  y\n## endif\n");
+    let empty = "";
+    let x = "x";
     let mut c = Context::new();
-    c.set("x".into(), "");
+    c.set("x", &empty);
     assert_eq!(&t.render(&c).unwrap(), "");
-    c.set("x".into(), "x");
+    c.set("x", &x);
     assert_eq!(&t.render(&c).unwrap(), "  y\n");
 }
 
 #[test]
 fn iteration() {
     let t = parse("## for x in items\n  - {{ x }}\n## endfor\n");
+    let v = vec!["a", "b"];
     let mut c = Context::new();
-    c.set("items".into(), vec!["a", "b"]);
+    c.set("items", &v);
     // TODO(tailhook) fix indentation
     assert_eq!(&t.render(&c).unwrap(), "  - a\n  - b\n");
 }

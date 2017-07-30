@@ -9,7 +9,7 @@ use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
 use owning::{Own, ExprCode};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED, Var, VarRef};
-use varmap::{Context, set, get};
+use varmap::{Context, SubContext, set, get};
 use {Pos, Variable};
 
 
@@ -42,7 +42,7 @@ impl Template {
     }
 }
 
-fn render(r: &mut Renderer, root: &mut Context,
+fn render(r: &mut Renderer, root: &mut SubContext,
     t: &OwningRef<Rc<Arc<Tpl>>, Tpl>)
     -> Result<(), fmt::Error>
 {
@@ -50,13 +50,13 @@ fn render(r: &mut Renderer, root: &mut Context,
         &t.clone().map(|t| &t.body.statements[..]))
 }
 
-fn nothing<'x, 'y, 'render: 'x>(n: &'x Rc<()>, _: &Context<'y, 'render>)
+fn nothing<'x, 'y, 'render: 'x>(n: &'x Rc<()>, _: &SubContext<'y, 'render>)
     -> Rc<Erased+'render>
 {
     n.clone()
 }
 
-fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &Context<'x, 'render>,
+fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
     expr: &OwningRef<Rc<Arc<Tpl>>, Expr>)
     -> VarRef<'render>
 {
@@ -109,7 +109,8 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &Context<'x, 'render>,
     }
 }
 
-fn write_block<'x, 'render>(r: &mut Renderer, root: &mut Context<'x, 'render>,
+fn write_block<'x, 'render>(r: &mut Renderer,
+    root: &mut SubContext<'x, 'render>,
     items: &OwningRef<Rc<Arc<Tpl>>, [Statement]>)
     -> Result<(), fmt::Error>
 {
