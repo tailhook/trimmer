@@ -69,6 +69,10 @@ impl<'a> StreamOnce for TokenStream<'a> {
     {
         use self::Kind::*;
         if self.off == self.buf.len() {
+            if self.state == State::Statement {
+                self.state = State::Top;
+                return Ok(Token { kind: Kind::Newline, value: "" });
+            }
             return Ok(Token { kind: Kind::Eof, value: "" });
         }
         match self.state {

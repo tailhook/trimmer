@@ -196,3 +196,23 @@ fn assign() {
         },
     ]);
 }
+
+#[test]
+fn at_eof() {
+    use grammar::AssignTarget;
+    use grammar::StatementCode::*;
+    use grammar::ExprCode::*;
+
+    assert_eq(parse("## let x = y"), vec![
+        Statement {
+            position: lines(1, 1, 1, 13),
+            code: Alias {
+                target: AssignTarget::Var("x".into()),
+                value: Expr {
+                    position: line(1, 12, 13),
+                    code: Var("y".into()),
+                },
+            },
+        },
+    ]);
+}
