@@ -1,0 +1,62 @@
+language: rust
+rust: stable
+os: linux
+dist: trusty
+sudo: false
+addons:
+  apt:
+    packages:
+    - fakeroot
+    - musl-tools
+
+cache:
+- apt
+- cargo
+
+before_cache:
+- rm -r $TRAVIS_BUILD_DIR/target/debug
+
+script:
+- cargo build $CARGO_ARGS
+- cargo test $CARGO_ARGS
+
+jobs:
+  include:
+  - rust: stable
+  - rust: beta
+  - rust: nightly
+
+  # deploy
+  - stage: publish docs
+    env:
+    # GH_TOKEN
+    - secure: "SO/5q6480FduSPU7KjDo9urCBzq38LVDB+moPr7YvE/3gaFl47BjiRxDnbnZmPwzbLQ0tGbQ0sMLaroEIzfU/SrzUpifzDdjsDRCSgKay+7EBdSQgprZt7Bqof4ybXjdq5pt+cdSMMmpuNhj7f5UR4uYA8HEFURYWbuLbL42ql2REE7fpALteUC11sMqhzTTU9l6NrLlmLgWbRWJg6oQ1wpWaoRZoeSaIlfN8hvnmrlxcY+tmAma4FKq1W7gPHS3a/EOWt2C/4HhuLhGm5oQ/193Zf4VmpGyqQtbQxf1vaBvZ9qYxnjRDrPECQrMRxho80aZ8nLIw/arSAwQ6jTYlAt9nGIWoRAZxQRTRv3dxi2HS3tyHdWFcTn9G9H9M+n7dUdoHHNusIMHO8iXd2w4QRZMhdpM209J32RU/ESORmNJj0AxhqLXRRPlu2CbDl5xBjnp8YJRHAHXJftYiyAvtemhqwlSyEa/NwJ2xDsPw+rjgKWEERskvG/mACGz8F0iqMGzbEz/29oGvKOsFyUdOXIOCHH3VgDFuAbtSoU28ZdGx8hGsl0LNlnB35dW3kjtvv9Gu+eKC/mqt/SwR/BmJZ+ZCFi5j5PX8Zcok0cg8/9IBQqTho9pAoqE2ErSlPUOPIgezxSHIpF9qzbixvSw5dizk2feMEDX5Iw/l+8NEHY="
+    # CARGO_TOKEN
+    - secure: "dU6EfRIOqrxxrkeiKzmzEeJSNVl+g6GYniJUkLerc3OG6OyHkF1+GN9GEq2MRYStUeD/MQ/yvnMPmDTXmSzTJJU3PIUXFEW7MlBNoosssHggc/azbLom9zWhAB98aohiqBOjfTt65lNQKi/qrW3390t4DddrlfuP+Q3TYgEsvpo2pBlLr1jmZWvR1Y/51X9X6aJsMz7+MZJRWb09VhI6jvNTnm2TpO+Pp6fm802OgQDrecdVrEPz7iIztS7SmhOLC3JzUVlKj7XtBA3RgEoRyUv2cA6a17/437q1kVHO+Je6QSmBdfEaiZcP0wgNH3dBYjtB8MBLHPG0SlpuQL/KI9ZOVBFoBX6TRxn5shWPCX8B1h7OVV4A87DzZoqLkQMfDOg3Hra/RH1nk/mfhNidArE8As6GoTeqklavLtQ4uZud0j46FJFMd52rB8oP6FsQ5buoYiyMhhBdwDsv1+VqhPw9pxQ6p4RePm/QFuN653XNDN+y/XgHM42Rjcy0qHHCEUsaV1TgepLP3TUXJACen509z7HYEBisGCjhkfcpCls/3opPeM9afxHETXxJzHcSBds8wUJEx6NA0lSEcX171er6vHi9UsJWCZzk07EJHhAy0dMAtpo+UP+IA/IiVMzZ1YLPiKYOgCPt6Kn3dajSi5P/EovERIBG9XXYJ/B7p4Y="
+    install: true
+
+    #before_deploy: |
+    #  mkdir -p dist
+    #  rustup target add x86_64-unknown-linux-musl
+    #  cargo build --target=x86_64-unknown-linux-musl --release
+    #  fakeroot sh -ecx '
+    #    install -D target/x86_64-unknown-linux-musl/release/trimmer pkg/usr/bin/trimmer
+    #    tar -C pkg -czf dist/trimmer-$TRAVIS_TAG.tar.gz usr
+    #  '
+
+    deploy:
+    - provider: script
+      script: .travis/publish-docs.sh
+      on:
+        branch: master
+    - provider: script
+      script: 'cargo publish --verbose --token=$CARGO_TOKEN'
+      on:
+        tags: true
+    #- provider: releases
+    #  api_key:
+    #    secure: "mCTz8eEb1I3o3KL8xYOtRk988NXL2KuQDvqjvoHMlYZnH+87LOEkRVJwkJm48HngkieroK7UqP+iL0is1e/p66DbWXG+CO/Nt1YRVFDuGpfKTOgu07rbrbwKXE0RNDrL0asgkdlH0VB2nPYI92cmUOy+51FFaRF2FxLEq/SmVEKahkGHd/yWJ/nGlKUbXH1HEXJ3dfm/4EqnFILIkSNJGRE3z2OToqYzALoDcsUUYP2fWLYGFdxljAdCmzV828reC51wlfrQBOtAnU5++FHXH4UlJIjUi/m21QtpQL2S7B/gG0hSLxqRaAbVnEgjJ5POjLvEacSozEYO5JZcVog6kRz0+xIXAi5KarmLvDNqQ9fqOjRT+Z+8sGNmj137x1/DCZLqnEiVUVC1xII6ixTgBZ2CR0Oq2hFVTDruAsYmoSqdWX0Tk8X2j9yCbCdB7OAS698982G9F9l61eT1VjxhZnWnoFjZ3bNsrcmROHRSOil34Z8BEc1ybXJ43T3MW4AsF+zkwIXk0lGCUJ4RCCzRpz3AHD0UIbpvqDsIgisYiNR7sIQr7hSJ9lgcog3CtNK/P+tSIGDhQOdzTRRnvwxMhYQBc0HOdwwQoYRjcbIA+9hRIA1PfBlqs/1/ub9jbU27U9JlnWj36absPFZ65FdKA2oQTYtVrcvai8WSzH0KDys="
+    #  file: "dist/trimmer-$TRAVIS_TAG.tar.gz"
+    #  skip_cleanup: true
+    #  on:
+    #    tags: true
