@@ -6,6 +6,11 @@ files. Basically it's template renderer for text files which can also do
 very small subset of validations to make process of design of template easier
 and safer to use.
 
+Github_ | `API Docs`_
+
+.. _api docs: https://docs.rs/trimmer/
+.. _github: https://github.com/tailhook/trimmer/
+
 Contents:
 
 .. toctree::
