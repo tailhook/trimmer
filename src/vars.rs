@@ -4,18 +4,13 @@ use std::iter::empty;
 
 use render_error::DataError;
 use owning_ref::{OwningRef, Erased};
+use {Var};
 
-pub type VarRef<'render> = OwningRef<Rc<Erased+'render>, Variable<'render>+'render>;
+pub type VarRef<'render> = OwningRef<Rc<Erased+'render>,
+                                     Variable<'render>+'render>;
 
-/// Variable reference returned from methods of Variable trait
-///
-/// It can contain borrowed reference from current variable or
-/// owned (reference counted) box to another object
-// TODO(tailhook) maybe completely hide thing
-pub enum Var<'a, 'render: 'a> {
-    #[doc(hidden)]
+pub enum Val<'a, 'render: 'a>{
     Ref(&'a (Variable<'render> + 'render)),
-    #[doc(hidden)]
     Rc(VarRef<'render>),
 }
 
@@ -169,8 +164,8 @@ impl<'a, 'render> Var<'a, 'render> {
     pub fn owned<'x, 'y: 'x, T: Variable<'y>+'y>(x: T) -> Var<'x, 'y>
         where 'y: 'x, T: 'y
     {
-        Var::Rc(OwningRef::new(Rc::new(x))
-                .map(|x| x as &Variable).erase_owner())
+        Var(Val::Rc(OwningRef::new(Rc::new(x))
+                .map(|x| x as &Variable).erase_owner()))
     }
     /// Embed a static string as a variable
     ///
@@ -178,23 +173,23 @@ impl<'a, 'render> Var<'a, 'render> {
     /// but we want to figure out better way to reference static strings
     pub fn str(x: &'static str) -> Var<'a, 'render> {
         // This is a limitation of a rust type system
-        Var::Rc(OwningRef::new(Rc::new(x))
+        Var(Val::Rc(OwningRef::new(Rc::new(x))
                 .map(|x| x as &Variable)
-                .erase_owner())
+                .erase_owner()))
     }
     /// Create a borrowed reference to the variable
     pub fn borrow<'x, T: Variable<'render>+'render>(x: &'x T)
         -> Var<'x, 'render>
         where 'render: 'x
     {
-        Var::Ref(x)
+        Var(Val::Ref(x))
     }
     /// Create an undefined variable reference
     pub fn undefined<'x, 'y: 'x>() -> Var<'x, 'y> {
-        Var::Ref(UNDEFINED)
+        Var(Val::Ref(UNDEFINED))
     }
     /// Create a variable that contains an empty string
     pub fn empty<'x, 'y: 'x>() -> Var<'x, 'y> {
-        Var::Ref(EMPTY)
+        Var(Val::Ref(EMPTY))
     }
 }

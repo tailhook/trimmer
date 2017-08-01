@@ -4,8 +4,8 @@ use std::usize;
 
 use serde_json::Value;
 
-use vars::{EMPTY_STR, Var};
-use {DataError, Variable};
+use vars::{EMPTY_STR};
+use {DataError, Variable, Var};
 
 pub const TRUE: &'static &'static str = &"true";
 pub const FALSE: &'static &'static str = &"false";

@@ -2,7 +2,8 @@ use std::fmt::Display;
 use std::collections::HashMap;
 
 use render_error::DataError;
-use vars::{Variable, Var};
+use vars::{Variable};
+use {Var};
 
 
 impl<'a, 'render: 'a> Variable<'render> for &'a str {

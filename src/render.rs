@@ -8,9 +8,9 @@ use owning_ref::{OwningRef, Erased};
 use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
 use owning::{Own, ExprCode};
 use render_error::{RenderError, DataError};
-use vars::{UNDEFINED, Var, VarRef};
+use vars::{UNDEFINED, Val, VarRef};
 use varmap::{Context, SubContext, set, get};
-use {Pos, Variable};
+use {Pos, Variable, Var};
 
 
 /// A parsed template code that can be rendered
@@ -77,8 +77,8 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
         ExprCode::Attr(ref e, ref a) => {
             let value = eval_expr(r, root, e);
             match value.try_map(|v| match v.attr(a) {
-                Ok(Var::Ref(x)) => Ok(x),
-                Ok(Var::Rc(v)) => Err(v),
+                Ok(Var(Val::Ref(x))) => Ok(x),
+                Ok(Var(Val::Rc(v))) => Err(v),
                 Err(e) => {
                     r.errors.push((expr.position.0, e));
                     Err(OwningRef::new(nothing(&r.nothing, root))
@@ -93,8 +93,8 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
             let value = eval_expr(r, root, e);
             let index = eval_expr(r, root, a);
             match value.try_map(|v| match v.index(&*index) {
-                Ok(Var::Ref(x)) => Ok(x),
-                Ok(Var::Rc(v)) => Err(v),
+                Ok(Var(Val::Ref(x))) => Ok(x),
+                Ok(Var(Val::Rc(v))) => Err(v),
                 Err(e) => {
                     r.errors.push((expr.position.0, e));
                     Err(OwningRef::new(nothing(&r.nothing, root))
@@ -217,7 +217,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                         let res: Result<VarRef<'render>, _> =
                             value.clone()
                             .try_map(|_value| match iter.next() {
-                                Some(Var::Ref(r)) => {
+                                Some(Var(Val::Ref(r))) => {
                                     // This transmute should be safe,
                                     // because we only transmute lifetime
                                     // and x and r have basically same lifetime
@@ -225,7 +225,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                                     // of `value` even if rust doesn't think so
                                     Ok(unsafe { transmute(r) })
                                 }
-                                Some(Var::Rc(r)) => Err(Err(r)),
+                                Some(Var(Val::Rc(r))) => Err(Err(r)),
                                 None => Err(Ok(())),
                             });
                         let val = match res {
@@ -275,7 +275,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                         let (val_a, val_b) = match iter.next() {
                             Some((var_a, var_b)) => {
                                 let val_a = match var_a {
-                                    Var::Ref(r) => {
+                                    Var(Val::Ref(r)) => {
                                         value.clone()
                                         // This transmute should be safe,
                                         // because we only transmute lifetime
@@ -285,10 +285,10 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                                         // rust doesn't think so
                                         .map(|_| unsafe { transmute(r) })
                                     }
-                                    Var::Rc(r) => r,
+                                    Var(Val::Rc(r)) => r,
                                 };
                                 let val_b = match var_b {
-                                    Var::Ref(r) => {
+                                    Var(Val::Ref(r)) => {
                                         value.clone()
                                         // This transmute should be safe,
                                         // because we only transmute lifetime
@@ -298,7 +298,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                                         // rust doesn't think so
                                         .map(|_| unsafe { transmute(r) })
                                     }
-                                    Var::Rc(r) => r,
+                                    Var(Val::Rc(r)) => r,
                                 };
                                 (val_a, val_b)
                             }

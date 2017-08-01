@@ -34,10 +34,12 @@ pub use parse_error::ParseError;
 pub use position::Pos;
 pub use render_error::{RenderError, DataError};
 pub use render::Template;
-pub use vars::{Variable, Var};
+pub use vars::{Variable};
 pub use varmap::Context;
 
 use std::collections::HashMap;
+
+use vars::Val;
 
 #[derive(Debug, Clone)]
 /// Options of the template
@@ -58,3 +60,9 @@ pub struct Options {
     default_validator: validators::Validator,
     validators: HashMap<String, validators::Validator>,
 }
+
+/// Variable reference returned from methods of Variable trait
+///
+/// It can contain borrowed reference from current variable or
+/// owned (reference counted) box to another object
+pub struct Var<'a, 'render: 'a>(Val<'a, 'render>);
