@@ -133,3 +133,24 @@ fn item() {
             r#"{"x": {"a": 2, "b": 73}, "key": "b"}"#),
         "2 + 73");
 }
+
+#[test]
+#[cfg(feature="serde")]
+fn iterations() {
+    assert_eq!(
+        render_json(r#"## syntax: indent
+## for x in list
+    - {{ x }}
+## endfor
+## for k, v in map
+    - {{ k }}: {{ v }}
+## endfor
+"#,
+            r#"{"map": {"a": 2, "b": "x+73"}, "list": ["b", 7]}"#),
+        "\
+- b
+- 7
+- a: 2
+- b: x+73
+");
+}

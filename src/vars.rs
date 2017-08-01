@@ -1,5 +1,6 @@
 use std::rc::Rc;
 use std::fmt::{Display, Debug};
+use std::iter::empty;
 
 use render_error::DataError;
 use owning_ref::{OwningRef, Erased};
@@ -135,6 +136,19 @@ impl<'a> Variable<'a> for Undefined {
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(false)
+    }
+    fn iterate<'x>(&'x self)
+        -> Result<Box<Iterator<Item=Var<'x, 'a>>+'x>, DataError>
+        where 'a: 'x
+    {
+        Ok(Box::new(empty()))
+    }
+    fn iterate_pairs<'x>(&'x self)
+        -> Result<Box<Iterator<Item=(Var<'x, 'a>, Var<'x, 'a>)>+'x>,
+                  DataError>
+        where 'a: 'x
+    {
+        Ok(Box::new(empty()))
     }
 }
 

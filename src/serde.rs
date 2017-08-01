@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::iter::empty;
 use std::usize;
 
 use serde_json::Value;
@@ -99,6 +100,33 @@ impl<'render> Variable<'render> for Value {
             String(ref s) => Ok(s.len() > 0),
             Array(ref a) => Ok(a.len() > 0),
             Object(ref o) => Ok(o.len() > 0),
+        }
+    }
+    fn iterate<'x>(&'x self)
+        -> Result<Box<Iterator<Item=Var<'x, 'render>>+'x>, DataError>
+        where 'render: 'x
+    {
+        use serde_json::Value::*;
+        match *self {
+            Null => Ok(Box::new(empty())),
+            Bool(..) | I64(..) | U64(..) | F64(..) | String(..) | Object(..)
+            => Err(DataError::IterationUnsupported(self.typename())),
+            Array(ref a) => Ok(Box::new(
+                a.iter().map(|x| Var::borrow(x)))),
+        }
+    }
+    fn iterate_pairs<'x>(&'x self)
+        -> Result<Box<Iterator<Item=(Var<'x, 'render>, Var<'x, 'render>)>+'x>,
+                  DataError>
+        where 'render: 'x
+    {
+        use serde_json::Value::*;
+        match *self {
+            Null => Ok(Box::new(empty())),
+            Bool(..) | I64(..) | U64(..) | F64(..) | String(..) | Array(..)
+            => Err(DataError::IterationUnsupported(self.typename())),
+            Object(ref o) => Ok(Box::new(
+                o.iter().map(|(k, v)| (Var::borrow(k), Var::borrow(v))))),
         }
     }
 }
