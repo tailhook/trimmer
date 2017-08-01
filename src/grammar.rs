@@ -1,5 +1,5 @@
 use combine::{Parser as CombineParser, ParseResult};
-use combine::combinator::{position, parser, many, optional};
+use combine::combinator::{position, parser, many, optional, skip_many};
 
 use indent;
 use oneline;
@@ -351,7 +351,11 @@ fn statement<'a>(input: TokenStream<'a>)
 fn body<'a>(input: TokenStream<'a>)
     -> ParseResult<Body, TokenStream<'a>>
 {
-    many(parser(statement)).map(|x| {
+    use tokenizer::Kind::Comment;
+    use helpers::kind;
+
+    optional(skip_many(kind(Comment)))
+    .with(many(parser(statement).skip(skip_many(kind(Comment))))).map(|x| {
         Body {
             statements: x,
         }

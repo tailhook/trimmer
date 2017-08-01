@@ -10,7 +10,7 @@ use {Pos};
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Kind {
     Whitespace,
-    CommentStart,
+    Comment,
     Eof,
     Raw,
     // Top level tokens
@@ -80,10 +80,25 @@ impl<'a> StreamOnce for TokenStream<'a> {
                 let tok = self.match_top();
 
                 let col = self.position.column;
+                let start_off = self.off;
                 self.update_pos(tok.value);
 
                 match tok.kind {
-                    CommentStart => unimplemented!(),
+                    Comment => {
+                        let end = self.buf[self.off..].find("#}");
+                        if let Some(end) = end {
+                            let end = self.off+end+2;
+                            let slice = &self.buf[self.off..end];
+                            self.update_pos(slice);
+                            return Ok(Token {
+                                kind: Comment,
+                                value: &self.buf[start_off..end],
+                            })
+                        } else {
+                            return Err(Error::Message(
+                                Info::Borrowed("Comment does not end")));
+                        }
+                    }
                     ExprStart => {
                         self.state = State::Expr;
                     }
@@ -105,7 +120,7 @@ impl<'a> StreamOnce for TokenStream<'a> {
                 self.update_pos(tok.value);
 
                 match tok.kind {
-                    CommentStart => unimplemented!(),
+                    Comment => unimplemented!(),
                     ExprEnd => {
                         self.state = State::Top;
                     }
@@ -119,7 +134,7 @@ impl<'a> StreamOnce for TokenStream<'a> {
                 self.update_pos(tok.value);
 
                 match tok.kind {
-                    CommentStart => unimplemented!(),
+                    Comment => unimplemented!(),
                     Newline => {
                         self.state = State::Top;
                     }
@@ -225,14 +240,14 @@ impl Tokenizer {
         use self::Kind::*;
         let top = &[
             (r"\{\{[+-]?", ExprStart),
-            (r"\{#", CommentStart),
+            (r"\{#", Comment),
             (r"\n", Newline),
             (r"^\s*##\s*(\w*)", StStart),
             (r"[ \t]+", Whitespace),
         ];
         let expr_common = &[
             (r"^[+-]?\}\}", ExprEnd),
-            (r"^\{#", CommentStart),
+            (r"^#", Comment),
             (r"^(?:and|or|not|>=|<=|==|!=|=|\.\.|[.,|:><%*/+-])", Operator),
             (r"^[{}()\[\]]", Paren),
             ("^(?:for|in|endfor\

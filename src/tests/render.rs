@@ -38,6 +38,19 @@ fn number() {
     assert_eq!(&t.render(&Context::new()).unwrap(), "42");
 }
 
+#[test]
+fn comment() {
+    let t = parse("{{ x }} {# +  {{ y }} #} + {{ z }}");
+    let x = "2";
+    let y = "3";
+    let z = "4";
+    let mut c = Context::new();
+    c.set("x", &x);
+    c.set("y", &y);
+    c.set("z", &z);
+    assert_eq!(&t.render(&c).unwrap(), "2  + 4");
+}
+
 /*
 #[test]
 fn var_owned() {

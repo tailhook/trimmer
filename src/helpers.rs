@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use combine::{Parser, ConsumedResult, satisfy, skip_many};
-use combine::combinator::{SkipMany};
+use combine::combinator::{SkipMany, Or};
 use combine::primitives::{ParseError, Error, Info};
 
 use tokenizer::{TokenStream, Kind, Token};
@@ -20,11 +20,14 @@ pub fn kind<'x>(kind: Kind) -> TokenMatch<'x> {
     }
 }
 
-pub fn ws<'x>() -> SkipMany<TokenMatch<'x>> {
+pub fn ws<'x>() -> SkipMany<Or<TokenMatch<'x>, TokenMatch<'x>>> {
     skip_many(TokenMatch {
         kind: Kind::Whitespace,
         phantom: PhantomData,
-    })
+    }.or(TokenMatch {
+        kind: Kind::Comment,
+        phantom: PhantomData,
+    }))
 }
 
 impl<'a> Parser for TokenMatch<'a> {
