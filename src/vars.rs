@@ -9,7 +9,7 @@ pub type VarRef<'render> = OwningRef<Rc<Erased+'render>, Variable<'render>+'rend
 
 /// Variable reference returned from methods of Variable trait
 ///
-/// It can contain borrowed reference from curret variable or
+/// It can contain borrowed reference from current variable or
 /// owned (reference counted) box to another object
 // TODO(tailhook) maybe completely hide thing
 pub enum Var<'a, 'render: 'a> {
