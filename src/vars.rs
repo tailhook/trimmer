@@ -103,6 +103,15 @@ pub trait Variable<'render>: Debug {
     {
         Err(DataError::IterationUnsupported(self.typename()))
     }
+
+    /// Return iterator over pairs if appropriate
+    fn iterate_pairs<'x>(&'x self)
+        -> Result<Box<Iterator<Item=(Var<'x, 'render>, Var<'x, 'render>)>+'x>,
+                  DataError>
+        where 'render: 'x
+    {
+        Err(DataError::PairIterationUnsupported(self.typename()))
+    }
 }
 
 impl<'a> Variable<'a> for Undefined {

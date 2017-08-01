@@ -1,5 +1,5 @@
 use combine::{Parser as CombineParser, ParseResult};
-use combine::combinator::{position, parser, many};
+use combine::combinator::{position, parser, many, optional};
 
 use indent;
 use oneline;
@@ -82,6 +82,7 @@ pub enum StatementCode {
 #[derive(Debug, PartialEq)]
 pub enum AssignTarget {
     Var(String),
+    Pair(String, String),
 }
 
 #[derive(Debug, PartialEq)]
@@ -210,7 +211,23 @@ fn expression<'a>(input: TokenStream<'a>)
     .parse_stream(input)
 }
 
-fn assign_target<'a>(input: TokenStream<'a>)
+fn for_target<'a>(input: TokenStream<'a>)
+    -> ParseResult<AssignTarget, TokenStream<'a>>
+{
+    use tokenizer::Kind::*;
+    use helpers::*;
+
+    kind(Ident)
+    .skip(ws())
+    .and(optional(operator(",").skip(ws()).with(kind(Ident)).skip(ws())))
+    .map(|(a, b)| {
+        b.map(|b| AssignTarget::Pair(a.value.to_string(), b.value.to_string()))
+        .unwrap_or_else(|| AssignTarget::Var(a.value.to_string()))
+    })
+    .parse_stream(input)
+}
+
+fn let_target<'a>(input: TokenStream<'a>)
     -> ParseResult<AssignTarget, TokenStream<'a>>
 {
     use tokenizer::Kind::*;
@@ -257,8 +274,7 @@ fn for_stmt<'a>(input: TokenStream<'a>)
 
     st_start("for")
         .skip(ws())
-        .and(parser(assign_target))
-        .skip(ws())
+        .and(parser(for_target))
         .skip(keyword("in"))
         .skip(ws())
         .and(parser(top_level_expression))
@@ -287,7 +303,7 @@ fn let_stmt<'a>(input: TokenStream<'a>)
 
     st_start("let")
         .skip(ws())
-        .with(parser(assign_target))
+        .with(parser(let_target))
         .skip(ws())
         .skip(operator("="))
         .skip(ws())

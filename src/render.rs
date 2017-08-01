@@ -145,6 +145,8 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                         }).erase_owner();
                         set(root, name, value);
                     }
+                    // unsupported by grammar yet
+                    AssignTarget::Pair(..) => unreachable!(),
                 }
             }
             Cond { conditional: ref clist, .. } => {
@@ -184,7 +186,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                 let mut sub = root.sub();
                 write_block(r, &mut sub, &ostatements)?;
             }
-            Loop { .. } => {
+            Loop { target: AssignTarget::Var(_), .. } => {
                 let iterator = items.clone().map(|x| match x[idx].code {
                     Loop { ref iterator, .. } => iterator,
                     _ => unreachable!(),
@@ -232,6 +234,78 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                             Err(Ok(())) => break,
                         };
                         set(&mut sub, target.clone(), val);
+                    }
+                    write_block(r, &mut sub, &statements)?;
+                }
+            }
+            Loop { target: AssignTarget::Pair(..), .. } => {
+                let iterator = items.clone().map(|x| match x[idx].code {
+                    Loop { ref iterator, .. } => iterator,
+                    _ => unreachable!(),
+                });
+                let value = eval_expr(r, root, &iterator);
+                let mut iter = match value.iterate_pairs() {
+                    Ok(iter) => iter,
+                    Err(e) => {
+                        r.errors.push((iterator.position.0, e));
+                        // treating as empty loop
+                        continue 'outer;
+                    }
+                };
+
+                let statements = items.clone().map(|x| match x[idx].code {
+                    Loop { ref body, .. } => &body.statements[..],
+                    _ => unreachable!(),
+                });
+
+                let targ_a = items.clone().map(|x| match x[idx].code {
+                    Loop { target: AssignTarget::Pair(ref a, _), .. }
+                    => &a[..],
+                    _ => unreachable!(),
+                }).erase_owner();
+                let targ_b = items.clone().map(|x| match x[idx].code {
+                    Loop { target: AssignTarget::Pair(_, ref b), .. }
+                    => &b[..],
+                    _ => unreachable!(),
+                }).erase_owner();
+
+                loop {
+                    let mut sub = root.sub();
+                    {
+                        let (val_a, val_b) = match iter.next() {
+                            Some((var_a, var_b)) => {
+                                let val_a = match var_a {
+                                    Var::Ref(r) => {
+                                        value.clone()
+                                        // This transmute should be safe,
+                                        // because we only transmute lifetime
+                                        // and x and r have basically same
+                                        // lifetime because are both tied to
+                                        // the lifetime of `value` even if
+                                        // rust doesn't think so
+                                        .map(|_| unsafe { transmute(r) })
+                                    }
+                                    Var::Rc(r) => r,
+                                };
+                                let val_b = match var_b {
+                                    Var::Ref(r) => {
+                                        value.clone()
+                                        // This transmute should be safe,
+                                        // because we only transmute lifetime
+                                        // and x and r have basically same
+                                        // lifetime because are both tied to
+                                        // the lifetime of `value` even if
+                                        // rust doesn't think so
+                                        .map(|_| unsafe { transmute(r) })
+                                    }
+                                    Var::Rc(r) => r,
+                                };
+                                (val_a, val_b)
+                            }
+                            None => break,
+                        };
+                        set(&mut sub, targ_a.clone(), val_a);
+                        set(&mut sub, targ_b.clone(), val_b);
                     }
                     write_block(r, &mut sub, &statements)?;
                 }

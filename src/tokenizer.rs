@@ -1,4 +1,5 @@
 use std::fmt;
+use std::cmp::min;
 
 use regex::{Regex, RegexSet};
 use combine::{StreamOnce};
@@ -175,10 +176,15 @@ impl<'a> TokenStream<'a> {
         let cur = &self.buf[self.off..];
         match self.tok.line_set.matches(cur).into_iter().next() {
             None => {
-                Ok(Token {
-                    kind: Kind::Newline,
-                    value: "",
-                })
+                if cur.chars().all(|x| x.is_whitespace()) {
+                    Ok(Token {
+                        kind: Kind::Newline,
+                        value: "",
+                    })
+                } else {
+                    Err(Error::Unexpected(Info::Owned(
+                        cur[..min(8, cur.len())].into())))
+                }
             }
             Some(idx) => {
                 let m = self.tok.line_list[idx].0.find(cur).unwrap();
@@ -223,7 +229,7 @@ impl Tokenizer {
         let expr_common = &[
             (r"^[+-]?\}\}", ExprEnd),
             (r"^\{#", CommentStart),
-            (r"^(?:and|or|not|>=|<=|==|!=|=|\.\.|[.|:><%*/+-])", Operator),
+            (r"^(?:and|or|not|>=|<=|==|!=|=|\.\.|[.,|:><%*/+-])", Operator),
             (r"^[{}()\[\]]", Paren),
             ("^(?:for|in|endfor\
              |skip\
@@ -289,6 +295,6 @@ impl Tokenizer {
 
 impl<'a> fmt::Display for Token<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(&self.value, f)
+        write!(f, "{}[{:?}]", self.value, self.kind)
     }
 }

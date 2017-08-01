@@ -99,8 +99,21 @@ fn iteration() {
     let v = vec!["a", "b"];
     let mut c = Context::new();
     c.set("items", &v);
-    // TODO(tailhook) fix indentation
     assert_eq!(&t.render(&c).unwrap(), "  - a\n  - b\n");
+}
+
+#[test]
+fn pair_iteration() {
+    let t = parse("## syntax: indent\n\
+                   ## for k, v in items\n  {{ k }}: {{ v }}\n## endfor\n");
+    let mut v = HashMap::new();
+    v.insert("x", 1);
+    v.insert("y", 2);
+    let mut c = Context::new();
+    c.set("items", &v);
+    let result = t.render(&c).unwrap();
+    println!("Result:\n{}", result);
+    assert!(result == "x: 1\ny: 2\n" || result == "y: 2\nx: 1\n");
 }
 
 #[test]

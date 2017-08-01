@@ -46,10 +46,16 @@ quick_error! {
             description("can't treat object of this type as bool")
             display("can't treat object of type {} as bool", typename)
         }
-        /// The object can't be boolean
+        /// The object can't be iterated over
         IterationUnsupported(typename: &'static str) {
             description("can't iterate over the object")
             display("can't iterate over the object of type {}", typename)
+        }
+        /// The object can't be iterated over by pairs
+        PairIterationUnsupported(typename: &'static str) {
+            description("can't iterate over the object by pairs")
+            display("can't iterate over the object by pairs of type {}",
+                    typename)
         }
         /// Variable or attribute not found
         VariableNotFound(name: String) {
