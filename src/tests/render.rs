@@ -26,6 +26,18 @@ fn hello() {
                "hello");
 }
 
+#[test]
+fn escape() {
+    let t = parse("{{ '{{' }}");
+    assert_eq!(&t.render(&Context::new()).unwrap(), "{{");
+}
+
+#[test]
+fn number() {
+    let t = parse("{{ 42 }}");
+    assert_eq!(&t.render(&Context::new()).unwrap(), "42");
+}
+
 /*
 #[test]
 fn var_owned() {

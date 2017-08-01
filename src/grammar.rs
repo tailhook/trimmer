@@ -147,7 +147,11 @@ fn atom<'a>(input: TokenStream<'a>)
 
     let expr =
         kind(Ident).map(|t| Var(t.value.into()))
-        .or(kind(String).map(|t| Str(parse_str(t.value))));
+        .or(kind(String).map(|t| Str(parse_str(t.value))))
+        .or(kind(Number).map(|t| {
+            t.value.parse().map(Int)
+                    .unwrap_or_else(|_| Float(t.value.parse().unwrap()))
+        }));
     (position(), expr, position())
     .map(|(s, c, e)| Expr {
         position: (s, e),

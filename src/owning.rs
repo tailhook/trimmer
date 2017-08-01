@@ -16,8 +16,8 @@ type Owned<T> = OwningRef<Rc<Arc<Tpl>>, T>;
 #[allow(dead_code)] // TODO(tailhook)
 pub enum ExprCode {
     Str(Owned<String>),
-    Int(i64),
-    Float(f64),
+    Int(Owned<i64>),
+    Float(Owned<f64>),
     Var(Owned<str>),
     Attr(Owned<Expr>, Owned<String>),
     Item(Owned<Expr>, Owned<Expr>),
@@ -95,8 +95,8 @@ impl Own for OwningRef<Rc<Arc<Tpl>>, grammar::ExprCode> {
         use owning::ExprCode as O;
         match **self {
             I::Str(_) => O::Str(omap!(self, I::Str(ref x))),
-            I::Int(v) => O::Int(v),
-            I::Float(v) => O::Float(v),
+            I::Int(_) => O::Int(omap!(self, I::Int(ref x))),
+            I::Float(_) => O::Float(omap!(self, I::Float(ref x))),
             I::Var(_) => O::Var(omap!(self, I::Var(ref x) => &**x)),
             I::Attr(_, _) => O::Attr(
                 omap!(self, I::Attr(ref x, _) => &**x),

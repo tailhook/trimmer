@@ -51,6 +51,81 @@ impl<'x> Variable<'x> for u16 {
     }
 }
 
+impl<'x> Variable<'x> for i16 {
+    fn typename(&self) -> &'static str {
+        "i16"
+    }
+    fn as_int_key(&self) -> Result<usize, DataError> {
+        Ok(*self as usize)
+    }
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(self)
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(*self != 0)
+    }
+}
+
+impl<'x> Variable<'x> for i32 {
+    fn typename(&self) -> &'static str {
+        "i32"
+    }
+    fn as_int_key(&self) -> Result<usize, DataError> {
+        Ok(*self as usize)
+    }
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(self)
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(*self != 0)
+    }
+}
+
+impl<'x> Variable<'x> for i64 {
+    fn typename(&self) -> &'static str {
+        "i64"
+    }
+    fn as_int_key(&self) -> Result<usize, DataError> {
+        Ok(*self as usize)
+    }
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(self)
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(*self != 0)
+    }
+}
+
+impl<'x> Variable<'x> for f32 {
+    fn typename(&self) -> &'static str {
+        "f64"
+    }
+    fn as_int_key(&self) -> Result<usize, DataError> {
+        Ok(*self as usize)
+    }
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(self)
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(*self != 0.0)
+    }
+}
+
+impl<'x> Variable<'x> for f64 {
+    fn typename(&self) -> &'static str {
+        "f64"
+    }
+    fn as_int_key(&self) -> Result<usize, DataError> {
+        Ok(*self as usize)
+    }
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(self)
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(*self != 0.0)
+    }
+}
+
 impl<'render, V> Variable<'render> for HashMap<String, V>
     where V: Variable<'render> + 'render
 {

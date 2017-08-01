@@ -105,6 +105,12 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
                 Err(v) => v,
             }
         }
+        ExprCode::Int(ref val) => {
+            val.clone().map(|x| x as &Variable).erase_owner()
+        }
+        ExprCode::Float(ref val) => {
+            val.clone().map(|x| x as &Variable).erase_owner()
+        }
         _ => unimplemented!(),
     }
 }
