@@ -2,7 +2,7 @@
 Trimmer
 =======
 
-:Status: PoC
+:Status: Alpha
 :Documentation: http://tailhook.github.io/trimmer/
 
 Yet anoter template engine for Rust. Features:
