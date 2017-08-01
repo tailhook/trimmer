@@ -33,7 +33,7 @@ impl Template {
             errors: Vec::new(),
             nothing: Rc::new(()),
         };
-        render(&mut rnd, &mut root.sub(),
+        render(&mut rnd, &mut SubContext::from(root),
             &OwningRef::new(Rc::new(self.0.clone())).map(|x| &**x))?;
         if rnd.errors.len() != 0 {
             return Err(RenderError::Data(rnd.errors));

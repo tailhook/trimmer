@@ -39,18 +39,18 @@ impl<'render> Context<'render> {
     {
         self.vars.insert(name, var);
     }
-    /// Create a new context by deriving (borrowing) this context
-    ///
-    /// Variables can be overriden in the new context
-    pub fn sub<'x>(&'x self) -> SubContext<'x, 'render> {
-        SubContext {
-            parent: Parent::Root(self),
-            local: HashMap::new()
-        }
-    }
 }
 
 impl<'a, 'render: 'a> SubContext<'a, 'render> {
+    /// Create a new context by deriving (borrowing) this context
+    ///
+    /// Variables can be overriden in the new context
+    pub fn from<'x>(parent: &'x Context<'render>) -> SubContext<'x, 'render> {
+        SubContext {
+            parent: Parent::Root(parent),
+            local: HashMap::new()
+        }
+    }
     /// Create a new context by deriving (borrowing) this context
     ///
     /// Variables can be overriden in the new context
