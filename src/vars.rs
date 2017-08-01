@@ -22,8 +22,12 @@ pub enum Var<'a, 'render: 'a> {
 #[derive(Debug)]
 pub struct Undefined;
 
+#[derive(Debug)]
+pub struct Empty;
+
 pub const UNDEFINED: &'static Undefined = &Undefined;
-pub const EMPTY: &'static &'static str = &"";
+pub const EMPTY_STR: &'static &'static str = &"";
+pub const EMPTY: &'static Empty = &Empty;
 
 /// A trait that you need to implement to put variable into the rendering
 /// context
@@ -115,10 +119,22 @@ impl<'a> Variable<'a> for Undefined {
         Ok(Var::undefined())
     }
     fn output(&self) -> Result<&Display, DataError> {
-        Ok(EMPTY)
+        Ok(EMPTY_STR)
     }
     fn typename(&self) -> &'static str {
         "undefined"
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(false)
+    }
+}
+
+impl<'a> Variable<'a> for Empty {
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(EMPTY_STR)
+    }
+    fn typename(&self) -> &'static str {
+        "str"
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(false)
@@ -154,10 +170,8 @@ impl<'a, 'render> Var<'a, 'render> {
     pub fn undefined<'x, 'y: 'x>() -> Var<'x, 'y> {
         Var::Ref(UNDEFINED)
     }
-    /*
     /// Create a variable that contains an empty string
     pub fn empty<'x, 'y: 'x>() -> Var<'x, 'y> {
         Var::Ref(EMPTY)
     }
-    */
 }

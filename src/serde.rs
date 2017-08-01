@@ -3,7 +3,7 @@ use std::usize;
 
 use serde_json::Value;
 
-use vars::{EMPTY, Var};
+use vars::{EMPTY_STR, Var};
 use {DataError, Variable};
 
 pub const TRUE: &'static &'static str = &"true";
@@ -65,7 +65,7 @@ impl<'render> Variable<'render> for Value {
     fn output(&self) -> Result<&Display, DataError> {
         use serde_json::Value::*;
         match *self {
-            Null => Ok(EMPTY),
+            Null => Ok(EMPTY_STR),
             Bool(x) => if x { Ok(TRUE) } else { Ok(FALSE) },
             I64(ref x) => Ok(x),
             U64(ref x) => Ok(x),
