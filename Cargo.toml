@@ -1,7 +1,7 @@
 [package]
 name = "trimmer"
 description = """
-    A whitespace and memory friendly template engine
+    A whitespace- and memory-friendly template engine
 """
 license = "MIT/Apache-2.0"
 readme = "README.rst"
