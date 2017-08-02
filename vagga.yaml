@@ -1,5 +1,11 @@
 commands:
 
+  run: !Command
+    description: Run command-line template renderer
+    container: ubuntu
+    prerequisites: [make]
+    run: [./target/debug/trimmer]
+
   doc: !Command
     description: Build documentation
     container: doc
