@@ -3,7 +3,12 @@ Trimmer
 =======
 
 :Status: Alpha
-:Documentation: http://tailhook.github.io/trimmer/
+
+Reference_ | `API Docs`_ | Crate_
+
+.. _api docs: https://docs.rs/trimmer/
+.. _reference: https://trimmer.readthedocs.io/
+.. _crate: https://crates.io/crates/trimmer
 
 Yet anoter template engine for Rust. Features:
 
