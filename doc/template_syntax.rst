@@ -68,3 +68,34 @@ Here are the list of supported syntaxes:
       as is with all whitespace. Statements always occupy the whole line
       including indentation whitespace and trailing end of line.
 
+
+If Statement
+============
+
+Conditional statement looks like::
+
+    ## if something
+        output something
+    ## endif
+
+In any case lines containing ``## if`` and ``## endif`` do not put into output.
+In ``indent`` syntax the inner indentation of the block is also stripped.
+
+
+For Statement
+=============
+
+There are two forms of loop statements, for iterating over sequences:
+
+    ## for var in value
+        output something
+    ## endfor
+
+And for iterating over dictionaries
+
+    ## for key, value in var
+        {{ key }} = {{ value }}
+    ## endfor
+
+In any case lines containing ``## for`` and ``## endfor`` do not put into
+output.  In ``indent`` syntax the inner indentation of the block is also stripped.
