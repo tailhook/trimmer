@@ -8,7 +8,7 @@ readme = "README.rst"
 keywords = ["template", "render", "whitespace"]
 homepage = "http://github.com/tailhook/trimmer"
 documentation = "http://trimmer.readthedocs.io"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["paul@colomiets.name"]
 
 [dependencies]
