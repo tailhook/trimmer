@@ -28,3 +28,6 @@ default = ["serde"]
 serde = ["serde_json"]
 
 
+[[bin]]
+name = "trimmer"
+doc = false
