@@ -16,6 +16,7 @@ mod indent;
 mod oneline;
 mod optimize;
 mod options;
+mod output;
 mod owning;
 mod parse_error;
 mod position;
@@ -68,3 +69,10 @@ pub struct Options {
 /// It can contain borrowed reference from current variable or
 /// owned (reference counted) box to another object
 pub struct Var<'a, 'render: 'a>(Val<'a, 'render>);
+
+
+/// A value returned from `Variable::output`
+///
+/// Usually it should borrow some displayable value, but may also
+/// contain an boxed thing.
+pub struct Output<'x>(output::OutImpl<'x>);

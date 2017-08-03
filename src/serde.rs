@@ -1,11 +1,9 @@
-use std::fmt::Display;
 use std::iter::empty;
 use std::usize;
 
 use serde_json::Value;
 
-use vars::{EMPTY_STR};
-use {DataError, Variable, Var, Context, Template, RenderError, Pos};
+use {DataError, Variable, Var, Context, Template, RenderError, Pos, Output};
 
 pub const TRUE: &'static &'static str = &"true";
 pub const FALSE: &'static &'static str = &"false";
@@ -63,13 +61,13 @@ impl<'render> Variable<'render> for Value {
             _ => Err(DataError::IntKeyUnsupported(self.typename())),
         }
     }
-    fn output(&self) -> Result<&Display, DataError> {
+    fn output(&self) -> Result<Output, DataError> {
         use serde_json::Value::*;
         match *self {
-            Null => Ok(EMPTY_STR),
-            Bool(x) => if x { Ok(TRUE) } else { Ok(FALSE) },
-            Number(ref x) => Ok(x),
-            String(ref s) => Ok(s),
+            Null => Ok(Output::empty()),
+            Bool(x) => if x { Ok(TRUE.into()) } else { Ok(FALSE.into()) },
+            Number(ref x) => Ok(x.into()),
+            String(ref s) => Ok(s.into()),
             Array(_) => Err(DataError::OutputUnsupported(self.typename())),
             Object(_) => Err(DataError::OutputUnsupported(self.typename())),
         }

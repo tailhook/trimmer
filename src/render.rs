@@ -221,7 +221,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                 });
                 let var = &eval_expr(r, root, &e);
                 write!(&mut r.buf, "{}",
-                    var.output().unwrap_or(&""))?;
+                    var.output().unwrap_or(::Output::empty()).0)?;
                 r.frozen = r.buf.len();
                 r.tail_mode = end_ws;
             }

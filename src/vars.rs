@@ -1,10 +1,10 @@
 use std::rc::Rc;
-use std::fmt::{Display, Debug};
+use std::fmt::{Debug};
 use std::iter::empty;
 
 use render_error::DataError;
 use owning_ref::{OwningRef, Erased};
-use {Var};
+use {Var, Output};
 
 pub type VarRef<'render> = OwningRef<Rc<Erased+'render>,
                                      Variable<'render>+'render>;
@@ -22,7 +22,6 @@ pub struct Undefined;
 pub struct Empty;
 
 pub const UNDEFINED: &'static Undefined = &Undefined;
-pub const EMPTY_STR: &'static &'static str = &"";
 pub const EMPTY: &'static Empty = &Empty;
 pub const TRUE: &'static bool = &true;
 pub const FALSE: &'static bool = &false;
@@ -61,7 +60,7 @@ pub trait Variable<'render>: Debug {
     /// Evaluates `{{ x }}`
     ///
     /// This operation may not be useful for array-, and mapping-like values
-    fn output(&self) -> Result<&Display, DataError> {
+    fn output(&self) -> Result<Output, DataError> {
         Err(DataError::OutputUnsupported(self.typename()))
     }
     /// Returns type name to use in error messages
@@ -125,8 +124,8 @@ impl<'a> Variable<'a> for Undefined {
     {
         Ok(Var::undefined())
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(EMPTY_STR)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(Output::empty())
     }
     fn typename(&self) -> &'static str {
         "undefined"
@@ -150,8 +149,8 @@ impl<'a> Variable<'a> for Undefined {
 }
 
 impl<'a> Variable<'a> for Empty {
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(EMPTY_STR)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(Output::empty())
     }
     fn typename(&self) -> &'static str {
         "str"

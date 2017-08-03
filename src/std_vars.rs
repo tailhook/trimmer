@@ -1,10 +1,9 @@
-use std::fmt::Display;
 use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
 use std::collections::HashMap;
 
 use render_error::DataError;
 use vars::{Variable};
-use {Var};
+use {Var, Output};
 
 const TRUE: &&str = &"true";
 const FALSE: &&str = &"false";
@@ -14,8 +13,8 @@ impl<'a, 'render: 'a> Variable<'render> for &'a str {
     fn typename(&self) -> &'static str {
         "str"
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(self.into())
     }
     fn as_str_key(&self) -> Result<&str, DataError> {
         Ok(self)
@@ -32,8 +31,8 @@ impl<'x> Variable<'x> for String {
     fn as_str_key(&self) -> Result<&str, DataError> {
         Ok(&self[..])
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(self.into())
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(self.len() > 0)
@@ -44,8 +43,8 @@ impl<'x> Variable<'x> for IpAddr {
     fn typename(&self) -> &'static str {
         "IpAddr"
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(self.into())
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(true)
@@ -56,8 +55,8 @@ impl<'x> Variable<'x> for Ipv4Addr {
     fn typename(&self) -> &'static str {
         "Ipv4Addr"
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(self.into())
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(true)
@@ -68,8 +67,8 @@ impl<'x> Variable<'x> for Ipv6Addr {
     fn typename(&self) -> &'static str {
         "Ipv4Addr"
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(self.into())
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(true)
@@ -80,8 +79,8 @@ impl<'x> Variable<'x> for SocketAddr {
     fn typename(&self) -> &'static str {
         "IpAddr"
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(self.into())
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(true)
@@ -92,8 +91,11 @@ impl<'x> Variable<'x> for Option<&'x str> {
     fn typename(&self) -> &'static str {
         "Option<str>"
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self.as_ref().unwrap())
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(match self.as_ref() {
+            Some(x) => x.into(),
+            None => Output::empty(),
+        })
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(true)
@@ -107,8 +109,8 @@ impl<'x> Variable<'x> for u16 {
     fn as_int_key(&self) -> Result<usize, DataError> {
         Ok(*self as usize)
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(self.into())
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(*self != 0)
@@ -122,8 +124,8 @@ impl<'x> Variable<'x> for i16 {
     fn as_int_key(&self) -> Result<usize, DataError> {
         Ok(*self as usize)
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(self.into())
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(*self != 0)
@@ -137,8 +139,8 @@ impl<'x> Variable<'x> for i32 {
     fn as_int_key(&self) -> Result<usize, DataError> {
         Ok(*self as usize)
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(self.into())
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(*self != 0)
@@ -152,8 +154,8 @@ impl<'x> Variable<'x> for i64 {
     fn as_int_key(&self) -> Result<usize, DataError> {
         Ok(*self as usize)
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(self.into())
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(*self != 0)
@@ -167,8 +169,8 @@ impl<'x> Variable<'x> for f32 {
     fn as_int_key(&self) -> Result<usize, DataError> {
         Ok(*self as usize)
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(self.into())
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(*self != 0.0)
@@ -182,8 +184,8 @@ impl<'x> Variable<'x> for f64 {
     fn as_int_key(&self) -> Result<usize, DataError> {
         Ok(*self as usize)
     }
-    fn output(&self) -> Result<&Display, DataError> {
-        Ok(self)
+    fn output(&self) -> Result<Output, DataError> {
+        Ok(self.into())
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(*self != 0.0)
@@ -281,10 +283,10 @@ impl<'x> Variable<'x> for bool {
     fn typename(&self) -> &'static str {
         "bool"
     }
-    fn output(&self) -> Result<&Display, DataError> {
+    fn output(&self) -> Result<Output, DataError> {
         Ok(match *self {
-            true => TRUE,
-            false => FALSE,
+            true => TRUE.into(),
+            false => FALSE.into(),
         })
     }
     fn as_bool(&self) -> Result<bool, DataError> {
