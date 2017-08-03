@@ -255,16 +255,19 @@ fn if_stmt<'a>(input: TokenStream<'a>)
         .skip(ws())
         .skip(kind(Newline))
     .and(parser(body))
+    .and(optional(
+        st_start("else").skip(ws()).skip(kind(Newline))
+        .with(parser(body))))
     .skip(st_start("endif")).skip(ws()).skip(kind(Newline))
-    .map(|((if_token, condition), block)| {
+    .map(|(((if_token, condition), block), else_block)| {
         Cond {
             indent: if_token.value.len() - if_token.value.trim_left().len(),
             conditional: vec![
                 (condition, block),
             ],
-            otherwise: Body {
+            otherwise: else_block.unwrap_or_else(|| Body {
                 statements: Vec::new(),
-            }
+            }),
         }
     })
     .parse_stream(input)
