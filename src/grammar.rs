@@ -197,10 +197,36 @@ fn attr<'a>(input: TokenStream<'a>)
     })
     .parse_stream(input)
 }
+
+fn unary<'a>(input: TokenStream<'a>)
+    -> ParseResult<Expr, TokenStream<'a>>
+{
+    use helpers::{operator, ws};
+    use self::ExprCode::*;
+
+    let expr = optional(operator("not").skip(ws())).and(parser(attr));
+
+    (position(), expr, position())
+    .map(|(s, (op, attr), e)| {
+        if let Some(op) = op {
+            Expr {
+                position: (s, e),
+                code: match op.value {
+                    "not" => Not(Box::new(attr)),
+                    _ => unreachable!(),
+                },
+            }
+        } else {
+            attr
+        }
+    })
+    .parse_stream(input)
+}
+
 fn top_level_expression<'a>(input: TokenStream<'a>)
     -> ParseResult<Expr, TokenStream<'a>>
 {
-    attr(input)
+    unary(input)
 }
 
 fn expression<'a>(input: TokenStream<'a>)

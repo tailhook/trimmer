@@ -131,6 +131,30 @@ fn cond_else() {
 }
 
 #[test]
+fn cond_not() {
+    let t = parse("## if not x\n  y\n## else\n  z\n## endif\n");
+    let empty = "";
+    let x = "x";
+    let mut c = Context::new();
+    c.set("x", &empty);
+    assert_eq!(&t.render(&c).unwrap(), "  y\n");
+    c.set("x", &x);
+    assert_eq!(&t.render(&c).unwrap(), "  z\n");
+}
+
+#[test]
+fn print_not() {
+    let t = parse("{{ not x }}");
+    let empty = "";
+    let x = "x";
+    let mut c = Context::new();
+    c.set("x", &empty);
+    assert_eq!(&t.render(&c).unwrap(), "true");
+    c.set("x", &x);
+    assert_eq!(&t.render(&c).unwrap(), "false");
+}
+
+#[test]
 fn cond_elif() {
     let t = parse("## if x\n  y\n## elif 1\n  z\n## endif\n");
     let empty = "";

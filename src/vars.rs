@@ -24,6 +24,8 @@ pub struct Empty;
 pub const UNDEFINED: &'static Undefined = &Undefined;
 pub const EMPTY_STR: &'static &'static str = &"";
 pub const EMPTY: &'static Empty = &Empty;
+pub const TRUE: &'static bool = &true;
+pub const FALSE: &'static bool = &false;
 
 /// A trait that you need to implement to put variable into the rendering
 /// context
@@ -190,6 +192,14 @@ impl<'a, 'render> Var<'a, 'render> {
     }
     /// Create a variable that contains an empty string
     pub fn empty<'x, 'y: 'x>() -> Var<'x, 'y> {
+        Var(Val::Ref(EMPTY))
+    }
+    /// Create a variable that boolean true
+    pub fn bool_true<'x, 'y: 'x>() -> Var<'x, 'y> {
+        Var(Val::Ref(EMPTY))
+    }
+    /// Create a variable that boolean false
+    pub fn bool_false<'x, 'y: 'x>() -> Var<'x, 'y> {
         Var(Val::Ref(EMPTY))
     }
 }

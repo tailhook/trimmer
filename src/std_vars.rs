@@ -5,6 +5,9 @@ use render_error::DataError;
 use vars::{Variable};
 use {Var};
 
+const TRUE: &&str = &"true";
+const FALSE: &&str = &"false";
+
 
 impl<'a, 'render: 'a> Variable<'render> for &'a str {
     fn typename(&self) -> &'static str {
@@ -210,5 +213,20 @@ impl<'a, 'render, T: Variable<'render> + 'render> Variable<'render> for Vec<T> {
         self.get(index.as_int_key()?)
         .map(|x| Var::borrow(x))
         .ok_or(DataError::IndexNotFound)
+    }
+}
+
+impl<'x> Variable<'x> for bool {
+    fn typename(&self) -> &'static str {
+        "bool"
+    }
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(match *self {
+            true => TRUE,
+            false => FALSE,
+        })
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(*self)
     }
 }

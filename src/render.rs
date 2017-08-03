@@ -8,7 +8,7 @@ use owning_ref::{OwningRef, Erased};
 use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
 use owning::{Own, ExprCode};
 use render_error::{RenderError, DataError};
-use vars::{UNDEFINED, Val, VarRef};
+use vars::{UNDEFINED, TRUE, FALSE, Val, VarRef};
 use varmap::{Context, SubContext, set, get};
 use {Pos, Variable, Var};
 
@@ -111,6 +111,24 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
         ExprCode::Float(ref val) => {
             val.clone().map(|x| x as &Variable).erase_owner()
         }
+        ExprCode::Not(ref v) => {
+            let value = eval_expr(r, root, v);
+            match value.as_bool() {
+                Ok(true) => {
+                    OwningRef::new(nothing(&r.nothing, root))
+                        .map(|_| FALSE as &Variable)
+                }
+                Ok(false) => {
+                    OwningRef::new(nothing(&r.nothing, root))
+                        .map(|_| TRUE as &Variable)
+                }
+                Err(e) => {
+                    r.errors.push((expr.position.0, e));
+                    OwningRef::new(nothing(&r.nothing, root))
+                        .map(|_| UNDEFINED as &Variable)
+                }
+            }
+        },
         _ => unimplemented!(),
     }
 }
