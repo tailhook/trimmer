@@ -1,8 +1,9 @@
-use {Parser, Context};
-use render::extract;
 
 #[cfg(feature="serde")]
 fn render_json(template: &str, value: &str) -> String {
+    use {Parser, Context};
+    use render::extract;
+
     use serde_json;
     let tpl = Parser::new().parse(template).unwrap();
     println!("Template {:#?}", extract(tpl));

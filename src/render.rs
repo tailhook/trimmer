@@ -1,4 +1,5 @@
 use std::fmt::{self, Write};
+use std::cmp::min;
 use std::mem::transmute;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -6,6 +7,7 @@ use std::sync::Arc;
 use owning_ref::{OwningRef, Erased};
 
 use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
+use grammar::OutputMode::{self, Preserve, Strip, Space};
 use owning::{Own, ExprCode};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED, TRUE, FALSE, Val, VarRef};
@@ -19,6 +21,8 @@ pub struct Template(Arc<Tpl>);
 
 struct Renderer {
     buf: String,
+    frozen: usize,
+    tail_mode: OutputMode,
     errors: Vec<(Pos, DataError)>,
     nothing: Rc<()>,
 }
@@ -32,6 +36,8 @@ impl Template {
             buf: String::new(),
             errors: Vec::new(),
             nothing: Rc::new(()),
+            tail_mode: Preserve,
+            frozen: 0,
         };
         render(&mut rnd, &mut SubContext::from(root),
             &OwningRef::new(Rc::new(self.0.clone())).map(|x| &**x))?;
@@ -142,17 +148,59 @@ fn write_block<'x, 'render>(r: &mut Renderer,
 
     'outer: for (idx, item) in items.iter().enumerate() {
         match item.code {
-            OutputRaw(ref x) => {
-                r.buf.push_str(x);
+            OutputRaw(ref text) => {
+                r.tail_mode = match r.tail_mode {
+                    Preserve => {
+                        r.buf.push_str(text);
+                        Preserve
+                    }
+                    Strip => {
+                        let off = r.frozen;
+                        r.buf.truncate(off);
+                        let s = text.trim_left();
+                        if s.len() > 0 {
+                            r.buf.push_str(s);
+                            Preserve
+                        } else {
+                            Strip
+                        }
+                    }
+                    Space => {
+                        let off = r.frozen;
+                        r.buf.truncate(off);
+                        let s = text.trim_left();
+                        if s.len() > 0 {
+                            r.buf.push(' ');
+                            r.buf.push_str(s);
+                            Preserve
+                        } else {
+                            Space
+                        }
+                    }
+                }
             }
-            Output(_) => {
+            Output(start_ws, _, end_ws) => {
+                match min(start_ws, r.tail_mode) {
+                    Preserve => {},
+                    Strip => {
+                        let off = r.frozen;
+                        r.buf.truncate(off);
+                    }
+                    Space => {
+                        let off = r.frozen;
+                        r.buf.truncate(off);
+                        r.buf.push(' ');
+                    }
+                }
                 let e = items.clone().map(|x| match x[idx].code {
-                    Output(ref e) => e,
+                    Output(_, ref e, _) => e,
                     _ => unreachable!(),
                 });
                 let var = &eval_expr(r, root, &e);
                 write!(&mut r.buf, "{}",
                     var.output().unwrap_or(&""))?;
+                r.frozen = r.buf.len();
+                r.tail_mode = end_ws;
             }
             Alias { ref target, .. } => {
                 let expr = items.clone().map(|x| match x[idx].code {

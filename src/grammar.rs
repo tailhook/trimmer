@@ -57,10 +57,17 @@ pub struct Body {
     pub statements: Vec<Statement>,
 }
 
+#[derive(Debug, PartialEq, Clone, Copy, PartialOrd, Ord, Eq)]
+pub enum OutputMode {
+    Strip,
+    Space,
+    Preserve,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum StatementCode {
     OutputRaw(String),
-    Output(Expr),
+    Output(OutputMode, Expr, OutputMode),
     Cond {
         indent: usize,
         conditional: Vec<(Expr, Body)>,
@@ -230,14 +237,19 @@ fn top_level_expression<'a>(input: TokenStream<'a>)
 }
 
 fn expression<'a>(input: TokenStream<'a>)
-    -> ParseResult<Expr, TokenStream<'a>>
+    -> ParseResult<StatementCode, TokenStream<'a>>
 {
     use tokenizer::Kind::*;
     use helpers::*;
 
-    kind(ExprStart).and(ws())
-        .with(parser(top_level_expression))
-        .skip(ws()).skip(kind(ExprEnd))
+    kind(ExprStart).skip(ws())
+        .and(parser(top_level_expression))
+        .skip(ws()).and(kind(ExprEnd))
+    .map(|((start, expr), end)| {
+        let start = OutputMode::start(&start);
+        let end = OutputMode::end(&end);
+        StatementCode::Output(start, expr, end)
+    })
     .parse_stream(input)
 }
 
@@ -373,7 +385,7 @@ fn statement<'a>(input: TokenStream<'a>)
 
     let statements =
         kind(Raw).map(|tok| OutputRaw(tok.value.to_string()))
-        .or(parser(expression).map(Output))
+        .or(parser(expression))
         .or(parser(block))
         // Whitespace out of any blocks is output as is
         .or(kind(Whitespace).map(|tok| OutputRaw(tok.value.to_string())))
@@ -396,6 +408,27 @@ fn body<'a>(input: TokenStream<'a>)
             statements: x,
         }
     }).parse_stream(input)
+}
+
+impl OutputMode {
+    fn start(tok: &Token) -> OutputMode {
+        if tok.value.ends_with("+") {
+            OutputMode::Space
+        } else if tok.value.ends_with("-") {
+            OutputMode::Strip
+        } else {
+            OutputMode::Preserve
+        }
+    }
+    fn end(tok: &Token) -> OutputMode {
+        if tok.value.starts_with("+") {
+            OutputMode::Space
+        } else if tok.value.starts_with("-") {
+            OutputMode::Strip
+        } else {
+            OutputMode::Preserve
+        }
+    }
 }
 
 impl Parser {

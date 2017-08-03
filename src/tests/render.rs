@@ -19,6 +19,14 @@ fn render_json(template: &str, value: &str) -> String {
     tpl.render(&vars).unwrap()
 }
 
+fn render_x(template: &str) -> String {
+    let tpl = Parser::new().parse(template).unwrap();
+    let x = "x";
+    let mut vars: Context = Context::new();
+    vars.set("x", &x);
+    tpl.render(&vars).unwrap()
+}
+
 #[test]
 fn hello() {
     let t = parse("hello");
@@ -226,4 +234,49 @@ fn iterations() {
 - a: 2
 - b: x+73
 ");
+}
+
+#[test]
+fn strip_right() {
+    assert_eq!(render_x(r#"{{ x }}   {{- x }}"#), "xx");
+}
+
+#[test]
+fn strip_left() {
+    assert_eq!(render_x(r#"{{ x }}     {{- x }}"#), "xx");
+}
+
+#[test]
+fn strip_both() {
+    assert_eq!(render_x(r#"{{ x -}}   {{- x }}"#), "xx");
+}
+
+#[test]
+fn space_left() {
+    assert_eq!(render_x(r#"{{ x +}}   {{ x }}"#), "x x");
+}
+
+#[test]
+fn space_right() {
+    assert_eq!(render_x(r#"{{ x }}  {{+ x }}"#), "x x");
+}
+
+#[test]
+fn space_both() {
+    assert_eq!(render_x(r#"{{ x }}  {{+ x }}"#), "x x");
+}
+
+#[test]
+fn space_and_strip1() {
+    assert_eq!(render_x(r#"{{ x -}}  {{+ x }}"#), "xx");
+}
+
+#[test]
+fn space_and_strip2() {
+    assert_eq!(render_x(r#"{{ x +}}  {{- x }}"#), "xx");
+}
+
+#[test]
+fn preserve_manually() {
+    assert_eq!(render_x(r#"{{ x -}}  {{ "" }}  {{ " " }} {{- x }}"#), "x   x");
 }

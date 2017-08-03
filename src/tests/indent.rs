@@ -3,7 +3,7 @@ use tests::assert_eq;
 use render::extract;
 use grammar::StatementCode::*;
 use grammar::{Parser, Statement};
-use {Pos, Context};
+use Pos;
 
 fn parse(data: &'static str) -> Vec<Statement> {
     extract(Parser::new().parse(data).unwrap()).body.statements
@@ -12,6 +12,8 @@ fn parse(data: &'static str) -> Vec<Statement> {
 #[cfg(feature="serde")]
 fn render_json(template: &str, value: &str) -> String {
     use serde_json;
+    use {Context};
+
     let tpl = Parser::new()
         .parse(&format!("## syntax: indent\n{}", template)).unwrap();
     let json = serde_json::from_str::<serde_json::Value>(value).unwrap();

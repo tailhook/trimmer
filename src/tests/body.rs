@@ -2,6 +2,7 @@ use tests::assert_eq;
 
 use render::extract;
 use grammar::ExprCode::*;
+use grammar::OutputMode::*;
 use grammar::StatementCode::*;
 use grammar::{Parser, Statement, Expr, Body};
 use {Pos};
@@ -50,10 +51,10 @@ fn var() {
         },
         Statement {
             position: line(1, 2, 9),
-            code: Output(Expr {
+            code: Output(Preserve, Expr {
                 position: line(1, 5, 6),
                 code: Var(String::from("x")),
-            }),
+            }, Preserve),
         },
         Statement {
             position: line(1, 9, 10),
@@ -161,10 +162,10 @@ fn iteration() {
                         Statement {
                             position: line(3, 5, 12),
                             // TODO(tailhook) no indent
-                            code: Output(Expr {
+                            code: Output(Preserve, Expr {
                                 position: line(3, 8, 9),
                                 code: Var("x".into()),
-                            }),
+                            }, Preserve),
                         },
                         Statement {
                             position: lines(3, 12, 4, 1),
