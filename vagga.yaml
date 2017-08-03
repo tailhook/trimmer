@@ -18,6 +18,7 @@ commands:
   cargo: !Command
     description: Run any cargo command
     container: ubuntu
+    symlink-name: cargo
     run: [cargo]
 
   make: !Command
