@@ -55,9 +55,9 @@ impl<'render> Variable<'render> for Value {
     fn as_int_key(&self) -> Result<usize, DataError> {
         use serde_json::Value::*;
         match *self {
-            I64(val) if val >= 0 && val as u64 <= usize::MAX as u64
-            => Ok(val as usize),
-            U64(val) if val <= usize::MAX as u64 => Ok(val as usize),
+            Number(ref val)
+            if val.as_u64() .map(|x| x <= usize::MAX as u64).unwrap_or(false)
+            => Ok(val.as_u64().unwrap() as usize),
             // TODO(tailhook) try use float too
             // TODO(tailhook) show out of range int error
             _ => Err(DataError::IntKeyUnsupported(self.typename())),
@@ -68,9 +68,7 @@ impl<'render> Variable<'render> for Value {
         match *self {
             Null => Ok(EMPTY_STR),
             Bool(x) => if x { Ok(TRUE) } else { Ok(FALSE) },
-            I64(ref x) => Ok(x),
-            U64(ref x) => Ok(x),
-            F64(ref x) => Ok(x),
+            Number(ref x) => Ok(x),
             String(ref s) => Ok(s),
             Array(_) => Err(DataError::OutputUnsupported(self.typename())),
             Object(_) => Err(DataError::OutputUnsupported(self.typename())),
@@ -81,9 +79,7 @@ impl<'render> Variable<'render> for Value {
         match *self {
             Null => "null",
             Bool(_) => "bool",
-            I64(_) => "number",
-            U64(_) => "number",
-            F64(_) => "number",
+            Number(_) => "number",
             String(_) => "string",
             Array(_) => "array",
             Object(_) => "object",
@@ -94,9 +90,7 @@ impl<'render> Variable<'render> for Value {
         match *self {
             Null => Ok(false),
             Bool(x) => Ok(x),
-            I64(x) => Ok(x != 0),
-            U64(x) => Ok(x != 0),
-            F64(x) => Ok(x != 0.),
+            Number(ref x) => Ok(x.as_u64().map(|x| x != 0).unwrap_or(true)),
             String(ref s) => Ok(s.len() > 0),
             Array(ref a) => Ok(a.len() > 0),
             Object(ref o) => Ok(o.len() > 0),
@@ -109,7 +103,7 @@ impl<'render> Variable<'render> for Value {
         use serde_json::Value::*;
         match *self {
             Null => Ok(Box::new(empty())),
-            Bool(..) | I64(..) | U64(..) | F64(..) | String(..) | Object(..)
+            Bool(..) | Number(..) | String(..) | Object(..)
             => Err(DataError::IterationUnsupported(self.typename())),
             Array(ref a) => Ok(Box::new(
                 a.iter().map(|x| Var::borrow(x)))),
@@ -123,7 +117,7 @@ impl<'render> Variable<'render> for Value {
         use serde_json::Value::*;
         match *self {
             Null => Ok(Box::new(empty())),
-            Bool(..) | I64(..) | U64(..) | F64(..) | String(..) | Array(..)
+            Bool(..) | Number(..) | String(..) | Array(..)
             => Err(DataError::IterationUnsupported(self.typename())),
             Object(ref o) => Ok(Box::new(
                 o.iter().map(|(k, v)| (Var::borrow(k), Var::borrow(v))))),
