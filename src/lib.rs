@@ -1,5 +1,6 @@
 //! Trimmer: A yet another text template engine
 //!
+#![recursion_limit="100"]
 #![warn(missing_docs)]
 
 extern crate combine;
@@ -36,6 +37,7 @@ pub use render_error::{RenderError, DataError};
 pub use render::Template;
 pub use vars::{Variable};
 pub use varmap::Context;
+#[cfg(feature="serde")] pub use serde::render_json;
 
 use std::collections::HashMap;
 

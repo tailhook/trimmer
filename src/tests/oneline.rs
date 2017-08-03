@@ -22,6 +22,7 @@ fn stdvars(template: &str) -> String {
 }
 
 #[test]
+#[cfg(feature="serde")]
 fn text_only() {
     assert_eq!(stdvars(r#"
         just some
@@ -30,50 +31,60 @@ fn text_only() {
 }
 
 #[test]
+#[cfg(feature="serde")]
 fn var_and_ws() {
     assert_eq!(stdvars("   {{ x }} "), "1");
 }
 #[test]
+#[cfg(feature="serde")]
 fn var_at_start() {
     assert_eq!(stdvars("{{ x }}x"), "1x");
 }
 
 #[test]
+#[cfg(feature="serde")]
 fn var_at_end() {
     assert_eq!(stdvars("x{{ x }}"), "x1");
 }
 
 #[test]
+#[cfg(feature="serde")]
 fn start_spaces() {
     assert_eq!(stdvars("  x{{ x }}"), "x1");
 }
 
 #[test]
+#[cfg(feature="serde")]
 fn var_start_spaces() {
     assert_eq!(stdvars("  x  {{ x }}"), "x 1");
 }
 
 #[test]
+#[cfg(feature="serde")]
 fn start_var_spaces() {
     assert_eq!(stdvars("x  {{ x }}"), "x 1");
 }
 
 #[test]
+#[cfg(feature="serde")]
 fn end_spaces() {
     assert_eq!(stdvars("{{ x }}x   "), "1x");
 }
 
 #[test]
+#[cfg(feature="serde")]
 fn var_end_spaces() {
     assert_eq!(stdvars("{{ x }}  x   "), "1 x");
 }
 
 #[test]
+#[cfg(feature="serde")]
 fn end_var_spaces() {
     assert_eq!(stdvars("{{ x }} x"), "1 x");
 }
 
 #[test]
+#[cfg(feature="serde")]
 fn few_vars() {
     assert_eq!(render_json(r#"## syntax: oneline
         {{ hello }} /
@@ -85,6 +96,7 @@ fn few_vars() {
 }
 
 #[test]
+#[cfg(feature="serde")]
 fn if_spaces() {
     assert_eq!(stdvars(r#"
 ## if x

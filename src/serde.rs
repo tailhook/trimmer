@@ -5,7 +5,7 @@ use std::usize;
 use serde_json::Value;
 
 use vars::{EMPTY_STR};
-use {DataError, Variable, Var};
+use {DataError, Variable, Var, Context, Template, RenderError, Pos};
 
 pub const TRUE: &'static &'static str = &"true";
 pub const FALSE: &'static &'static str = &"false";
@@ -121,6 +121,28 @@ impl<'render> Variable<'render> for Value {
             => Err(DataError::IterationUnsupported(self.typename())),
             Object(ref o) => Ok(Box::new(
                 o.iter().map(|(k, v)| (Var::borrow(k), Var::borrow(v))))),
+        }
+    }
+}
+
+/// Renders a template using variables from `serde_json::Value`
+///
+/// The value must be JSON object or error is returned
+pub fn render_json(tpl: &Template, json: &Value) -> Result<String, RenderError>
+{
+    match json.as_object() {
+        Some(map) => {
+            let mut ctx = Context::new();
+            for (k, v) in map {
+                ctx.set(k, v);
+            }
+            tpl.render(&ctx)
+        }
+        None => {
+            Err(RenderError::Data(vec![
+                (Pos { line: 0, column: 0 },
+                 DataError::Custom("render_json expects a JSON object".into()))
+            ]))
         }
     }
 }

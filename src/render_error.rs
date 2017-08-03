@@ -1,5 +1,6 @@
 use std::fmt;
 use std::io;
+use std::error::Error;
 
 use Pos;
 
@@ -62,6 +63,14 @@ quick_error! {
             description("variable or attribute not found")
             display("variable or attribute {:?} not found", name)
         }
+        /// Custom error
+        Custom(err: Box<Error>) {
+            description(err.description())
+            display("{}", err)
+            cause(&**err)
+        }
+        #[doc(hidden)]
+        __Nonexhaustive
     }
 }
 

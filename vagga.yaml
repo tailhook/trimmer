@@ -25,10 +25,17 @@ commands:
     container: ubuntu
     run: [cargo, build]
 
+  test-no-default-features: !Command
+    description: Test the library with `--no-default-features`
+    container: ubuntu
+    environ: { RUST_BACKTRACE: 1 }
+    run: [cargo, test, --no-default-features]
+
   test: !Command
     description: Test the library
     container: ubuntu
     environ: { RUST_BACKTRACE: 1 }
+    prerequisites: [test-no-default-features]
     run: [cargo, test]
 
   _bulk: !Command
