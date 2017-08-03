@@ -57,8 +57,6 @@ Additional notes:
 1. The plus operator doesn't add space at the beginning and the
    end of the buffer
 2. We don't strip spaces output by an expression, only template source
-3. In :ref:`one-line syntax mode <syntax-oneline>` plus ``+`` in the default
-   mode, but may be overriden by dash ``-``
 
 The rule (2) in particular means, you can protect spaces using expression, in
 particular these are equivalent::
@@ -103,7 +101,7 @@ Here are the list of supported syntaxes:
 .. _syntax-indent:
 .. describe:: ## syntax: indent
 
-  means the output is indentation-sensitive, and
+  Means the output is indentation-sensitive, and
   we strip the additional indentation created by the block statements
   (``## if`` / ``## endif`` and ``## for`` / ``## endfor``), so the
   final output can easily be YAML or Python code.
@@ -111,14 +109,18 @@ Here are the list of supported syntaxes:
 .. _syntax-oneline:
 .. describe:: ## syntax: oneline
 
-  all subsequent whitespace (including newlines)
+  All subsequent whitespace (including newlines)
   is condensed and treated as a single space, effectively making template
   a oneline thing. This syntax is useful for templating log formats
   and command-lines.
 
+  Note: all whitespace printed by expressions is preserved, so you might
+  escape whitespace and newlines using quoted literals (``{{ "\n" }}``),
+  unless they are rejected by a validator.
+
 .. describe:: <plain-syntax>
 
-  plain (no syntax statement) means the output of the template is rendered
+  Plain (no syntax statement) means the output of the template is rendered
   as is with all whitespace. Statements always occupy the whole line
   including indentation whitespace and trailing end of line.
 

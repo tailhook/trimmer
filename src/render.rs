@@ -8,6 +8,7 @@ use owning_ref::{OwningRef, Erased};
 
 use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
 use grammar::OutputMode::{self, Preserve, Strip, Space};
+use preparser::Syntax::Oneline;
 use owning::{Own, ExprCode};
 use render_error::{RenderError, DataError};
 use vars::{UNDEFINED, TRUE, FALSE, Val, VarRef};
@@ -21,6 +22,7 @@ pub struct Template(Arc<Tpl>);
 
 struct Renderer {
     buf: String,
+    template: Arc<Tpl>,
     frozen: usize,
     tail_mode: OutputMode,
     errors: Vec<(Pos, DataError)>,
@@ -33,6 +35,7 @@ impl Template {
         -> Result<String, RenderError>
     {
         let mut rnd = Renderer {
+            template: self.0.clone(),
             buf: String::new(),
             errors: Vec::new(),
             nothing: Rc::new(()),
@@ -149,30 +152,48 @@ fn write_block<'x, 'render>(r: &mut Renderer,
     'outer: for (idx, item) in items.iter().enumerate() {
         match item.code {
             OutputRaw(ref text) => {
+                let base_mode = if r.template.options.syntax == Oneline {
+                    Space
+                } else {
+                    Preserve
+                };
                 r.tail_mode = match r.tail_mode {
                     Preserve => {
+                        let trim_len = text.trim_right().len();
                         r.buf.push_str(text);
-                        Preserve
+                        if trim_len <= text.len() {
+                            let spaces = text.len() - trim_len;
+                            r.frozen = r.buf.len() - spaces;
+                        }
+                        base_mode
                     }
                     Strip => {
                         let off = r.frozen;
                         r.buf.truncate(off);
                         let s = text.trim_left();
                         if s.len() > 0 {
+                            let trim_len = s.trim_right().len();
+                            let spaces = s.len() - trim_len;
                             r.buf.push_str(s);
-                            Preserve
+                            r.frozen = r.buf.len() - spaces;
+                            base_mode
                         } else {
                             Strip
                         }
                     }
                     Space => {
-                        let off = r.frozen;
-                        r.buf.truncate(off);
                         let s = text.trim_left();
                         if s.len() > 0 {
-                            r.buf.push(' ');
+                            let off = r.frozen;
+                            r.buf.truncate(off);
+                            let trim_len = s.trim_right().len();
+                            let spaces = s.len() - trim_len;
+                            if r.buf.len() > 0 {
+                                r.buf.push(' ');
+                            }
                             r.buf.push_str(s);
-                            Preserve
+                            r.frozen = r.buf.len() - spaces;
+                            base_mode
                         } else {
                             Space
                         }
@@ -189,7 +210,9 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                     Space => {
                         let off = r.frozen;
                         r.buf.truncate(off);
-                        r.buf.push(' ');
+                        if r.buf.len() > 0 {
+                            r.buf.push(' ');
+                        }
                     }
                 }
                 let e = items.clone().map(|x| match x[idx].code {

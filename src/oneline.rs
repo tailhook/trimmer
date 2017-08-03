@@ -10,61 +10,79 @@ impl Postprocess {
         Postprocess {}
     }
 
-    fn visit_body(&self, body: Body, top: bool) -> Body {
+    fn visit_body(&self, body: Body) -> Body {
         use grammar::StatementCode::*;
+        use grammar::OutputMode::{Preserve, Space, Strip};
 
-        let statements = body.statements;
-        let last = statements.len().saturating_sub(1);
-        let s = statements.into_iter().enumerate().filter_map(|(i, s)| {
-            let code = match s.code {
-                OutputRaw(ref val) if val == "" => return None,
-                OutputRaw(val) => {
-                    let mut res = String::with_capacity(val.len());
-                    let first_c = val.chars().next().unwrap();
-                    let last_c = val.chars().rev().next().unwrap();
-                    let start_ws = first_c.is_whitespace() && (!top || i != 0);
-                    let end_ws = last_c.is_whitespace() && (!top || i != last);
-                    for item in val.split_whitespace() {
-                        if start_ws || res.len() > 0 {
-                            res.push(' ');
-                        }
-                        res.push_str(item);
+        let mut st = body.statements;
+        let last = st.len().saturating_sub(1);
+        for i in 0..st.len() {
+            let fix_start = if i == 0 {
+                true
+            } else {
+                match st[i-1].code {
+                    Output(..) => false,
+                    // Empty OutputRaw's are already optimized out
+                    OutputRaw(ref x)
+                    => x.chars().rev().next().unwrap().is_whitespace(),
+                    _ => true,
+                }
+            };
+            let fix_end = if i == last {
+                true
+            } else {
+                match st[i+1].code {
+                    Output(..) => false,
+                    // Empty OutputRaw's are already optimized out
+                    OutputRaw(ref x)
+                    => x.chars().next().unwrap().is_whitespace(),
+                    _ => true,
+                }
+            };
+            match st[i].code {
+                Output(ref mut start, _, ref mut end) => {
+                    if *start == Preserve {
+                        *start = if fix_start { Space } else { Strip };
                     }
-                    if res.len() > 0 {
-                        if end_ws {
-                            res.push(' ');
-                        }
-                        OutputRaw(res)
-                    } else {
-                        return None;
+                    if *end == Preserve && fix_end {
+                        *end = if fix_end { Space } else { Strip };
                     }
                 }
-                s@Alias { .. } | s@Output(..) => s,
+                _ => {}
+            }
+        }
+        let st = st.into_iter().map(|s| {
+            let code = match s.code {
+                OutputRaw(text) => OutputRaw(
+                    text.split_whitespace()
+                        .collect::<Vec<_>>().join(" ")
+                ),
+                s@Output(..) | s@Alias { .. } => s,
                 Cond { indent, conditional, otherwise } => Cond {
                     indent,
                     conditional: conditional.into_iter().map(|(e, b)| {
-                        (e, self.visit_body(b, false))
+                        (e, self.visit_body(b))
                     }).collect(),
-                    otherwise: self.visit_body(otherwise, false),
+                    otherwise: self.visit_body(otherwise),
                 },
                 Loop { indent, target, iterator, filter, body } => Loop {
                     indent, target, iterator, filter,
-                    body: self.visit_body(body, false),
+                    body: self.visit_body(body),
                 }
             };
-            Some(Statement {
+            Statement {
                 code: code,
                 .. s
-            })
+            }
         }).collect();
         Body {
-            statements: s,
+            statements: st,
             .. body
         }
     }
 
     pub fn process(&self, _opt: &Options, body: Body) -> Body {
-        self.visit_body(body, true)
+        self.visit_body(body)
     }
 
 }
