@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
 use std::collections::HashMap;
 
 use render_error::DataError;
@@ -36,6 +37,66 @@ impl<'x> Variable<'x> for String {
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(self.len() > 0)
+    }
+}
+
+impl<'x> Variable<'x> for IpAddr {
+    fn typename(&self) -> &'static str {
+        "IpAddr"
+    }
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(self)
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(true)
+    }
+}
+
+impl<'x> Variable<'x> for Ipv4Addr {
+    fn typename(&self) -> &'static str {
+        "Ipv4Addr"
+    }
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(self)
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(true)
+    }
+}
+
+impl<'x> Variable<'x> for Ipv6Addr {
+    fn typename(&self) -> &'static str {
+        "Ipv4Addr"
+    }
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(self)
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(true)
+    }
+}
+
+impl<'x> Variable<'x> for SocketAddr {
+    fn typename(&self) -> &'static str {
+        "IpAddr"
+    }
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(self)
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(true)
+    }
+}
+
+impl<'x> Variable<'x> for Option<&'x str> {
+    fn typename(&self) -> &'static str {
+        "Option<str>"
+    }
+    fn output(&self) -> Result<&Display, DataError> {
+        Ok(self.as_ref().unwrap())
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(true)
     }
 }
 
