@@ -2,7 +2,7 @@ use {Parser, Context};
 use render::extract;
 
 
-#[cfg(feature="serde")]
+#[cfg(feature="json")]
 fn render_json(template: &str, value: &str) -> String {
     use serde_json;
     let tpl = Parser::new().parse(template).unwrap();
@@ -80,7 +80,7 @@ fn end_var_spaces() {
 }
 
 #[test]
-#[cfg(feature="serde")]
+#[cfg(feature="json")]
 fn few_vars() {
     assert_eq!(render_json(r#"## syntax: oneline
         {{ hello }} /

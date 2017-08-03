@@ -1,6 +1,6 @@
 extern crate trimmer;
 extern crate argparse;
-#[cfg(feature="serde")] extern crate serde_json;
+#[cfg(feature="json")] extern crate serde_json;
 
 use std::io::{Read, Write, stdout, stderr};
 use std::fs::File;
@@ -8,13 +8,13 @@ use std::path::{Path};
 use std::process::exit;
 
 use trimmer::Parser;
-#[cfg(feature="serde")] use serde_json::Value;
+#[cfg(feature="json")] use serde_json::Value;
 
 
 fn main() {
     let mut vars = Vec::<String>::new();
     let mut templates = Vec::<String>::new();
-    #[cfg(feature="serde")]
+    #[cfg(feature="json")]
     let mut json_vars = Vec::<String>::new();
     let mut output = None::<String>;
     {
@@ -34,7 +34,7 @@ fn main() {
             .add_option(&["-D", "--var"], Collect,
                 "Define a string variable. Only useful if `-o-` is also
                  specified");
-        #[cfg(feature="serde")]
+        #[cfg(feature="json")]
         {
             ap.refer(&mut json_vars)
                 .add_option(&["-J", "--json"], Collect,
@@ -55,7 +55,7 @@ fn main() {
         }
         let path = Path::new(&templates[0]);
 
-        #[cfg(feature="serde")]
+        #[cfg(feature="json")]
         let parsed_jsons = {
             let mut v = Vec::new();
             for val in &json_vars {
@@ -120,7 +120,7 @@ fn main() {
         };
 
         let mut context = trimmer::Context::new();
-        #[cfg(feature="serde")]
+        #[cfg(feature="json")]
         for map in &parsed_jsons {
             for (k, v) in map {
                 context.set(k, v);
@@ -157,9 +157,9 @@ fn main() {
 
     } else {
 
-        #[cfg(not(feature="serde"))]
+        #[cfg(not(feature="json"))]
         let has_vars = vars.len() > 0;
-        #[cfg(feature="serde")]
+        #[cfg(feature="json")]
         let has_vars = vars.len() > 0 || json_vars.len() > 0;
         if has_vars {
             println!("No vars allowed in syntax check mode. \

@@ -8,7 +8,7 @@ extern crate owning_ref;
 extern crate regex;
 #[macro_use] extern crate quick_error;
 #[cfg(test)] #[macro_use] extern crate matches;
-#[cfg(feature="serde")] extern crate serde_json;
+#[cfg(feature="json")] extern crate serde_json;
 
 mod grammar;
 mod helpers;
@@ -27,7 +27,7 @@ mod tokenizer;
 mod validators;
 mod varmap;
 mod vars;
-#[cfg(feature="serde")] mod serde;
+#[cfg(feature="json")] mod serde;
 #[cfg(test)] mod tests;
 
 pub use grammar::Parser;
@@ -37,7 +37,7 @@ pub use render_error::{RenderError, DataError};
 pub use render::Template;
 pub use vars::{Variable};
 pub use varmap::Context;
-#[cfg(feature="serde")] pub use serde::render_json;
+#[cfg(feature="json")] pub use serde::render_json;
 
 use std::collections::HashMap;
 

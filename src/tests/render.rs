@@ -7,7 +7,7 @@ fn parse(template: &str) -> Template {
     Parser::new().parse(template).unwrap()
 }
 
-#[cfg(feature="serde")]
+#[cfg(feature="json")]
 fn render_json(template: &str, value: &str) -> String {
     use serde_json;
     let tpl = Parser::new().parse(template).unwrap();
@@ -198,7 +198,7 @@ fn pair_iteration() {
 }
 
 #[test]
-#[cfg(feature="serde")]
+#[cfg(feature="json")]
 fn attr() {
     assert_eq!(
         render_json("{{ x.a }} + {{ x.b }}",
@@ -207,7 +207,7 @@ fn attr() {
 }
 
 #[test]
-#[cfg(feature="serde")]
+#[cfg(feature="json")]
 fn item() {
     assert_eq!(
         render_json(r#"{{ x["a"] }} + {{ x[key] }}"#,
@@ -216,7 +216,7 @@ fn item() {
 }
 
 #[test]
-#[cfg(feature="serde")]
+#[cfg(feature="json")]
 fn iterations() {
     assert_eq!(
         render_json(r#"## syntax: indent

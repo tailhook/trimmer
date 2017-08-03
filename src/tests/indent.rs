@@ -9,7 +9,7 @@ fn parse(data: &'static str) -> Vec<Statement> {
     extract(Parser::new().parse(data).unwrap()).body.statements
 }
 
-#[cfg(feature="serde")]
+#[cfg(feature="json")]
 fn render_json(template: &str, value: &str) -> String {
     use serde_json;
     use {Context};
@@ -45,7 +45,7 @@ fn hello() {
 }
 
 #[test]
-#[cfg(feature="serde")]
+#[cfg(feature="json")]
 fn indented_if() {
     assert_eq(
         render_json(r#"
@@ -65,7 +65,7 @@ hello:
 }
 
 #[test]
-#[cfg(feature="serde")]
+#[cfg(feature="json")]
 fn nested_blocks() {
     assert_eq(
         render_json(r#"
@@ -87,7 +87,7 @@ hello:
 }
 
 #[test]
-#[cfg(feature="serde")]
+#[cfg(feature="json")]
 fn directly_nested_blocks() {
     assert_eq(
         render_json(r#"
