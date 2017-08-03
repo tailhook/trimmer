@@ -131,6 +131,18 @@ fn cond_else() {
 }
 
 #[test]
+fn cond_elif() {
+    let t = parse("## if x\n  y\n## elif 1\n  z\n## endif\n");
+    let empty = "";
+    let x = "x";
+    let mut c = Context::new();
+    c.set("x", &empty);
+    assert_eq!(&t.render(&c).unwrap(), "  z\n");
+    c.set("x", &x);
+    assert_eq!(&t.render(&c).unwrap(), "  y\n");
+}
+
+#[test]
 fn iteration() {
     let t = parse("## for x in items\n  - {{ x }}\n## endfor\n");
     let v = vec!["a", "b"];

@@ -255,16 +255,23 @@ fn if_stmt<'a>(input: TokenStream<'a>)
         .skip(ws())
         .skip(kind(Newline))
     .and(parser(body))
+    .and(many::<Vec<_>, _>(
+        st_start("elif")
+        .skip(ws())
+        .with(parser(top_level_expression))
+        .skip(kind(Newline))
+        .and(parser(body))))
     .and(optional(
         st_start("else").skip(ws()).skip(kind(Newline))
         .with(parser(body))))
     .skip(st_start("endif")).skip(ws()).skip(kind(Newline))
-    .map(|(((if_token, condition), block), else_block)| {
+    .map(|((((if_token, condition), block), mut elifs), else_block)| {
         Cond {
             indent: if_token.value.len() - if_token.value.trim_left().len(),
-            conditional: vec![
-                (condition, block),
-            ],
+            conditional: {
+                elifs.insert(0, (condition, block));
+                elifs
+            },
             otherwise: else_block.unwrap_or_else(|| Body {
                 statements: Vec::new(),
             }),
