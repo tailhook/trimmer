@@ -41,7 +41,8 @@ containers:
   ubuntu:
     setup:
     - !Ubuntu xenial
-    - !Install [ca-certificates, build-essential, vim]
+    - !Install [ca-certificates, build-essential, vim, libssl1.0.0]
+    - !BuildDeps [pkg-config, libssl-dev, cmake]
 
     - !TarInstall
       url: "https://static.rust-lang.org/dist/rust-1.17.0-x86_64-unknown-linux-gnu.tar.gz"
@@ -51,6 +52,9 @@ containers:
       url: "https://github.com/tailhook/bulk/releases/download/v0.4.9/bulk-v0.4.9.tar.gz"
       sha256: 23471a9986274bb4b7098c03e2eb7e1204171869b72c45385fcee1c64db2d111
       path: /
+    - !Sh |
+        cargo install cargo-outdated --root=/usr
+        cargo install cargo-tarpaulin --root=/usr
 
     environ:
       HOME: /work/target
