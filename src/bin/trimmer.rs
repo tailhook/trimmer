@@ -177,6 +177,7 @@ fn main() {
                     Scanning directories is not iplemented.", path);
                 code = 1;
             }
+            buf.truncate(0);
             let read = File::open(path)
                 .and_then(|mut f| f.read_to_string(&mut buf));
             match read {
