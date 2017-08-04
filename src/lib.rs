@@ -1,5 +1,9 @@
 //! Trimmer: A yet another text template engine
 //!
+//! [User Guide](https://trimmer.readthedocs.io/) |
+//! [Github](https://github.com/tailhook/trimmer/) |
+//! [Crate](https://crates.io/crates/trimmer)
+//!
 #![recursion_limit="100"]
 #![warn(missing_docs)]
 
