@@ -6,6 +6,7 @@ description = """
 license = "MIT/Apache-2.0"
 readme = "README.rst"
 keywords = ["template", "render", "whitespace"]
+categories = ["template-engine"]
 homepage = "http://github.com/tailhook/trimmer"
 documentation = "http://trimmer.readthedocs.io"
 version = "0.2.0"
