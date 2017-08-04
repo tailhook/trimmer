@@ -217,6 +217,14 @@ impl<'render, V> Variable<'render> for HashMap<String, V>
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(self.len() > 0)
     }
+    fn iterate_pairs<'x>(&'x self)
+        -> Result<Box<Iterator<Item=(Var<'x, 'render>, Var<'x, 'render>)>+'x>,
+                  DataError>
+        where 'render: 'x
+    {
+        Ok(Box::new(self.iter()
+            .map(|(x, y)| (Var::borrow(x), Var::borrow(y)))))
+    }
 }
 
 impl<'a: 'render, 'render, V> Variable<'render> for HashMap<&'a str, V>
