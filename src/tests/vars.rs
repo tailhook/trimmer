@@ -135,3 +135,16 @@ fn undefined_int_index_serde() {
         render_json(&tpl, &from_str(r#"{"x":[2, 3]}"#).unwrap()).unwrap(),
         "2: 3, 3: , 3.b: ");
 }
+
+#[test]
+#[should_panic(expected="IntKeyUnsupported")]
+fn str_key_in_list() {
+    let p = Parser::new();
+    let tpl = p.parse(r#"## syntax: oneline
+        k: {{ x['k1'] }},
+    "#).unwrap();
+    let x: Vec<String> = vec![];
+    let mut vars: Context = Context::new();
+    vars.set("x", &x);
+    tpl.render(&vars).unwrap();
+}
