@@ -89,7 +89,9 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
                 Ok(Var(Val::Ref(x))) => Ok(x),
                 Ok(Var(Val::Rc(v))) => Err(v),
                 Err(e) => {
-                    r.errors.push((expr.position.0, e));
+                    if !matches!(e, DataError::AttrNotFound) {
+                        r.errors.push((expr.position.0, e));
+                    }
                     Err(OwningRef::new(nothing(&r.nothing, root))
                         .map(|_| UNDEFINED as &Variable))
                 }

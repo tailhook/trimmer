@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use {Parser, Context, Variable};
 
 fn render_var<'x, V: Variable<'x> + 'x>(template: &str, value: &'x V)
@@ -33,4 +34,37 @@ fn render_str() {
 #[test]
 fn render_opt() {
     assert_eq!(render_var("{{x}}", &Some("hello")), "hello");
+}
+
+#[test]
+fn undefined_attrs() {
+    let p = Parser::new();
+    let tpl = p.parse(r#"## syntax: oneline
+        k: {{ x.k1 }},
+        k2: {{ x.k2 }},
+        k3.b: {{ x.k3.b }}
+    "#).unwrap();
+    let x: HashMap<String, String> = vec![
+        ("k1".into(), "v".into()),
+    ].into_iter().collect();
+    let mut vars: Context = Context::new();
+    vars.set("x", &x);
+    assert_eq!(tpl.render(&vars).unwrap(), "k: v, k2: , k3.b: ");
+}
+
+#[test]
+#[cfg(feature="json")]
+fn undefined_attrs_serde() {
+    use serde_json::from_str;
+    use render_json;
+
+    let p = Parser::new();
+    let tpl = p.parse(r#"## syntax: oneline
+        k: {{ x.k1 }},
+        k2: {{ x.k2 }},
+        k3.b: {{ x.k3.b }}
+    "#).unwrap();
+    assert_eq!(
+        render_json(&tpl, &from_str(r#"{"x":{"k1":123}}"#).unwrap()).unwrap(),
+        "k: 123, k2: , k3.b: ");
 }

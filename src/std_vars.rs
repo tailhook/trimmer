@@ -201,7 +201,7 @@ impl<'render, V> Variable<'render> for HashMap<String, V>
     {
         self.get(attr)
         .map(|x| Var::borrow(x))
-        .ok_or_else(|| DataError::VariableNotFound(attr.to_string()))
+        .ok_or_else(|| DataError::AttrNotFound)
     }
     fn index<'x>(&'x self, index: &(Variable<'render>+'render))
         -> Result<Var<'x, 'render>, DataError>
@@ -236,7 +236,7 @@ impl<'a: 'render, 'render, V> Variable<'render> for HashMap<&'a str, V>
     {
         self.get(attr)
         .map(|x| Var::borrow(x))
-        .ok_or_else(|| DataError::VariableNotFound(attr.to_string()))
+        .ok_or_else(|| DataError::AttrNotFound)
     }
     fn index<'x>(&'x self, index: &(Variable<'render>+'render))
         -> Result<Var<'x, 'render>, DataError>

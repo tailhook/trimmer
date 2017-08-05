@@ -11,7 +11,7 @@ extern crate combine;
 extern crate owning_ref;
 extern crate regex;
 #[macro_use] extern crate quick_error;
-#[cfg(test)] #[macro_use] extern crate matches;
+#[macro_use] extern crate matches;
 #[cfg(feature="json")] extern crate serde_json;
 
 mod grammar;
