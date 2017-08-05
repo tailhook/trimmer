@@ -102,6 +102,39 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
                 Err(v) => v,
             }
         }
+        ExprCode::And(ref a, ref b) => {
+            let left = eval_expr(r, root, a);
+            match left.as_bool() {
+                Ok(true) | Err(BoolUnsupported(_)) => {
+                    eval_expr(r, root, b)
+                }
+                Ok(false) => {
+                    left
+                }
+                Err(e) => {
+                    r.errors.push((expr.position.0, e));
+                    // this is kinda undefined, so false
+                    OwningRef::new(nothing(&r.nothing, root))
+                        .map(|_| UNDEFINED as &Variable)
+                }
+            }
+        }
+        ExprCode::Or(ref a, ref b) => {
+            let left = eval_expr(r, root, a);
+            match left.as_bool() {
+                Ok(true) | Err(BoolUnsupported(_)) => {
+                    left
+                }
+                Ok(false) => {
+                    eval_expr(r, root, b)
+                }
+                Err(e) => {
+                    r.errors.push((expr.position.0, e));
+                    // this is kinda undefined, so false
+                    eval_expr(r, root, b)
+                }
+            }
+        }
         ExprCode::Item(ref e, ref a) => {
             let value = eval_expr(r, root, e);
             let index = eval_expr(r, root, a);
@@ -156,6 +189,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
     -> Result<(), fmt::Error>
 {
     use grammar::StatementCode::*;
+    use render_error::DataError::*;
 
     'outer: for (idx, item) in items.iter().enumerate() {
         match item.code {
@@ -262,7 +296,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                     let condval = eval_expr(r, root, &cond);
 
                     match condval.as_bool() {
-                        Ok(x) if x => {
+                        Ok(true) | Err(BoolUnsupported(..)) => {
                             let bstatements = items.clone()
                                 .map(|x| match x[idx].code {
                                     Cond { ref conditional, .. }
@@ -273,7 +307,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                             write_block(r, &mut sub, &bstatements)?;
                             continue 'outer;
                         }
-                        Ok(_) => {}
+                        Ok(false) => {}
                         Err(e) => {
                             r.errors.push((cond.position.0, e));
                             // treating as false

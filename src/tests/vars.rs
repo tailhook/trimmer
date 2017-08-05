@@ -59,6 +59,26 @@ fn undefined_attrs() {
 }
 
 #[test]
+fn space_attrs() {
+    let p = Parser::new();
+    let tpl = p.parse(r#"## syntax: oneline
+        a: {{ x .k1 }},
+        b: {{ x. k1 }},
+        c: {{ x . k1 }},
+        A: {{ x ["k1"] }},
+        B: {{ x[ "k1" ] }},
+        C: {{ x   [ "k1"] }},
+    "#).unwrap();
+    let x: HashMap<String, String> = vec![
+        ("k1".into(), "v".into()),
+    ].into_iter().collect();
+    let mut vars: Context = Context::new();
+    vars.set("x", &x);
+    assert_eq!(tpl.render(&vars).unwrap(),
+        "a: v, b: v, c: v, A: v, B: v, C: v,");
+}
+
+#[test]
 #[cfg(feature="json")]
 fn undefined_attrs_serde() {
     use serde_json::from_str;

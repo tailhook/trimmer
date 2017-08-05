@@ -160,6 +160,7 @@ fn atom<'a>(input: TokenStream<'a>)
                     .unwrap_or_else(|_| Float(t.value.parse().unwrap()))
         }));
     (position(), expr, position())
+    .skip(ws())
     .map(|(s, c, e)| Expr {
         position: (s, e),
         code: c,
@@ -180,10 +181,12 @@ fn attr<'a>(input: TokenStream<'a>)
 
     parser(atom)
     .and(many(
-        operator(".").with(kind(Ident)).map(Suffix::Attr).or(
+        operator(".").skip(ws()).with(kind(Ident)).map(Suffix::Attr).or(
             paren("[")
+            .skip(ws())
             .with(parser(top_level_expression))
             .skip(paren("]"))
+            .skip(ws())
             .map(Suffix::Item)
         ).and(position())))
     .map(|(atom, vec): (_, Vec<_>)| {
@@ -230,10 +233,57 @@ fn unary<'a>(input: TokenStream<'a>)
     .parse_stream(input)
 }
 
+fn bool_and<'a>(input: TokenStream<'a>)
+    -> ParseResult<Expr, TokenStream<'a>>
+{
+    use helpers::*;
+
+    parser(unary)
+    .and(many(
+        operator("and")
+        .skip(ws())
+        .with(parser(unary))
+        .and(position())))
+    .map(|(expr, vec): (_, Vec<_>)| {
+        vec.into_iter().fold(expr,
+        |a: Expr, (b, e): (Expr, _)| {
+            Expr {
+                position: (a.position.0, e),
+                code: ExprCode::And(Box::new(a), Box::new(b)),
+            }
+        })
+    })
+    .parse_stream(input)
+}
+
+fn bool_or<'a>(input: TokenStream<'a>)
+    -> ParseResult<Expr, TokenStream<'a>>
+{
+    use helpers::*;
+
+    parser(bool_and)
+    .and(many(
+        operator("or")
+        .skip(ws())
+        .with(parser(bool_and))
+        .and(position())))
+    .map(|(expr, vec): (_, Vec<_>)| {
+        vec.into_iter().fold(expr,
+        |a: Expr, (b, e): (Expr, _)| {
+            Expr {
+                position: (a.position.0, e),
+                code: ExprCode::Or(Box::new(a), Box::new(b)),
+            }
+        })
+    })
+    .parse_stream(input)
+}
+
 fn top_level_expression<'a>(input: TokenStream<'a>)
     -> ParseResult<Expr, TokenStream<'a>>
 {
-    unary(input)
+    parser(bool_or)
+    .parse_stream(input)
 }
 
 fn expression<'a>(input: TokenStream<'a>)
