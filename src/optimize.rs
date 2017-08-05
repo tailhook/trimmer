@@ -1,8 +1,31 @@
-use grammar::{Body, Statement};
+use grammar::{Body, Statement, StatementCode};
 use {Options};
 
 
 pub struct Optimizer {
+}
+
+fn is_whitespace(text: &str) -> bool {
+    text.chars().all(|x| x.is_whitespace())
+}
+
+fn is_line_or_none(stmt: Option<&Statement>) -> bool {
+    if let Some(st) = stmt {
+        is_line_statement(&st.code)
+    } else {
+        true
+    }
+}
+
+fn is_line_statement(code: &StatementCode) -> bool {
+    use grammar::StatementCode::*;
+    match *code {
+        OutputRaw(..) => false,
+        Output(..) => false,
+        Cond {..} => true,
+        Loop {..} => true,
+        Alias {..} => true,
+    }
 }
 
 impl Optimizer {
@@ -12,23 +35,36 @@ impl Optimizer {
     fn visit_body(&self, body: Body) -> Body {
         use grammar::StatementCode::*;
 
-        let mut dst = Vec::with_capacity(body.statements.len());
+        let mut interm = Vec::with_capacity(body.statements.len());
         for item in body.statements.into_iter() {
-            match (&item, dst.last_mut()) {
+            match (interm.last_mut(), &item) {
                 (
+                    Some(&mut Statement {
+                        position: (_, ref mut old_end),
+                        code: OutputRaw(ref mut prev),
+                    }),
                     &Statement {
                         position: (_, new_end),
                         code: OutputRaw(ref next),
                     },
-                    Some(&mut Statement {
-                        position: (_, ref mut old_end),
-                        code: OutputRaw(ref mut prev),
-                    })
                 ) => {
                     *old_end = new_end;
                     prev.push_str(next);
                     continue;
                 }
+                _ => {}
+            }
+            interm.push(item);
+        }
+        let mut dst = Vec::with_capacity(interm.len());
+        let mut iter = interm.into_iter().peekable();
+        while let Some(item) = iter.next() {
+            match (dst.last(), &item, iter.peek()) {
+                (prev, &Statement { code: OutputRaw(ref this), .. }, next)
+                if is_whitespace(this) &&
+                    is_line_or_none(prev) && is_line_or_none(next)
+                // skip current element
+                => continue,
                 _ => {}
             }
             dst.push(item);

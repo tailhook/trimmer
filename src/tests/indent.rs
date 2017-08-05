@@ -3,7 +3,7 @@ use tests::assert_eq;
 use render::extract;
 use grammar::StatementCode::*;
 use grammar::{Parser, Statement};
-use Pos;
+use {Pos, Context};
 
 fn parse(data: &'static str) -> Vec<Statement> {
     extract(Parser::new().parse(data).unwrap()).body.statements
@@ -12,7 +12,6 @@ fn parse(data: &'static str) -> Vec<Statement> {
 #[cfg(feature="json")]
 fn render_json(template: &str, value: &str) -> String {
     use serde_json;
-    use {Context};
 
     let tpl = Parser::new()
         .parse(&format!("## syntax: indent\n{}", template)).unwrap();
@@ -21,6 +20,14 @@ fn render_json(template: &str, value: &str) -> String {
     for (k, v) in json.as_object().unwrap() {
         vars.set(k, v);
     }
+    tpl.render(&vars).unwrap()
+}
+
+fn render_x(template: &str) -> String {
+    let tpl = Parser::new().parse(template).unwrap();
+    let x = "x";
+    let mut vars: Context = Context::new();
+    vars.set("x", &x);
     tpl.render(&vars).unwrap()
 }
 
@@ -105,5 +112,25 @@ hello:
     a: 1
     x: 2
     y: 2+x
+".lines().collect());
+}
+
+#[test]
+fn block_space() {
+    assert_eq(
+        render_x(r#"
+
+## if 1
+{{ x }}
+## endif
+
+
+## if 1
+{{ x }}
+## endif
+
+"#).lines().collect(),
+        "x
+x
 ".lines().collect());
 }
