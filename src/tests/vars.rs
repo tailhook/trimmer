@@ -19,6 +19,12 @@ fn render_ip() {
 }
 
 #[test]
+#[should_panic(expected="VariableNotFound")]
+fn render_unknown_var() {
+    render_var("{{ x }} {{ y }}", &String::from("x"));
+}
+
+#[test]
 fn render_sockaddr() {
     use std::net::{IpAddr, Ipv4Addr, SocketAddr};
     assert_eq!(render_var("{{x}}",
