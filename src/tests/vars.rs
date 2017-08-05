@@ -68,3 +68,70 @@ fn undefined_attrs_serde() {
         render_json(&tpl, &from_str(r#"{"x":{"k1":123}}"#).unwrap()).unwrap(),
         "k: 123, k2: , k3.b: ");
 }
+
+#[test]
+fn undefined_str_index() {
+    let p = Parser::new();
+    let tpl = p.parse(r#"## syntax: oneline
+        k: {{ x['k1'] }},
+        k2: {{ x['k2'] }},
+        k3.b: {{ x['k3'].b }}
+    "#).unwrap();
+    let x: HashMap<String, String> = vec![
+        ("k1".into(), "v".into()),
+    ].into_iter().collect();
+    let mut vars: Context = Context::new();
+    vars.set("x", &x);
+    assert_eq!(tpl.render(&vars).unwrap(), "k: v, k2: , k3.b: ");
+}
+
+#[test]
+#[cfg(feature="json")]
+fn undefined_str_index_serde() {
+    use serde_json::from_str;
+    use render_json;
+
+    let p = Parser::new();
+    let tpl = p.parse(r#"## syntax: oneline
+        k: {{ x['k1'] }},
+        k2: {{ x['k2'] }},
+        k3.b: {{ x['k3'].b }}
+    "#).unwrap();
+    assert_eq!(
+        render_json(&tpl, &from_str(r#"{"x":{"k1":123}}"#).unwrap()).unwrap(),
+        "k: 123, k2: , k3.b: ");
+}
+
+#[test]
+fn undefined_int_index() {
+    let p = Parser::new();
+    let tpl = p.parse(r#"## syntax: oneline
+        2: {{ x[1] }},
+        3: {{ x[2] }},
+        3.b: {{ x[2].b }}
+    "#).unwrap();
+    let x: Vec<String> = vec![
+        "v1".into(),
+        "v2".into(),
+    ];
+    let mut vars: Context = Context::new();
+    vars.set("x", &x);
+    assert_eq!(tpl.render(&vars).unwrap(), "2: v2, 3: , 3.b: ");
+}
+
+#[test]
+#[cfg(feature="json")]
+fn undefined_int_index_serde() {
+    use serde_json::from_str;
+    use render_json;
+
+    let p = Parser::new();
+    let tpl = p.parse(r#"## syntax: oneline
+        2: {{ x[1] }},
+        3: {{ x[2] }},
+        3.b: {{ x[2].b }}
+    "#).unwrap();
+    assert_eq!(
+        render_json(&tpl, &from_str(r#"{"x":[2, 3]}"#).unwrap()).unwrap(),
+        "2: 3, 3: , 3.b: ");
+}

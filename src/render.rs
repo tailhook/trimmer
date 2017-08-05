@@ -69,6 +69,8 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
     expr: &OwningRef<Rc<Arc<Tpl>>, Expr>)
     -> VarRef<'render>
 {
+    use render_error::DataError::*;
+
     match expr.clone().map(|e| &e.code).own() {
         ExprCode::Str(ref s) => {
             s.clone().map(|x| x as &Variable).erase_owner()
@@ -89,7 +91,7 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
                 Ok(Var(Val::Ref(x))) => Ok(x),
                 Ok(Var(Val::Rc(v))) => Err(v),
                 Err(e) => {
-                    if !matches!(e, DataError::AttrNotFound) {
+                    if !matches!(e, AttrNotFound) {
                         r.errors.push((expr.position.0, e));
                     }
                     Err(OwningRef::new(nothing(&r.nothing, root))
@@ -107,7 +109,11 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
                 Ok(Var(Val::Ref(x))) => Ok(x),
                 Ok(Var(Val::Rc(v))) => Err(v),
                 Err(e) => {
-                    r.errors.push((expr.position.0, e));
+                    // we allow AttrNotFound too, for the cases where
+                    // square brackets equal to attribute access (JSON)
+                    if !matches!(e, IndexNotFound | AttrNotFound) {
+                        r.errors.push((expr.position.0, e));
+                    }
                     Err(OwningRef::new(nothing(&r.nothing, root))
                         .map(|_| UNDEFINED as &Variable))
                 }
