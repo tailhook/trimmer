@@ -49,7 +49,8 @@ containers:
   ubuntu:
     setup:
     - !Ubuntu xenial
-    - !Install [ca-certificates, build-essential, vim, libssl1.0.0]
+    - !Install [ca-certificates, build-essential, vim, libssl1.0.0,
+                libcurl3-gnutls]
     - !BuildDeps [pkg-config, libssl-dev, cmake]
 
     - !TarInstall
@@ -60,9 +61,11 @@ containers:
       url: "https://github.com/tailhook/bulk/releases/download/v0.4.9/bulk-v0.4.9.tar.gz"
       sha256: 23471a9986274bb4b7098c03e2eb7e1204171869b72c45385fcee1c64db2d111
       path: /
+    - !Tar
+      url: https://github.com/xd009642/tarpaulin/releases/download/0.3.11/cargo-tarpaulin-0.3.11-travis.tar.gz
+      path: /usr/bin
     - !Sh |
         cargo install cargo-outdated --root=/usr
-        cargo install cargo-tarpaulin --root=/usr
 
     environ:
       HOME: /work/target
