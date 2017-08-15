@@ -14,9 +14,11 @@ extern crate regex;
 #[macro_use] extern crate matches;
 #[cfg(feature="json")] extern crate serde_json;
 
+mod compare;
 mod grammar;
 mod helpers;
 mod indent;
+mod number;
 mod oneline;
 mod optimize;
 mod options;
@@ -42,6 +44,8 @@ pub use render_error::{RenderError, DataError};
 pub use render::Template;
 pub use vars::{Variable};
 pub use varmap::Context;
+pub use number::Number;
+pub use compare::Comparable;
 #[cfg(feature="json")] pub use serde::render_json;
 
 use std::collections::HashMap;

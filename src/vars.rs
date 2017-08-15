@@ -4,7 +4,7 @@ use std::iter::empty;
 
 use render_error::DataError;
 use owning_ref::{OwningRef, Erased};
-use {Var, Output};
+use {Var, Output, Number, Comparable};
 
 pub type VarRef<'render> = OwningRef<Rc<Erased+'render>,
                                      Variable<'render>+'render>;
@@ -13,7 +13,6 @@ pub enum Val<'a, 'render: 'a>{
     Ref(&'a (Variable<'render> + 'render)),
     Rc(VarRef<'render>),
 }
-
 
 #[derive(Debug)]
 pub struct Undefined;
@@ -91,6 +90,25 @@ pub trait Variable<'render>: Debug {
     /// This is used in conditions `## if x`
     fn as_bool(&self) -> Result<bool, DataError> {
         Err(DataError::BoolUnsupported(self.typename()))
+    }
+
+    /// Return value as it could be treated in numeric context
+    ///
+    /// Numeric context is where `+,-,*,/,%` operators are used. Use standard
+    /// `into()` conversion to convert built-in value into internal
+    /// representation.
+    fn as_number(&self) -> Result<Number, DataError> {
+        Err(DataError::NumberUnsupported(self.typename()))
+    }
+
+    /// Return value of the object that might be compared to another value
+    ///
+    /// Note we can only compare numbers with number and strings with
+    /// strings. All other types of comparisons are unsupported. Use standard
+    /// `into()` conversion to convert built-in value into internal
+    /// representation.
+    fn as_comparable(&self) -> Result<Comparable, DataError> {
+        Err(DataError::ComparisonUnsupported(self.typename()))
     }
 
     /// Return iterator over the value if appropriate

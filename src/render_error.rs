@@ -47,6 +47,16 @@ quick_error! {
             description("can't treat object of this type as bool")
             display("can't treat object of type {} as bool", typename)
         }
+        /// The object can't be a number
+        NumberUnsupported(typename: &'static str) {
+            description("can't treat object of this type as number")
+            display("can't treat object of type {} as number", typename)
+        }
+        /// The object can't be compared to
+        ComparisonUnsupported(typename: &'static str) {
+            description("can't compare objects of this type")
+            display("can't compare objects of type {}", typename)
+        }
         /// The object can't be iterated over
         IterationUnsupported(typename: &'static str) {
             description("can't iterate over the object")
