@@ -134,6 +134,9 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
         ExprCode::Add(ref a, ref b) => {
             operator(number::add, a, b, r, root)
         }
+        ExprCode::Sub(ref a, ref b) => {
+            operator(number::sub, a, b, r, root)
+        }
         ExprCode::And(ref a, ref b) => {
             let left = eval_expr(r, root, a);
             match left.as_bool() {

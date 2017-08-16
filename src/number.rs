@@ -113,3 +113,31 @@ pub fn add<'x>(a: Number, b: Number) -> VarRef<'x> {
         }
     }
 }
+
+pub fn sub<'x>(a: Number, b: Number) -> VarRef<'x> {
+    use self::NumberInner::*;
+    match (norm(a.0), norm(b.0)) {
+        (I64(a), I64(b)) => {
+            a.checked_sub(b).map(val)
+            .unwrap_or_else(|| val((a as f64) - (b as f64)))
+        }
+        (U64(a), U64(b)) => {
+            a.checked_sub(b).map(val)
+            .unwrap_or_else(|| val((a as f64) - (b as f64)))
+        }
+        (F64(a), F64(b)) => val(a - b),
+        (I64(a), F64(b)) => val(a as f64 - b),
+        (F64(a), I64(b)) => val(a - b as f64),
+        (U64(a), F64(b)) => val(a as f64 - b),
+        (F64(a), U64(b)) => val(a - b as f64),
+        (U64(a), I64(b)) => {
+            a.checked_add((-b as u64)).map(val)
+            .unwrap_or_else(|| val((a as f64) - (b as f64)))
+        }
+        (I64(a), U64(b)) if b < i64::MAX as u64 => {
+            a.checked_sub(b as i64).map(val)
+            .unwrap_or_else(|| val((a as f64) - (b as f64)))
+        }
+        (I64(a), U64(b)) => val((a as f64) - (b as f64)),
+    }
+}
