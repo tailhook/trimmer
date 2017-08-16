@@ -6,13 +6,14 @@ use std::sync::Arc;
 
 use owning_ref::{OwningRef, Erased};
 
-use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
 use grammar::OutputMode::{self, Preserve, Strip, Space};
-use preparser::Syntax::Oneline;
+use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
+use number::{self, Number};
 use owning::{Own, ExprCode};
+use preparser::Syntax::Oneline;
 use render_error::{RenderError, DataError};
-use vars::{UNDEFINED, TRUE, FALSE, Val, VarRef};
 use varmap::{Context, SubContext, set, get};
+use vars::{UNDEFINED, TRUE, FALSE, Val, VarRef};
 use {Pos, Variable, Var};
 
 
@@ -65,6 +66,34 @@ fn nothing<'x, 'y, 'render: 'x>(n: &'x Rc<()>, _: &SubContext<'y, 'render>)
     n.clone()
 }
 
+fn operator<'x, 'render: 'x>(op: fn(Number, Number) -> VarRef<'render>,
+    a: &OwningRef<Rc<Arc<Tpl>>, Expr>, b: &OwningRef<Rc<Arc<Tpl>>, Expr>,
+    r: &mut Renderer, root: &SubContext<'x, 'render>)
+    -> VarRef<'render>
+{
+    let left = eval_expr(r, root, a);
+    let right = eval_expr(r, root, b);
+    match (left.as_number(), right.as_number()) {
+        (Ok(a), Ok(b)) => {
+            op(a, b)
+        }
+        (Ok(_), Err(eb)) => {
+            r.errors.push((b.position.0, eb));
+            left
+        }
+        (Err(ea), Ok(_)) => {
+            r.errors.push((a.position.0, ea));
+            right
+        }
+        (Err(ea), Err(eb)) => {
+            r.errors.push((a.position.0, ea));
+            r.errors.push((b.position.0, eb));
+            OwningRef::new(nothing(&r.nothing, root))
+                .map(|_| UNDEFINED as &Variable)
+        }
+    }
+}
+
 fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
     expr: &OwningRef<Rc<Arc<Tpl>>, Expr>)
     -> VarRef<'render>
@@ -101,6 +130,9 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
                 Ok(x) => x,
                 Err(v) => v,
             }
+        }
+        ExprCode::Add(ref a, ref b) => {
+            operator(number::add, a, b, r, root)
         }
         ExprCode::And(ref a, ref b) => {
             let left = eval_expr(r, root, a);
@@ -179,7 +211,7 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
                 }
             }
         },
-        _ => unimplemented!(),
+        x => panic!("Unimplemented oper {:?}", x),
     }
 }
 

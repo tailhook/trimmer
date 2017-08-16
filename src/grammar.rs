@@ -233,16 +233,47 @@ fn unary<'a>(input: TokenStream<'a>)
     .parse_stream(input)
 }
 
+fn addition<'a>(input: TokenStream<'a>)
+    -> ParseResult<Expr, TokenStream<'a>>
+{
+    use helpers::*;
+
+    enum Op {
+        Add,
+        Sub,
+    }
+
+    parser(unary)
+    .and(many(
+        operator("+").map(|_| Op::Add).or(operator("-").map(|_| Op::Sub))
+        .skip(ws())
+        .and(parser(unary))
+        .and(position())))
+    .map(|(expr, vec): (_, Vec<_>)| {
+        vec.into_iter().fold(expr,
+        |a: Expr, ((op, b), e): ((_, Expr), _)| {
+            Expr {
+                position: (a.position.0, e),
+                code: match op {
+                    Op::Add => ExprCode::Add(Box::new(a), Box::new(b)),
+                    Op::Sub => ExprCode::Sub(Box::new(a), Box::new(b)),
+                },
+            }
+        })
+    })
+    .parse_stream(input)
+}
+
 fn bool_and<'a>(input: TokenStream<'a>)
     -> ParseResult<Expr, TokenStream<'a>>
 {
     use helpers::*;
 
-    parser(unary)
+    parser(addition)
     .and(many(
         operator("and")
         .skip(ws())
-        .with(parser(unary))
+        .with(parser(addition))
         .and(position())))
     .map(|(expr, vec): (_, Vec<_>)| {
         vec.into_iter().fold(expr,

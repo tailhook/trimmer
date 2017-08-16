@@ -3,8 +3,10 @@
 /// Only numbers and strings can be compared for now.
 ///
 /// Use `into()` conversion to make the value.
+#[derive(Debug)]  // TODO(tailhook) make normal debug
 pub struct Comparable<'a>(ComparableInner<'a>);
 
+#[derive(Debug)]  // TODO(tailhook) make normal debug
 enum ComparableInner<'a> {
     I64(i64),
     U64(u64),

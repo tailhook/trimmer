@@ -14,6 +14,7 @@ pub trait Own {
 type Owned<T> = OwningRef<Rc<Arc<Tpl>>, T>;
 
 #[allow(dead_code)] // TODO(tailhook)
+#[derive(Debug)]
 pub enum ExprCode {
     Str(Owned<String>),
     Int(Owned<i64>),
@@ -126,28 +127,28 @@ impl Own for OwningRef<Rc<Arc<Tpl>>, grammar::ExprCode> {
             I::Less(_, _) => O::Less(
                 omap!(self, I::Less(ref a, _) => &**a),
                 omap!(self, I::Less(_, ref b) => &**b)),
-            I::GreaterEq(_, _) => O::LessEq(
+            I::GreaterEq(_, _) => O::GreaterEq(
                 omap!(self, I::GreaterEq(ref a, _) => &**a),
                 omap!(self, I::GreaterEq(_, ref b) => &**b)),
-            I::Greater(_, _) => O::Less(
+            I::Greater(_, _) => O::Greater(
                 omap!(self, I::Greater(ref a, _) => &**a),
                 omap!(self, I::Greater(_, ref b) => &**b)),
             I::List(_) => unimplemented!(),
             I::Dict(_) => unimplemented!(),
             I::Range(_, _) => unimplemented!(),
-            I::Add(_, _) => O::Less(
+            I::Add(_, _) => O::Add(
                 omap!(self, I::Add(ref a, _) => &**a),
                 omap!(self, I::Add(_, ref b) => &**b)),
-            I::Sub(_, _) => O::Less(
+            I::Sub(_, _) => O::Sub(
                 omap!(self, I::Sub(ref a, _) => &**a),
                 omap!(self, I::Sub(_, ref b) => &**b)),
-            I::Mul(_, _) => O::Less(
+            I::Mul(_, _) => O::Mul(
                 omap!(self, I::Mul(ref a, _) => &**a),
                 omap!(self, I::Mul(_, ref b) => &**b)),
-            I::Div(_, _) => O::Less(
+            I::Div(_, _) => O::Div(
                 omap!(self, I::Div(ref a, _) => &**a),
                 omap!(self, I::Div(_, ref b) => &**b)),
-            I::Mod(_, _) => O::Less(
+            I::Mod(_, _) => O::Mod(
                 omap!(self, I::Mod(ref a, _) => &**a),
                 omap!(self, I::Mod(_, ref b) => &**b)),
         }
