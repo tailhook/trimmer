@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use render_error::DataError;
 use vars::{Variable};
-use {Var, Output};
+use {Var, Output, Number, Comparable};
 
 const TRUE: &&str = &"true";
 const FALSE: &&str = &"false";
@@ -116,6 +116,12 @@ macro_rules! impl_number {
             }
             fn as_bool(&self) -> Result<bool, DataError> {
                 Ok(*self != $zero)
+            }
+            fn as_number(&self) -> Result<Number, DataError> {
+                Ok((*self).into())
+            }
+            fn as_comparable(&self) -> Result<Comparable, DataError> {
+                Ok((*self).into())
             }
         }
     }
