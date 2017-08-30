@@ -34,6 +34,9 @@ fn main() {
             .add_option(&["-D", "--var"], Collect,
                 "Define a string variable. Only useful if `-o-` is also
                  specified");
+        ap.add_option(&["--version"],
+            Print(env!("CARGO_PKG_VERSION").into()),
+            "Print version and exit");
         #[cfg(feature="json")]
         {
             ap.refer(&mut json_vars)
