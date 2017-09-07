@@ -546,7 +546,10 @@ impl Parser {
             skip_many(
                 st_start("syntax")
                 .skip(skip_many(satisfy(|x: Token| x.kind != Newline)))
-                .skip(kind(Newline)))
+                .skip(kind(Newline))
+                .or(st_start("validate")
+                .skip(skip_many(satisfy(|x: Token| x.kind != Newline)))
+                .skip(kind(Newline))))
             .with(parser(body)).skip(kind(Kind::Eof));
 
         let (body, _) = p.parse(s)?;

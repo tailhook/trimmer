@@ -1,6 +1,7 @@
 use std::fmt::Write;
 
 use combine::primitives::{ParseError as CombineError, Error};
+use regex;
 
 use tokenizer::TokenStream;
 use {Pos};
@@ -27,6 +28,10 @@ quick_error! {
         UnsupportedSyntax {
             description("Template must start with `## syntax: indent`")
             display("Template must start with `## syntax: indent`")
+        }
+        BadRegexValidator(value: String, err: regex::Error) {
+            description("Validator regexp is invalid")
+            display("Validator regex {:?} is invalid: {}", value, err)
         }
     }
 }

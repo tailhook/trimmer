@@ -12,6 +12,7 @@ extern crate owning_ref;
 extern crate regex;
 #[macro_use] extern crate quick_error;
 #[macro_use] extern crate matches;
+#[cfg(test)] #[macro_use] extern crate difference;
 #[cfg(feature="json")] extern crate serde_json;
 
 mod compare;

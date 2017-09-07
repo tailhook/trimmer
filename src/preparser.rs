@@ -1,6 +1,7 @@
 use regex::{Regex, RegexSet};
 
 use parse_error::{ParseError, ParseErrorEnum};
+use validators::Validator;
 use {Options};
 
 
@@ -29,7 +30,7 @@ impl Preparser {
 
         let list = &[
             (r"^##\s*syntax:\s*(\w+)(?:\n|$)", Syntax),
-            (r"^##\s*validate\s+\w+:.*(?:\n|$)", Validate),
+            (r"^##\s*validate\s+(\w+):\s*(.*?)\s*(?:\n|$)", Validate),
             (r"^#.*(?:\n|$)", Comment),
             (r"^###.*(?:\n|$)", Comment),
             (r"^\s*\n", Comment),
@@ -74,7 +75,18 @@ impl Preparser {
                             }
                         }
                         Token::Validate => {
-                            unimplemented!();
+                            let name = m.get(1).unwrap().as_str();
+                            let regex = m.get(2).unwrap().as_str();
+                            let regex = Regex::new(regex)
+                                .map_err(|e| ParseErrorEnum::BadRegexValidator(
+                                    regex.to_string(), e))?;
+                            if name == "default" {
+                                options.default_validator =
+                                    Validator::Regex(regex);
+                            } else {
+                                options.validators.insert(
+                                    name.to_string(), Validator::Regex(regex));
+                            }
                         }
                         Token::Comment => {
                             // Skip
