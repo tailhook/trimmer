@@ -67,7 +67,11 @@ pub enum OutputMode {
 #[derive(Debug, PartialEq)]
 pub enum StatementCode {
     OutputRaw(String),
-    Output(OutputMode, Expr, OutputMode),
+    Output {
+        left_ws: OutputMode,
+        expr: Expr,
+        right_ws: OutputMode,
+    },
     Cond {
         indent: usize,
         conditional: Vec<(Expr, Body)>,
@@ -327,9 +331,9 @@ fn expression<'a>(input: TokenStream<'a>)
         .and(parser(top_level_expression))
         .skip(ws()).and(kind(ExprEnd))
     .map(|((start, expr), end)| {
-        let start = OutputMode::start(&start);
-        let end = OutputMode::end(&end);
-        StatementCode::Output(start, expr, end)
+        let left_ws = OutputMode::start(&start);
+        let right_ws = OutputMode::end(&end);
+        StatementCode::Output { left_ws, expr, right_ws }
     })
     .parse_stream(input)
 }

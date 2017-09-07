@@ -21,7 +21,7 @@ impl Postprocess {
                 true
             } else {
                 match st[i-1].code {
-                    Output(..) => false,
+                    Output {..} => false,
                     // Empty OutputRaw's are already optimized out
                     OutputRaw(ref x)
                     => x.chars().rev().next().unwrap().is_whitespace(),
@@ -32,7 +32,7 @@ impl Postprocess {
                 true
             } else {
                 match st[i+1].code {
-                    Output(..) => false,
+                    Output {..} => false,
                     // Empty OutputRaw's are already optimized out
                     OutputRaw(ref x)
                     => x.chars().next().unwrap().is_whitespace(),
@@ -40,12 +40,12 @@ impl Postprocess {
                 }
             };
             match st[i].code {
-                Output(ref mut start, _, ref mut end) => {
-                    if *start == Preserve {
-                        *start = if fix_start { Space } else { Strip };
+                Output { ref mut left_ws, expr: _, ref mut right_ws } => {
+                    if *left_ws == Preserve {
+                        *left_ws = if fix_start { Space } else { Strip };
                     }
-                    if *end == Preserve && fix_end {
-                        *end = if fix_end { Space } else { Strip };
+                    if *right_ws == Preserve && fix_end {
+                        *right_ws = if fix_end { Space } else { Strip };
                     }
                 }
                 _ => {}
@@ -57,7 +57,7 @@ impl Postprocess {
                     text.split_whitespace()
                         .collect::<Vec<_>>().join(" ")
                 ),
-                s@Output(..) | s@Alias { .. } => s,
+                s@Output {..} | s@Alias { .. } => s,
                 Cond { indent, conditional, otherwise } => Cond {
                     indent,
                     conditional: conditional.into_iter().map(|(e, b)| {

@@ -45,7 +45,7 @@ impl Postprocess {
                     }
                     OutputRaw(_) => false,
                     Alias { .. } => true,
-                    Output(..) => false,
+                    Output { .. } => false,
                     Cond { indent, .. } => {
                         update_indent(indent);
                         true
@@ -69,7 +69,7 @@ impl Postprocess {
                     }
                     OutputRaw(_) => false,
                     Alias { .. } => true,
-                    Output(..) => false,
+                    Output { .. } => false,
                     Cond { .. } => true,
                     Loop { .. } => true,
                 };
@@ -79,7 +79,7 @@ impl Postprocess {
 
         let s = statements.into_iter().map(|s| {
             let code = match s.code {
-                s@OutputRaw(..) | s@Alias { .. } | s@Output(..) => s,
+                s@OutputRaw(..) | s@Alias { .. } | s@Output {..} => s,
                 Cond { indent, conditional, otherwise } => Cond {
                     indent,
                     conditional: conditional.into_iter().map(|(e, b)| {

@@ -21,7 +21,7 @@ fn is_line_statement(code: &StatementCode) -> bool {
     use grammar::StatementCode::*;
     match *code {
         OutputRaw(..) => false,
-        Output(..) => false,
+        Output {..} => false,
         Cond {..} => true,
         Loop {..} => true,
         Alias {..} => true,
@@ -71,7 +71,7 @@ impl Optimizer {
         }
         let s = dst.into_iter().map(|s| {
             let code = match s.code {
-                s@OutputRaw(..) | s@Alias { .. } | s@Output(..) => s,
+                s@OutputRaw(..) | s@Alias { .. } | s@Output {..} => s,
                 Cond { indent, conditional, otherwise } => Cond {
                     indent,
                     conditional: conditional.into_iter().map(|(e, b)| {
