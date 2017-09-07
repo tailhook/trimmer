@@ -8,6 +8,7 @@ use parse_error::ParseError;
 use preparser::{Preparser, Syntax};
 use render::{self, template};
 use tokenizer::{Tokenizer, TokenStream, Token, Kind};
+use validators::Validator;
 use {Options, Pos};
 
 
@@ -70,6 +71,7 @@ pub enum StatementCode {
     Output {
         left_ws: OutputMode,
         expr: Expr,
+        validator: Option<Validator>,
         right_ws: OutputMode,
     },
     Cond {
@@ -333,7 +335,8 @@ fn expression<'a>(input: TokenStream<'a>)
     .map(|((start, expr), end)| {
         let left_ws = OutputMode::start(&start);
         let right_ws = OutputMode::end(&end);
-        StatementCode::Output { left_ws, expr, right_ws }
+        // TODO(tailhook) parse validator
+        StatementCode::Output { left_ws, expr, validator: None, right_ws }
     })
     .parse_stream(input)
 }

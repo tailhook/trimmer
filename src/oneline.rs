@@ -40,7 +40,7 @@ impl Postprocess {
                 }
             };
             match st[i].code {
-                Output { ref mut left_ws, expr: _, ref mut right_ws } => {
+                Output { ref mut left_ws, ref mut right_ws, .. } => {
                     if *left_ws == Preserve {
                         *left_ws = if fix_start { Space } else { Strip };
                     }

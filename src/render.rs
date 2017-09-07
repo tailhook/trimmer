@@ -277,7 +277,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                     }
                 }
             }
-            Output { left_ws, expr: _, right_ws } => {
+            Output { left_ws, right_ws, .. } => {
                 match min(left_ws, r.tail_mode) {
                     Preserve => {},
                     Strip => {
@@ -293,7 +293,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                     }
                 }
                 let e = items.clone().map(|x| match x[idx].code {
-                    Output { left_ws: _, ref expr, right_ws: _ } => expr,
+                    Output { ref expr, .. } => expr,
                     _ => unreachable!(),
                 });
                 let var = &eval_expr(r, root, &e);
