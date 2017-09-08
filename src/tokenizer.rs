@@ -85,18 +85,33 @@ impl<'a> StreamOnce for TokenStream<'a> {
 
                 match tok.kind {
                     Comment => {
-                        let end = self.buf[self.off..].find("#}");
-                        if let Some(end) = end {
-                            let end = self.off+end+2;
-                            let slice = &self.buf[self.off..end];
+                        if tok.value.starts_with('{') {
+                            let end = self.buf[self.off..].find("#}");
+                            if let Some(end) = end {
+                                let end = self.off+end+2;
+                                let slice = &self.buf[self.off..end];
+                                self.update_pos(slice);
+                                return Ok(Token {
+                                    kind: Comment,
+                                    value: &self.buf[start_off..end],
+                                })
+                            } else {
+                                return Err(Error::Message(
+                                    Info::Borrowed("Comment does not end")));
+                            }
+                        } else {
+                            let skip_nl = col == 1;
+                            let start_off = self.off;
+                            let end = self.buf[start_off..].find("\n");
+                            let end = end.map(|x| {
+                                start_off + x + if skip_nl { 1 } else { 0 }
+                            }).unwrap_or(self.buf.len());
+                            let slice = &self.buf[start_off..end];
                             self.update_pos(slice);
                             return Ok(Token {
                                 kind: Comment,
                                 value: &self.buf[start_off..end],
                             })
-                        } else {
-                            return Err(Error::Message(
-                                Info::Borrowed("Comment does not end")));
                         }
                     }
                     ExprStart => {
@@ -253,6 +268,7 @@ impl Tokenizer {
             (r"\{\{[+-]?", ExprStart),
             (r"\{#", Comment),
             (r"\n", Newline),
+            (r"^\s*###", Comment),
             (r"^\s*##\s*(\w*)", StStart),
             (r"[ \t]+", Whitespace),
         ];

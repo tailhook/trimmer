@@ -59,6 +59,21 @@ fn comment() {
     assert_eq!(&t.render(&c).unwrap(), "2  + 4");
 }
 
+#[test]
+fn line_comment() {
+    assert_eq!(render_x("x\n### hello\ny"), "x\ny")
+}
+
+#[test]
+fn indented_comment() {
+    assert_eq!(render_x("x\n    ### hello\ny"), "x\ny")
+}
+
+#[test]
+fn not_comment() {
+    assert_eq!(render_x("x ### hello\ny"), "x\ny")
+}
+
 /*
 #[test]
 fn var_owned() {
