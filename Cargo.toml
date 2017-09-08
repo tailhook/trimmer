@@ -4,7 +4,7 @@ description = """
     A whitespace- and memory-friendly template engine
 """
 license = "MIT/Apache-2.0"
-readme = "README.rst"
+readme = "README.md"
 keywords = ["template", "render", "whitespace"]
 categories = ["template-engine"]
 homepage = "http://github.com/tailhook/trimmer"

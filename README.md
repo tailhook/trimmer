@@ -1,22 +1,19 @@
-=======
 Trimmer
 =======
 
-:Status: Alpha
+:Status: Beta
 
-Reference_ | `API Docs`_ | Crate_
+[Reference](https://trimmer.readthedocs.io/) |
+[API Docs](https://docs.rs/trimmer/) |
+[Crate](https://crates.io/crates/trimmer)
 
-.. _api docs: https://docs.rs/trimmer/
-.. _reference: https://trimmer.readthedocs.io/
-.. _crate: https://crates.io/crates/trimmer
-
-Yet anoter template engine for Rust. Features:
+Yet another template engine for Rust. Features:
 
 * Can produce better indented text than most template engines
 * Can traverse Rust types without cloning them too much
+* Can produce safe output by validating variable values rather than escaping
 
 
-=======
 License
 =======
 
@@ -27,7 +24,6 @@ Licensed under either of
 
 at your option.
 
-------------
 Contribution
 ------------
 
