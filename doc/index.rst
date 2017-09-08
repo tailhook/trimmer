@@ -24,12 +24,11 @@ Quick showcase:
 
 .. code-block:: bash
 
-    ## syntax: indent, {}
-    ## validate default: '^[^;{}]*$'  # no ; { } to break nginx syntax
-    ## validate ne: '^[^;{}]+$'       # non-empty (note plus in regex)
+    ## syntax: indent
+    ## validate default: [^;{}]*  # no ; { } to break nginx syntax
+    ## validate ne: [^;{}]+       # non-empty (note plus in regex)
     http {
         ## for server in servers
-            ## skip if server.hostname == null
             server {
                 root /var/www;
                 server_name
