@@ -24,3 +24,11 @@ fn valid_default_non_matching() {
               ## validate default: [a-z]+\n\
               {{ x }}", "a+b");
 }
+
+#[test]
+fn valid_non_default_override() {
+    render_x("## syntax: oneline\n\
+              ## validate default: [a-z]+\n\
+              ## validate sum: [a-z+]+\n\
+              {{ x | sum }}", "a+b");
+}

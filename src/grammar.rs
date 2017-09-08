@@ -8,7 +8,6 @@ use parse_error::ParseError;
 use preparser::{Preparser, Syntax};
 use render::{self, template};
 use tokenizer::{Tokenizer, TokenStream, Token, Kind};
-use validators::Validator;
 use {Options, Pos};
 
 
@@ -330,13 +329,15 @@ fn expression<'a>(input: TokenStream<'a>)
     use helpers::*;
 
     kind(ExprStart).skip(ws())
-        .and(parser(top_level_expression))
+        .and(parser(top_level_expression)).skip(ws())
+        .and(optional(operator("|").skip(ws()).with(kind(Ident))))
         .skip(ws()).and(kind(ExprEnd))
-    .map(|((start, expr), end)| {
+    .map(|(((start, expr), validator), end)| {
         let left_ws = OutputMode::start(&start);
         let right_ws = OutputMode::end(&end);
         // TODO(tailhook) parse validator
-        StatementCode::Output { left_ws, expr, validator: None, right_ws }
+        StatementCode::Output { left_ws, expr,
+            validator: validator.map(|x| x.value.to_string()), right_ws }
     })
     .parse_stream(input)
 }
