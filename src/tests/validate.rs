@@ -11,9 +11,18 @@ fn render_x(template: &str, x: &str) -> String {
 #[test]
 fn valid_default() {
     assert_diff!(
-        &render_x(r#"## syntax: oneline
-                 ## validate default: [a-z]+
-                 {{ x }}"#, "hello"),
+        &render_x("## syntax: oneline\n\
+                   ## validate default: [a-z]+\n\
+                   {{ x }}", "hello"),
+        "hello", "\n", 0);
+}
+
+#[test]
+fn comment_in_validator() {
+    assert_diff!(
+        &render_x("## syntax: oneline\n\
+                   ## validate default: [a-z]+  # safe default\n\
+                   {{ x }}", "hello"),
         "hello", "\n", 0);
 }
 

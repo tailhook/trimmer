@@ -30,7 +30,8 @@ impl Preparser {
 
         let list = &[
             (r"^##\s*syntax:\s*(\w+)(?:\n|$)", Syntax),
-            (r"^##\s*validate\s+(\w+):\s*(.*?)\s*(?:\n|$)", Validate),
+            (r"^##\s*validate\s+(\w+):\s*(.*)\s*(?:\n|$)",
+                Validate),
             (r"^#.*(?:\n|$)", Comment),
             (r"^###.*(?:\n|$)", Comment),
             (r"^\s*\n", Comment),
@@ -78,6 +79,16 @@ impl Preparser {
                             let name = m.get(1).unwrap().as_str();
                             let mut regex = m.get(2).unwrap()
                                 .as_str().to_string();
+                            // Strip comment
+                            if let Some(end) = regex.as_bytes()
+                                .iter().position(|&x| x == b'#')
+                            {
+                                if end > 0 && regex[..end].ends_with(" ") {
+                                    let nlen = regex[..end].trim().len();
+                                    regex.truncate(nlen);
+                                }
+                            }
+                            // add anchors if not there
                             if !regex.starts_with("^") {
                                 regex.insert(0, '^');
                             }

@@ -134,7 +134,18 @@ impl<'a> StreamOnce for TokenStream<'a> {
                 self.update_pos(tok.value);
 
                 match tok.kind {
-                    Comment => unimplemented!(),
+                    Comment => {
+                        let start_off = self.off;
+                        let end = self.buf[start_off..].find("\n");
+                        let end = start_off+end
+                            .unwrap_or(self.buf.len() - start_off);
+                        let slice = &self.buf[start_off..end];
+                        self.update_pos(slice);
+                        return Ok(Token {
+                            kind: Comment,
+                            value: &self.buf[start_off..end],
+                        })
+                    }
                     Newline => {
                         self.state = State::Top;
                     }

@@ -127,6 +127,15 @@ fn cond() {
 }
 
 #[test]
+fn cond_comment() {
+    let t = parse("## if x #comment\n  y\n## endif\n");
+    let x = "x";
+    let mut c = Context::new();
+    c.set("x", &x);
+    assert_eq!(&t.render(&c).unwrap(), "  y\n");
+}
+
+#[test]
 fn cond_else() {
     let t = parse("## if x\n  y\n## else\n  z\n## endif\n");
     let empty = "";
