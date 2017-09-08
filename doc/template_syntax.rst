@@ -11,6 +11,7 @@ out there. There are few kinds of delimiters supported in template:
   template output
 * ``## something`` statements, they usually they last to the end of line
 
+.. index:: Expressions
 
 Expressions
 ===========
@@ -74,6 +75,8 @@ the easiest way to put expression or statement delimiter into the file::
     {{ '{{' }}
 
 
+.. index:: Statements
+
 Statements
 ==========
 
@@ -85,6 +88,11 @@ Statements start with double-sharp and a keyword. Here are examples:
 
 They must start at the start of the line, not counting the whitespace.
 
+The ``syntax`` and ``validate`` statements must also be at the start of the
+file and in the first column of the row.
+
+
+.. index:: pair: Syntax; Statement
 
 Syntax Statement
 ================
@@ -95,6 +103,8 @@ Syntax statement looks like this::
 
 Syntax doesn't influence parsing the template but the typechecking and the
 output of the template.
+
+Syntax statement must come the first in the file
 
 Here are the list of supported syntaxes:
 
@@ -124,6 +134,39 @@ Here are the list of supported syntaxes:
   as is with all whitespace. Statements always occupy the whole line
   including indentation whitespace and trailing end of line.
 
+.. _validate:
+.. index:: pair: Validate; Statement
+
+Validate Statement
+==================
+
+The validate statement is the core thing for producing valid template output.
+By default template output is not validated. But if you add the following
+to the beginning of the file::
+
+    ## validate default: [a-z]+
+
+The output of any variable can consist only of alphanumeric characters.
+Validator is a regular expression, the ``^`` and ``$`` anchors are added
+automatically.
+
+The ``default`` validator is used for every expression that doesn't override
+the validator. You can add a validator with any other name to be used in
+code that possibly extends default syntax, for example::
+
+    ## validate default: [a-zA-Z0-9]+
+    ## validate quoted: [^']*
+    #!/bin/sh
+    echo {{ arg1 }} '{{ arg2 | quoted }}'
+
+Here we generate a shell script. To be careful, we assume that it's only safe
+to put alphanumeric characters into the file. But in single-quoted strings its
+safe to put anything except a quote, so for all variables printed in quotes we
+can add a ``quoted`` validator. See :ref:`front page <showcase>` for more
+practical example.
+
+
+.. index:: pair: If; Statement
 
 If Statement
 ============
@@ -137,6 +180,8 @@ Conditional statement looks like::
 In any case lines containing ``## if`` and ``## endif`` do not put into output.
 In ``indent`` syntax the inner indentation of the block is also stripped.
 
+
+.. index:: pair: For; Statement
 
 For Statement
 =============

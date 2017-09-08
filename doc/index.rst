@@ -18,7 +18,9 @@ Contents:
    :maxdepth: 2
 
    template_syntax
+   changelog
 
+.. _showcase:
 
 Quick showcase:
 
