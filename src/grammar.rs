@@ -71,7 +71,7 @@ pub enum StatementCode {
     Output {
         left_ws: OutputMode,
         expr: Expr,
-        validator: Option<Validator>,
+        validator: Option<String>,
         right_ws: OutputMode,
     },
     Cond {

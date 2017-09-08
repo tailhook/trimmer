@@ -16,3 +16,11 @@ fn valid_default() {
                  {{ x }}"#, "hello"),
         "hello", "\n", 0);
 }
+
+#[test]
+#[should_panic]
+fn valid_default_non_matching() {
+    render_x("## syntax: oneline\n\
+              ## validate default: [a-z]+\n\
+              {{ x }}", "a+b");
+}

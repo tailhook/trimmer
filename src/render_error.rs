@@ -42,6 +42,21 @@ quick_error! {
             description("can't print object of this type")
             display("can't print object of type {}", typename)
         }
+        /// The object can't be output
+        OutputError(typename: &'static str) {
+            description("error when formatting value")
+            display("error when formatting value of type {}", typename)
+        }
+        /// Named validator is not known
+        UnknownValidator(name: String) {
+            description("unknown validator")
+            display("validator {:?} is not defined", name)
+        }
+        /// Output did not match regex
+        RegexValidationError(data: String, regex: String) {
+            description("validation error")
+            display("output {:?} should match regex {:?}", data, regex)
+        }
         /// The object can't be boolean
         BoolUnsupported(typename: &'static str) {
             description("can't treat object of this type as bool")

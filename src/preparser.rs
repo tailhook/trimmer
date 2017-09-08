@@ -76,8 +76,15 @@ impl Preparser {
                         }
                         Token::Validate => {
                             let name = m.get(1).unwrap().as_str();
-                            let regex = m.get(2).unwrap().as_str();
-                            let regex = Regex::new(regex)
+                            let mut regex = m.get(2).unwrap()
+                                .as_str().to_string();
+                            if !regex.starts_with("^") {
+                                regex.insert(0, '^');
+                            }
+                            if !regex.ends_with("$") {
+                                regex.push('$');
+                            }
+                            let regex = Regex::new(&regex)
                                 .map_err(|e| ParseErrorEnum::BadRegexValidator(
                                     regex.to_string(), e))?;
                             if name == "default" {

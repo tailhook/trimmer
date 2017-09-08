@@ -21,13 +21,13 @@ use {Pos, Variable, Var};
 pub struct Template(Arc<Tpl>);
 
 
-struct Renderer {
-    buf: String,
-    template: Arc<Tpl>,
-    frozen: usize,
-    tail_mode: OutputMode,
-    errors: Vec<(Pos, DataError)>,
-    nothing: Rc<()>,
+pub(crate) struct Renderer {
+    pub(crate) buf: String,
+    pub(crate) template: Arc<Tpl>,
+    pub(crate) frozen: usize,
+    pub(crate) tail_mode: OutputMode,
+    pub(crate) errors: Vec<(Pos, DataError)>,
+    pub(crate) nothing: Rc<()>,
 }
 
 impl Template {
@@ -277,7 +277,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                     }
                 }
             }
-            Output { left_ws, right_ws, .. } => {
+            Output { left_ws, right_ws, ref validator, expr: _ } => {
                 match min(left_ws, r.tail_mode) {
                     Preserve => {},
                     Strip => {
@@ -297,8 +297,37 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                     _ => unreachable!(),
                 });
                 let var = &eval_expr(r, root, &e);
-                write!(&mut r.buf, "{}",
-                    var.output().unwrap_or(::Output::empty()).0)?;
+                match var.output() {
+                    Ok(value) => {
+                        let start = r.buf.len();
+                        write!(&mut r.buf, "{}", value.0)?;
+                        let val = match *validator {
+                            Some(ref name) => {
+                                match r.template.options.validators.get(name) {
+                                    Some(val) => val,
+                                    None => {
+                                        r.errors.push((item.position.0,
+                                            UnknownValidator(
+                                                name.to_string())));
+                                        &r.template.options.default_validator
+                                    }
+                                }
+                            }
+                            None => {
+                                &r.template.options.default_validator
+                            }
+                        };
+                        match val.validate(&r.buf[start..]) {
+                            Ok(()) => {}
+                            Err(e) => {
+                                r.errors.push((item.position.0, e));
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        r.errors.push((item.position.0, e));
+                    }
+                }
                 r.frozen = r.buf.len();
                 r.tail_mode = right_ws;
             }
