@@ -238,6 +238,42 @@ fn unary<'a>(input: TokenStream<'a>)
     .parse_stream(input)
 }
 
+fn factors<'a>(input: TokenStream<'a>)
+    -> ParseResult<Expr, TokenStream<'a>>
+{
+    use helpers::*;
+
+    enum Op {
+        Mul,
+        Div,
+        Mod,
+    }
+
+    parser(unary)
+    .and(many(
+        operator("*").map(|_| Op::Mul)
+        .or(operator("/").map(|_| Op::Div))
+        .or(operator("%").map(|_| Op::Mod))
+        .skip(ws())
+        .and(parser(unary))
+        .and(position())))
+    .map(|(expr, vec): (_, Vec<_>)| {
+        vec.into_iter().fold(expr,
+        |a: Expr, ((op, b), e): ((_, Expr), _)| {
+            Expr {
+                position: (a.position.0, e),
+                code: match op {
+                    Op::Mul => ExprCode::Mul(Box::new(a), Box::new(b)),
+                    Op::Div => ExprCode::Div(Box::new(a), Box::new(b)),
+                    Op::Mod => ExprCode::Mod(Box::new(a), Box::new(b)),
+                },
+            }
+        })
+    })
+    .parse_stream(input)
+}
+
+
 fn addition<'a>(input: TokenStream<'a>)
     -> ParseResult<Expr, TokenStream<'a>>
 {
@@ -248,11 +284,11 @@ fn addition<'a>(input: TokenStream<'a>)
         Sub,
     }
 
-    parser(unary)
+    parser(factors)
     .and(many(
         operator("+").map(|_| Op::Add).or(operator("-").map(|_| Op::Sub))
         .skip(ws())
-        .and(parser(unary))
+        .and(parser(factors))
         .and(position())))
     .map(|(expr, vec): (_, Vec<_>)| {
         vec.into_iter().fold(expr,

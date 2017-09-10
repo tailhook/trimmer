@@ -141,3 +141,66 @@ pub fn sub<'x>(a: Number, b: Number) -> VarRef<'x> {
         (I64(a), U64(b)) => val((a as f64) - (b as f64)),
     }
 }
+
+pub fn mul<'x>(a: Number, b: Number) -> VarRef<'x> {
+    use self::NumberInner::*;
+    match (norm(a.0), norm(b.0)) {
+        (I64(a), I64(b)) => {
+            a.checked_mul(b).map(val)
+            .unwrap_or_else(|| val((a as f64) * (b as f64)))
+        }
+        (U64(a), U64(b)) => {
+            a.checked_mul(b).map(val)
+            .unwrap_or_else(|| val((a as f64) * (b as f64)))
+        }
+        (F64(a), F64(b)) => val(a * b),
+        (I64(a), F64(b)) => val(a as f64 * b),
+        (F64(a), I64(b)) => val(a * b as f64),
+        (U64(a), F64(b)) => val(a as f64 * b),
+        (F64(a), U64(b)) => val(a * b as f64),
+        (U64(a), I64(b)) => val((a as f64) * (b as f64)),
+        (I64(a), U64(b)) => val((a as f64) * (b as f64)),
+    }
+}
+
+pub fn div<'x>(a: Number, b: Number) -> VarRef<'x> {
+    use self::NumberInner::*;
+    match (norm(a.0), norm(b.0)) {
+        (I64(a), I64(b)) => {
+            if a % b == 0 {
+                val(a / b)
+            } else {
+                val((a as f64) / (b as f64))
+            }
+        }
+        (U64(a), U64(b)) => {
+            if a % b == 0 {
+                val(a / b)
+            } else {
+                val((a as f64) / (b as f64))
+            }
+        }
+        (F64(a), F64(b)) => val(a / b),
+        (I64(a), F64(b)) => val(a as f64 / b),
+        (F64(a), I64(b)) => val(a / b as f64),
+        (U64(a), F64(b)) => val(a as f64 / b),
+        (F64(a), U64(b)) => val(a / b as f64),
+        (U64(a), I64(b)) => val((a as f64) / (b as f64)),
+        (I64(a), U64(b)) => val((a as f64) / (b as f64)),
+    }
+}
+
+pub fn modulo<'x>(a: Number, b: Number) -> VarRef<'x> {
+    use self::NumberInner::*;
+    match (norm(a.0), norm(b.0)) {
+        (I64(a), I64(b)) => val(a % b),
+        (U64(a), U64(b)) => val(a % b),
+        (F64(a), F64(b)) => val(a % b),
+        (I64(a), F64(b)) => val(a as f64 % b),
+        (F64(a), I64(b)) => val(a % b as f64),
+        (U64(a), F64(b)) => val(a as f64 % b),
+        (F64(a), U64(b)) => val(a % b as f64),
+        (U64(a), I64(b)) => val((a as f64) % (b as f64)),
+        (I64(a), U64(b)) => val((a as f64) % (b as f64)),
+    }
+}

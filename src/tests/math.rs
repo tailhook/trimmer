@@ -35,3 +35,23 @@ fn render_minus() {
     assert_eq!(render_x_y("{{ x - y }}", 10i64, -1i64), "11");
     assert_eq!(render_x_y("{{ x - y }}", 1.5f64, -1f64), "2.5");
 }
+
+#[test]
+fn render_mul() {
+    assert_eq!(render_x_y("{{ x * y }}", 2u32, 3u32), "6");
+}
+
+#[test]
+fn render_div() {
+    assert_eq!(render_x_y("{{ x / y }}", 6u32, 3u32), "2");
+}
+
+#[test]
+fn render_mod() {
+    assert_eq!(render_x_y("{{ x % y }}", 5u32, 3u32), "2");
+}
+
+#[test]
+fn render_sum_mul() {
+    assert_eq!(render_x_y("{{ 2 + x * y }}", 2u32, 3u32), "8");
+}
