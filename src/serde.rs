@@ -4,6 +4,7 @@ use std::usize;
 use serde_json::Value;
 
 use {DataError, Variable, Var, Context, Template, RenderError, Pos, Output};
+use {Number};
 
 pub const TRUE: &'static &'static str = &"true";
 pub const FALSE: &'static &'static str = &"false";
@@ -54,11 +55,26 @@ impl<'render> Variable<'render> for Value {
         use serde_json::Value::*;
         match *self {
             Number(ref val)
-            if val.as_u64() .map(|x| x <= usize::MAX as u64).unwrap_or(false)
+            if val.as_u64().map(|x| x <= usize::MAX as u64).unwrap_or(false)
             => Ok(val.as_u64().unwrap() as usize),
             // TODO(tailhook) try use float too
             // TODO(tailhook) show out of range int error
             _ => Err(DataError::IntKeyUnsupported(self.typename())),
+        }
+    }
+    fn as_number(&self) -> Result<Number, DataError> {
+        use serde_json::Value::*;
+        match *self {
+            Number(ref val) if val.is_u64() => {
+                Ok(val.as_u64().unwrap().into())
+            }
+            Number(ref val) if val.is_i64() => {
+                Ok(val.as_i64().unwrap().into())
+            }
+            Number(ref val) if val.is_f64() => {
+                Ok(val.as_f64().unwrap().into())
+            }
+            _ => Err(DataError::NumberUnsupported(self.typename())),
         }
     }
     fn output(&self) -> Result<Output, DataError> {

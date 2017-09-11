@@ -232,6 +232,24 @@ fn attr() {
 
 #[test]
 #[cfg(feature="json")]
+fn sum_json() {
+    assert_eq!(
+        render_json("{{ x.a + x.b }}",
+            r#"{"x": {"a": 2, "b": 73}}"#),
+        "75");
+}
+
+#[test]
+#[cfg(feature="json")]
+fn prod_json() {
+    assert_eq!(
+        render_json("{{ x.a * x.b }}",
+            r#"{"x": {"a": 2, "b": 73}}"#),
+        "146");
+}
+
+#[test]
+#[cfg(feature="json")]
 fn item() {
     assert_eq!(
         render_json(r#"{{ x["a"] }} + {{ x[key] }}"#,
