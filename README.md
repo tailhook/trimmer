@@ -5,6 +5,7 @@ Trimmer
 
 [Reference](https://trimmer.readthedocs.io/) |
 [API Docs](https://docs.rs/trimmer/) |
+[Github](https://github.com/tailhook/trimmer) |
 [Crate](https://crates.io/crates/trimmer)
 
 Yet another template engine for Rust. Features:
