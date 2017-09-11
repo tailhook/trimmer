@@ -186,7 +186,8 @@ fn attr<'a>(input: TokenStream<'a>)
 
     parser(atom)
     .and(many(
-        operator(".").skip(ws()).with(kind(Ident)).map(Suffix::Attr).or(
+        operator(".").skip(ws()).with(kind(Ident)).skip(ws()).map(Suffix::Attr)
+        .or(
             paren("[")
             .skip(ws())
             .with(parser(top_level_expression))
