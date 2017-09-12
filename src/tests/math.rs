@@ -55,3 +55,8 @@ fn render_mod() {
 fn render_sum_mul() {
     assert_eq!(render_x_y("{{ 2 + x * y }}", 2u32, 3u32), "8");
 }
+
+#[test]
+fn render_parenthesis() {
+    assert_eq!(render_x_y("{{ (2+x) * y }}", 2u32, 3u32), "12");
+}

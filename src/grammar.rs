@@ -170,6 +170,11 @@ fn atom<'a>(input: TokenStream<'a>)
         position: (s, e),
         code: c,
     })
+    .or(paren("(")
+        .skip(ws())
+        .with(parser(top_level_expression))
+        .skip(paren(")")))
+        .skip(ws())
     .parse_stream(input)
 }
 
