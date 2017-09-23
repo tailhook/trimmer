@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use owning_ref::OwningRef;
 
-use grammar::{self, Template as Tpl, Expr};
+use grammar::{self, Template as Tpl, Expr, CmpOperator};
 
 
 pub trait Own {
@@ -26,12 +26,7 @@ pub enum ExprCode {
     And(Owned<Expr>, Owned<Expr>),
     Or(Owned<Expr>, Owned<Expr>),
     Not(Owned<Expr>),
-    Eq(Owned<Expr>, Owned<Expr>),
-    Neq(Owned<Expr>, Owned<Expr>),
-    LessEq(Owned<Expr>, Owned<Expr>),
-    Less(Owned<Expr>, Owned<Expr>),
-    GreaterEq(Owned<Expr>, Owned<Expr>),
-    Greater(Owned<Expr>, Owned<Expr>),
+    Comparison(Owned<Expr>, Owned<[(CmpOperator, Expr)]>),
     List(Vec<Expr>),
     Dict(Vec<(Expr, Expr)>),
     Range(Option<Owned<Expr>>, Option<Owned<Expr>>),
@@ -115,24 +110,9 @@ impl Own for OwningRef<Rc<Arc<Tpl>>, grammar::ExprCode> {
                 omap!(self, I::Or(ref a, _) => &**a),
                 omap!(self, I::Or(_, ref b) => &**b)),
             I::Not(_) => O::Not(omap!(self, I::Not(ref x) => &**x)),
-            I::Eq(_, _) => O::Eq(
-                omap!(self, I::Eq(ref a, _) => &**a),
-                omap!(self, I::Eq(_, ref b) => &**b)),
-            I::Neq(_, _) => O::Neq(
-                omap!(self, I::Neq(ref a, _) => &**a),
-                omap!(self, I::Neq(_, ref b) => &**b)),
-            I::LessEq(_, _) => O::LessEq(
-                omap!(self, I::LessEq(ref a, _) => &**a),
-                omap!(self, I::LessEq(_, ref b) => &**b)),
-            I::Less(_, _) => O::Less(
-                omap!(self, I::Less(ref a, _) => &**a),
-                omap!(self, I::Less(_, ref b) => &**b)),
-            I::GreaterEq(_, _) => O::GreaterEq(
-                omap!(self, I::GreaterEq(ref a, _) => &**a),
-                omap!(self, I::GreaterEq(_, ref b) => &**b)),
-            I::Greater(_, _) => O::Greater(
-                omap!(self, I::Greater(ref a, _) => &**a),
-                omap!(self, I::Greater(_, ref b) => &**b)),
+            I::Comparison(_, _) => O::Comparison(
+                omap!(self, I::Comparison(ref a, _) => &**a),
+                omap!(self, I::Comparison(_, ref vec) => &vec[..])),
             I::List(_) => unimplemented!(),
             I::Dict(_) => unimplemented!(),
             I::Range(_, _) => unimplemented!(),

@@ -12,6 +12,16 @@ use {Options, Pos};
 
 
 #[derive(Debug, PartialEq)]
+pub enum CmpOperator {
+    Eq,
+    Neq,
+    LessEq,
+    Less,
+    GreaterEq,
+    Greater,
+}
+
+#[derive(Debug, PartialEq)]
 #[allow(dead_code)] // TODO(tailhook)
 pub enum ExprCode {
     // Constants
@@ -28,12 +38,7 @@ pub enum ExprCode {
     And(Box<Expr>, Box<Expr>),
     Or(Box<Expr>, Box<Expr>),
     Not(Box<Expr>),
-    Eq(Box<Expr>, Box<Expr>),
-    Neq(Box<Expr>, Box<Expr>),
-    LessEq(Box<Expr>, Box<Expr>),
-    Less(Box<Expr>, Box<Expr>),
-    GreaterEq(Box<Expr>, Box<Expr>),
-    Greater(Box<Expr>, Box<Expr>),
+    Comparison(Box<Expr>, Vec<(CmpOperator, Expr)>),
     // Constructors
     List(Vec<Expr>),
     Dict(Vec<(Expr, Expr)>),
@@ -311,16 +316,46 @@ fn addition<'a>(input: TokenStream<'a>)
     .parse_stream(input)
 }
 
+fn comparison<'a>(input: TokenStream<'a>)
+    -> ParseResult<Expr, TokenStream<'a>>
+{
+    use helpers::*;
+    use self::CmpOperator::*;
+
+    parser(addition)
+    .and(many(
+        operator("==").map(|_| Eq)
+        .or(operator("!=").map(|_| Neq))
+        .or(operator(">").map(|_| Greater))
+        .or(operator(">=").map(|_| GreaterEq))
+        .or(operator("<").map(|_| Less))
+        .or(operator("<=").map(|_| LessEq))
+        .skip(ws())
+        .and(parser(addition))))
+    .and(position())
+    .map(|((expr, vec), e): ((Expr, Vec<_>), _)|  {
+        if vec.len() == 0 {
+            expr
+        } else {
+            Expr {
+                position: (expr.position.0, e),
+                code: ExprCode::Comparison(Box::new(expr), vec),
+            }
+        }
+    })
+    .parse_stream(input)
+}
+
 fn bool_and<'a>(input: TokenStream<'a>)
     -> ParseResult<Expr, TokenStream<'a>>
 {
     use helpers::*;
 
-    parser(addition)
+    parser(comparison)
     .and(many(
         operator("and")
         .skip(ws())
-        .with(parser(addition))
+        .with(parser(comparison))
         .and(position())))
     .map(|(expr, vec): (_, Vec<_>)| {
         vec.into_iter().fold(expr,

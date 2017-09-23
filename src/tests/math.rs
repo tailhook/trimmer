@@ -60,3 +60,12 @@ fn render_sum_mul() {
 fn render_parenthesis() {
     assert_eq!(render_x_y("{{ (2+x) * y }}", 2u32, 3u32), "12");
 }
+
+#[test]
+fn render_greater() {
+    let x = String::from("x");
+    let y = String::from("y");
+    assert_eq!(render_x_y("{{ x > y }}", x, y), "false");
+    assert_eq!(render_x_y("{{ x > y }}", 2, 1), "true");
+    assert_eq!(render_x_y("{{ x > y > 3 }}", 5, 4), "true");
+}
