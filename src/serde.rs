@@ -5,6 +5,7 @@ use serde_json::Value;
 
 use {DataError, Variable, Var, Context, Template, RenderError, Pos, Output};
 use {Number};
+use compare::Comparable;
 
 pub const TRUE: &'static &'static str = &"true";
 pub const FALSE: &'static &'static str = &"false";
@@ -75,6 +76,25 @@ impl<'render> Variable<'render> for Value {
                 Ok(val.as_f64().unwrap().into())
             }
             _ => Err(DataError::NumberUnsupported(self.typename())),
+        }
+    }
+    fn as_comparable(&self) -> Result<Comparable, DataError> {
+        use serde_json::Value::*;
+        match *self {
+            Bool(x) => Ok(x.into()),
+            Number(ref val) if val.is_u64() => {
+                Ok(val.as_u64().unwrap().into())
+            }
+            Number(ref val) if val.is_i64() => {
+                Ok(val.as_i64().unwrap().into())
+            }
+            Number(ref val) => {
+                Ok(val.as_f64().unwrap().into())
+            }
+            String(ref s) => Ok(s[..].into()),
+            Array(_) => Err(DataError::ComparisonUnsupported(self.typename())),
+            Object(_) => Err(DataError::ComparisonUnsupported(self.typename())),
+            Null => Err(DataError::ComparisonUnsupported(self.typename())),
         }
     }
     fn output(&self) -> Result<Output, DataError> {
