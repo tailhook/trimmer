@@ -11,7 +11,7 @@ use tokenizer::{Tokenizer, TokenStream, Token, Kind};
 use {Options, Pos};
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum CmpOperator {
     Eq,
     Neq,

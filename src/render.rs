@@ -10,6 +10,7 @@ use grammar::OutputMode::{self, Preserve, Strip, Space};
 use grammar::{self, Statement, Expr, AssignTarget, Template as Tpl};
 use number::{self, Number};
 use owning::{Own, ExprCode};
+use compare::{compare};
 use preparser::Syntax::Oneline;
 use render_error::{RenderError, DataError};
 use varmap::{Context, SubContext, set, get};
@@ -223,6 +224,56 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
                 }
             }
         },
+        ExprCode::Comparison(ref left, ref vec) => {
+            assert!(vec.len() > 0);
+            let mut cur_exp = eval_expr(r, root, left);
+            for i in 0..vec.len() {
+                cur_exp = {
+                    let left = match cur_exp.as_comparable() {
+                        Ok(c) => c,
+                        Err(e) => {
+                            r.errors.push((expr.position.0, e));
+                            return OwningRef::new(nothing(&r.nothing, root))
+                                .map(|_| UNDEFINED as &Variable)
+                        }
+                    };
+                    let right = expr.clone().map(|e| match e.code {
+                        grammar::ExprCode::Comparison(_, ref vec) => {
+                            &vec[i].1
+                        }
+                        _ => unreachable!(),
+                    });
+                    let oper = vec[i].0;
+                    let rexpr = eval_expr(r, root, &right);
+                    let next = match rexpr.as_comparable() {
+                        Ok(c) => c,
+                        Err(e) => {
+                            r.errors.push((expr.position.0, e));
+                            return OwningRef::new(nothing(&r.nothing, root))
+                                .map(|_| UNDEFINED as &Variable)
+                        }
+                    };
+                    match compare(&left, &next, oper) {
+                        Ok(false) => {
+                            return OwningRef::new(nothing(&r.nothing, root))
+                                .map(|_| FALSE as &Variable);
+                        }
+                        Ok(true) => {}
+                        Err(()) => {
+                            r.errors.push((expr.position.0,
+                                Incomparable(cur_exp.typename(),
+                                             rexpr.typename())
+                            ));
+                            return OwningRef::new(nothing(&r.nothing, root))
+                                .map(|_| UNDEFINED as &Variable)
+                        }
+                    }
+                    rexpr.clone()
+                };
+            }
+            return OwningRef::new(nothing(&r.nothing, root))
+                .map(|_| TRUE as &Variable);
+        }
         x => panic!("Unimplemented oper {:?}", x),
     }
 }

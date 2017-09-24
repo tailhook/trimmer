@@ -22,6 +22,9 @@ impl<'a, 'render: 'a> Variable<'render> for &'a str {
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(self.len() > 0)
     }
+    fn as_comparable(&self) -> Result<Comparable, DataError> {
+        Ok((*self).into())
+    }
 }
 
 impl<'x> Variable<'x> for String {
@@ -36,6 +39,9 @@ impl<'x> Variable<'x> for String {
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(self.len() > 0)
+    }
+    fn as_comparable(&self) -> Result<Comparable, DataError> {
+        Ok(self[..].into())
     }
 }
 
@@ -99,6 +105,12 @@ impl<'x> Variable<'x> for Option<&'x str> {
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(true)
+    }
+    fn as_comparable(&self) -> Result<Comparable, DataError> {
+        match *self {
+            Some(ref x) => Ok(x[..].into()),
+            None => Ok("".into()),
+        }
     }
 }
 
@@ -245,5 +257,8 @@ impl<'x> Variable<'x> for bool {
     }
     fn as_bool(&self) -> Result<bool, DataError> {
         Ok(*self)
+    }
+    fn as_comparable(&self) -> Result<Comparable, DataError> {
+        Ok((*self).into())
     }
 }

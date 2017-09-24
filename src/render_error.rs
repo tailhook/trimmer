@@ -88,6 +88,12 @@ quick_error! {
             description("variable or attribute not found")
             display("variable or attribute {:?} not found", name)
         }
+        /// Incomparable types
+        Incomparable(left_type: &'static str, right_type: &'static str) {
+            description("two types can't be compared")
+            display("Can't compare object of type {:?} to {:?}",
+                left_type, right_type)
+        }
         /// Custom error
         Custom(err: Box<Error>) {
             description(err.description())
