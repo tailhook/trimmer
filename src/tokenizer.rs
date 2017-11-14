@@ -269,7 +269,7 @@ impl Tokenizer {
             (r"\{#", Comment),
             (r"\n", Newline),
             (r"^\s*###", Comment),
-            (r"^\s*##\s*(\w*)", StStart),
+            (r"^[ \t]*##\s*(\w*)", StStart),
             (r"[ \t]+", Whitespace),
         ];
         let expr_common = &[

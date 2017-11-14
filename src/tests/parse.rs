@@ -25,6 +25,11 @@ fn syntax_if_at_start() {
 }
 
 #[test]
+fn statement_after_trailing_space() {
+    parse("hello   \n## if x\n## endif\n");
+}
+
+#[test]
 fn syntax_if_not_at_start() {
     parse("\n    ## if x\n    ## endif\n");
 }
