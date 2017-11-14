@@ -2,7 +2,7 @@ extern crate trimmer;
 extern crate argparse;
 #[cfg(feature="json")] extern crate serde_json;
 
-use std::io::{Read, Write, stdout, stderr};
+use std::io::{Read, Write, stdout};
 use std::fs::File;
 use std::path::{Path};
 use std::process::exit;
@@ -48,12 +48,10 @@ fn main() {
         ap.parse_args_or_exit();
     }
     let parser = Parser::new();
-    // TODO(tailhook) use eprintln when we can upgrade to rust 1.19
     if let Some(out_file) = output {
         if templates.len() != 1 {
-            writeln!(&mut stderr(),
-                "Exactly one template might be specified when in \
-                 render mode (with `-o`/`--render-to_file`)").ok();
+            eprintln!("Exactly one template might be specified when in \
+                       render mode (with `-o`/`--render-to_file`)");
             exit(1);
         }
         let path = Path::new(&templates[0]);
@@ -65,13 +63,11 @@ fn main() {
                 match serde_json::from_str::<Value>(val) {
                     Ok(Value::Object(map)) => v.push(map),
                     Ok(val) => {
-                        writeln!(&mut stderr(),
-                            "Json must contain object, not {:?}", val).ok();
+                        eprintln!("Json must contain object, not {:?}", val);
                         exit(1);
                     }
                     Err(e) => {
-                        writeln!(&mut stderr(),
-                            "Can't parse json: {}", e).ok();
+                        eprintln!("Can't parse json: {}", e);
                         exit(1);
                     }
                 }
@@ -85,15 +81,11 @@ fn main() {
             let mut piter = pair.splitn(2, '=');
             match (piter.next(), piter.next()) {
                 (Some(""), _) | (None, _) => {
-                    writeln!(&mut stderr(),
-                        "Var name must not be empty in {:?}",
-                        pair).ok();
+                    eprintln!("Var name must not be empty in {:?}", pair);
                     exit(1);
                 }
                 (_, None) => {
-                    writeln!(&mut stderr(),
-                        "Var {:?} must contain equals sign",
-                        pair).ok();
+                    eprintln!("Var {:?} must contain equals sign", pair);
                     exit(1);
                 }
                 (Some(x), Some(y)) => {
@@ -108,16 +100,14 @@ fn main() {
         match read {
             Ok(_) => {},
             Err(e) => {
-                writeln!(&mut stderr(), "Error reading {:?}: {}",
-                    path, e).ok();
+                eprintln!("Error reading {:?}: {}", path, e);
                 exit(1);
             }
         }
         let template = match parser.parse(&buf) {
             Ok(tpl) => tpl,
             Err(e) => {
-                writeln!(&mut stderr(),
-                    "Error parsing {:?}: {}", path, e).ok();
+                eprintln!("Error parsing {:?}: {}", path, e);
                 exit(2);
             }
         };
@@ -136,8 +126,7 @@ fn main() {
         let buf = match template.render(&context) {
             Ok(value) => value,
             Err(e) => {
-                writeln!(&mut stderr(), "Error rendering {:?}: {}",
-                    path, e).ok();
+                eprintln!("Error rendering {:?}: {}", path, e);
                 exit(3);
             }
         };
@@ -152,8 +141,7 @@ fn main() {
         match res {
             Ok(()) => {}
             Err(e) => {
-                writeln!(&mut stderr(), "Error writing output {:?}: {}",
-                    out_file, e).ok();
+                eprintln!("Error writing output {:?}: {}", out_file, e);
                 exit(3);
             }
         }
@@ -165,7 +153,7 @@ fn main() {
         #[cfg(feature="json")]
         let has_vars = vars.len() > 0 || json_vars.len() > 0;
         if has_vars {
-            println!("No vars allowed in syntax check mode. \
+            eprintln!("No vars allowed in syntax check mode. \
                 (Use `-o`/`--render-to-file` to render template)");
             exit(1);
         }
@@ -176,8 +164,8 @@ fn main() {
         for template in templates {
             let path = Path::new(&template);
             if path.is_dir() {
-                println!("{:?} is a directory. \
-                    Scanning directories is not iplemented.", path);
+                eprintln!("{:?} is a directory. \
+                    Scanning directories is not implemented.", path);
                 code = 1;
             }
             buf.truncate(0);
@@ -186,14 +174,14 @@ fn main() {
             match read {
                 Ok(_) => {},
                 Err(e) => {
-                    println!("Error reading {:?}: {}", path, e);
+                    eprintln!("Error reading {:?}: {}", path, e);
                     code = 1;
                 }
             }
             match parser.parse(&buf) {
                 Ok(_) => {}
                 Err(e) => {
-                    println!("Error parsing {:?}: {}", path, e);
+                    eprintln!("Error parsing {:?}: {}", path, e);
                     code = 2;
                 }
             }
