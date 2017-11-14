@@ -2,6 +2,7 @@
 Trimmer Changes By Version
 ==========================
 
+
 .. _changelog-v0.3.1:
 
 v0.3.1
@@ -15,6 +16,7 @@ v0.3.1
 * The ``### comments`` can be used as line comments in normal context
 * Added ``--version`` parameter to command-line tool
 
+
 .. _changelog-v0.3.2:
 
 v0.3.2
@@ -23,3 +25,22 @@ v0.3.2
 * Implemented ``as_number()`` for ``serde_json::Value``
 * Implemented ``a*b``, ``a/b`` and ``a%b`` expressions
 * [bugfix] Previously ``a.x+b`` worked but ``a.x +b`` did not (whitespace bug)
+
+
+.. _changelog-v0.3.3:
+
+v0.3.3
+======
+
+* Implemented all comparison operators (``>, <, >=, <=, ==, !=``)
+* Implemented ``as_comparable()`` for ``serde_json::Value``
+* Added parenthesis support in expressions
+
+
+.. _changelog-v0.3.4:
+
+v0.3.4
+======
+
+* Adds line joiner ``##`` (at end of line) syntax
+* Bugfixes of syntax and command-line tool
