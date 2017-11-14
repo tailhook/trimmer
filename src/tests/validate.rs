@@ -18,6 +18,15 @@ fn valid_default() {
 }
 
 #[test]
+fn valid_empty() {
+    assert_diff!(
+        &render_x("## syntax: oneline\n\
+                   ## validate empty:\n\
+                   {{ '' }}", "hello"),
+        "", "\n", 0);
+}
+
+#[test]
 fn comment_in_validator() {
     assert_diff!(
         &render_x("## syntax: oneline\n\

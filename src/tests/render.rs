@@ -304,6 +304,16 @@ fn space_right() {
 }
 
 #[test]
+fn space_right_eol() {
+    assert_eq!(render_x("{{ x }}\n## if x\n  {{+ x }}\n## endif"), "x x\n");
+}
+
+#[test]
+fn space_left_eol() {
+    assert_eq!(render_x("{{ x +}}\n## if x\n  {{ x }}\n## endif"), "x x\n");
+}
+
+#[test]
 fn space_both() {
     assert_eq!(render_x(r#"{{ x }}  {{+ x }}"#), "x x");
 }

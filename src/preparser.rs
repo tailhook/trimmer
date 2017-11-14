@@ -30,7 +30,7 @@ impl Preparser {
 
         let list = &[
             (r"^##\s*syntax:\s*(\w+)(?:\n|$)", Syntax),
-            (r"^##\s*validate\s+(\w+):\s*(.*)\s*(?:\n|$)",
+            (r"^##\s*validate\s+(\w+):[ \t]*(.*)\s*(?:\n|$)",
                 Validate),
             (r"^#.*(?:\n|$)", Comment),
             (r"^###.*(?:\n|$)", Comment),
