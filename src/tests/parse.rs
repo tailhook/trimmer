@@ -30,6 +30,11 @@ fn syntax_if_not_at_start() {
 }
 
 #[test]
+fn keyword_is_subscring_of_var() {
+    parse("\n    ## if index\n    ## endif\n");
+}
+
+#[test]
 #[should_panic(expected="InvalidSyntaxDirective")]
 fn syntax_unknown() {
     parse("## syntax: unknown\n");

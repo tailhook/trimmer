@@ -275,16 +275,17 @@ impl Tokenizer {
         let expr_common = &[
             (r"^[+-]?\}\}", ExprEnd),
             (r"^#", Comment),
-            (r"^(?:and|or|not|>=|<=|==|!=|=|\.\.|[.,|:><%*/+-])", Operator),
+            (r"^(?:and\b|or\b|not\b|>=|<=|==|!=|=|\.\.|[.,|:><%*/+-])",
+             Operator),
             (r"^[{}()\[\]]", Paren),
             ("^(?:for|in|endfor\
              |skip\
              |if|elif|else|endif\
              |let\
              |syntax|validate\
-             )", Keyword),
-            (r"^[a-zA-Z_][a-zA-Z0-9_]*", Ident),
-            (r"^(?:0[oxb])?[0-9][0-9_]*(\.[0-9_]+)?", Number),
+             )\\b", Keyword),
+            (r"^[a-zA-Z_][a-zA-Z0-9_]*\b", Ident),
+            (r"^(?:0[oxb])?[0-9][0-9_]*(\.[0-9_]+)?\b", Number),
             (r#"^"(:?[^"]|\\")*"|^'(:?[^']|\\')*'"#, String),
         ];
         let expr = &[(r"^\s+", Whitespace)];
