@@ -298,7 +298,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                     Preserve => {
                         let trim_len = text.trim_right().len();
                         r.buf.push_str(text);
-                        if trim_len <= text.len() {
+                        if trim_len > 0 && trim_len <= text.len() {
                             let spaces = text.len() - trim_len;
                             r.frozen = r.buf.len() - spaces;
                         }
