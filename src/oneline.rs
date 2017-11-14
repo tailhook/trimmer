@@ -53,6 +53,7 @@ impl Postprocess {
         }
         let st = st.into_iter().map(|s| {
             let code = match s.code {
+                Joiner => Joiner,
                 OutputRaw(text) => OutputRaw(
                     text.split_whitespace()
                         .collect::<Vec<_>>().join(" ")

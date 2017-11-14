@@ -91,6 +91,17 @@ They must start at the start of the line, not counting the whitespace.
 The ``syntax`` and ``validate`` statements must also be at the start of the
 file and in the first column of the row.
 
+As a special case empty statement ``##`` at the end of the line strips newline
+and leading spaces on the new line, effectively joining two lines::
+
+  function(  ##
+    arg1,    ##
+    arg2)
+
+Would output ``function(arg1, arg2)``. This is useful if the whole output
+line doesn't fit a template line. While you could use ``{{- '' +}}`` at
+the same place, the line joiner ``##`` is simpler and more clear.
+
 
 .. index:: pair: Syntax; Statement
 

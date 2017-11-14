@@ -17,6 +17,7 @@ pub enum Kind {
     Newline,
     ExprStart,
     ExprEnd,
+    LineJoiner,  // Joins two lines '##\n' without a newline
     StStart,  // Statement start '## something'
     // Expression tokens
     Operator,
@@ -269,6 +270,7 @@ impl Tokenizer {
             (r"\{#", Comment),
             (r"\n", Newline),
             (r"^\s*###", Comment),
+            (r"^\s*##(?:\n|$)", LineJoiner),
             (r"^[ \t]*##\s*(\w*)", StStart),
             (r"[ \t]+", Whitespace),
         ];

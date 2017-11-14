@@ -78,6 +78,7 @@ pub enum StatementCode {
         validator: Option<String>,
         right_ws: OutputMode,
     },
+    Joiner,
     Cond {
         indent: usize,
         conditional: Vec<(Expr, Body)>,
@@ -555,6 +556,7 @@ fn statement<'a>(input: TokenStream<'a>)
         .or(parser(block))
         // Whitespace out of any blocks is output as is
         .or(kind(Whitespace).map(|tok| OutputRaw(tok.value.to_string())))
+        .or(kind(LineJoiner).map(|_| Joiner))
         .or(kind(Newline).map(|tok| OutputRaw(tok.value.to_string())));
     (position(), statements, position()).map(|(s, c, e)| Statement {
         position: (s, e),

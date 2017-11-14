@@ -288,6 +288,9 @@ fn write_block<'x, 'render>(r: &mut Renderer,
 
     'outer: for (idx, item) in items.iter().enumerate() {
         match item.code {
+            Joiner => {
+                r.tail_mode = Space;
+            }
             OutputRaw(ref text) => {
                 let base_mode = if r.template.options.syntax == Oneline {
                     Space

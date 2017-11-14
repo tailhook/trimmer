@@ -20,6 +20,7 @@ fn is_line_or_none(stmt: Option<&Statement>) -> bool {
 fn is_line_statement(code: &StatementCode) -> bool {
     use grammar::StatementCode::*;
     match *code {
+        Joiner => false,
         OutputRaw(..) => false,
         Output {..} => false,
         Cond {..} => true,
@@ -71,6 +72,7 @@ impl Optimizer {
         }
         let s = dst.into_iter().map(|s| {
             let code = match s.code {
+                Joiner => Joiner,
                 s@OutputRaw(..) | s@Alias { .. } | s@Output {..} => s,
                 Cond { indent, conditional, otherwise } => Cond {
                     indent,

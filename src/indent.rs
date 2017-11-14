@@ -29,6 +29,7 @@ impl Postprocess {
             };
             for s in &mut statements {
                 line_start = match s.code {
+                    Joiner => line_start,
                     OutputRaw(ref txt) if txt == "\n" => true,
                     OutputRaw(ref txt) if line_start => {
                         let cindent = txt.len() - txt.trim_left().len();
@@ -62,6 +63,7 @@ impl Postprocess {
             let mut line_start = true;
             for s in &mut statements {
                 line_start = match s.code {
+                    Joiner => line_start,
                     OutputRaw(ref txt) if txt == "\n" => true,
                     OutputRaw(ref mut txt) if line_start => {
                         *txt = txt[strip..].to_string();
@@ -79,6 +81,7 @@ impl Postprocess {
 
         let s = statements.into_iter().map(|s| {
             let code = match s.code {
+                Joiner => Joiner,
                 s@OutputRaw(..) | s@Alias { .. } | s@Output {..} => s,
                 Cond { indent, conditional, otherwise } => Cond {
                     indent,

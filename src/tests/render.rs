@@ -332,3 +332,8 @@ fn space_and_strip2() {
 fn preserve_manually() {
     assert_eq!(render_x(r#"{{ x -}}  {{ "" }}  {{ " " }} {{- x }}"#), "x   x");
 }
+
+#[test]
+fn line_joiner() {
+    assert_eq!(render_x("a  ##\n  b"), "a b");
+}
