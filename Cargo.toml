@@ -9,7 +9,7 @@ keywords = ["template", "render", "whitespace"]
 categories = ["template-engine"]
 homepage = "http://github.com/tailhook/trimmer"
 documentation = "http://trimmer.readthedocs.io"
-version = "0.3.4"
+version = "0.3.5"
 authors = ["paul@colomiets.name"]
 
 [dependencies]
