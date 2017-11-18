@@ -192,6 +192,7 @@ In any case lines containing ``## if`` and ``## endif`` do not put into output.
 In ``indent`` syntax the inner indentation of the block is also stripped.
 
 
+.. _for-statement:
 .. index:: pair: For; Statement
 
 For Statement

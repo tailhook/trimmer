@@ -53,4 +53,5 @@ v0.3.5
 
 * Validate directives with some regexes was broken from the start and more of
   that was broken in v0.3.4, fixed now
+* Add ``skip if`` satement to the :ref:`for loop <for-statement>`
 
