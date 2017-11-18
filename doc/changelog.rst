@@ -44,3 +44,13 @@ v0.3.4
 
 * Adds line joiner ``##`` (at end of line) syntax
 * Bugfixes of syntax and command-line tool
+
+
+.. _changelog-v0.3.5:
+
+v0.3.5
+======
+
+* Validate directives with some regexes was broken from the start and more of
+  that was broken in v0.3.4, fixed now
+

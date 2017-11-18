@@ -622,21 +622,15 @@ impl Parser {
     pub fn parse_with_options(&self, options: &Options, data: &str)
         -> Result<render::Template, ParseError>
     {
-        use combine::combinator::{skip_many, parser, satisfy};
-        use tokenizer::Kind::Newline;
-        use helpers::{kind, st_start};
+        use combine::combinator::{skip_many, parser};
+        use tokenizer::Kind::{EarlyStatement, Comment};
+        use helpers::{kind};
 
         let options = self.pre.scan(data, options.clone())?;
         let s = self.tok.scan(data);
 
         let mut p =
-            skip_many(
-                st_start("syntax")
-                .skip(skip_many(satisfy(|x: Token| x.kind != Newline)))
-                .skip(kind(Newline))
-                .or(st_start("validate")
-                .skip(skip_many(satisfy(|x: Token| x.kind != Newline)))
-                .skip(kind(Newline))))
+            skip_many(kind(EarlyStatement).or(kind(Comment)))
             .with(parser(body)).skip(kind(Kind::Eof));
 
         let (body, _) = p.parse(s)?;

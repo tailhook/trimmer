@@ -17,8 +17,12 @@ pub enum Kind {
     Newline,
     ExprStart,
     ExprEnd,
-    LineJoiner,  // Joins two lines '##\n' without a newline
-    StStart,  // Statement start '## something'
+    /// Joins two lines '##\n' without a newline
+    LineJoiner,
+    /// Statement start '## something'
+    StStart,
+    /// A statement parsed by preparser
+    EarlyStatement,
     // Expression tokens
     Operator,
     Paren,
@@ -124,7 +128,24 @@ impl<'a> StreamOnce for TokenStream<'a> {
                                 Info::Borrowed("Statement must start at the \
                                     beginning of the line")));
                         }
-                        self.state = State::Statement;
+                        match tok.value.split_whitespace().nth(1) {
+                            Some("validate") | Some("syntax") => {
+                                let start_off = self.off;
+                                let end = self.buf[start_off..].find("\n");
+                                let end = end.map(|x| {
+                                    start_off + x + 1 /* NL */ 
+                                }).unwrap_or(self.buf.len());
+                                let slice = &self.buf[start_off..end];
+                                self.update_pos(slice);
+                                return Ok(Token {
+                                    kind: EarlyStatement,
+                                    value: &self.buf[start_off..end],
+                                })
+                            }
+                            _ => {
+                                self.state = State::Statement;
+                            }
+                        }
                     }
                     _ => {}
                 }
