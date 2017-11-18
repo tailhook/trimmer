@@ -31,6 +31,7 @@ Quick showcase:
     ## validate ne: [^;{}]+       # non-empty (note plus in regex)
     http {
         ## for server in servers
+            ## skip if server.hostname == ""
             server {
                 root /var/www;
                 server_name

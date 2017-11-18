@@ -207,6 +207,19 @@ fn iteration() {
     assert_eq!(&t.render(&c).unwrap(), "  - a\n  - b\n");
 }
 
+
+#[test]
+fn skip_if() {
+    let t = parse("## for x in items\n\
+                     ## skip if x == 'b'\n\
+                     - {{ x }}\n\
+                   ## endfor\n");
+    let v = vec!["a", "b", "c"];
+    let mut c = Context::new();
+    c.set("items", &v);
+    assert_eq!(&t.render(&c).unwrap(), "- a\n- c\n");
+}
+
 #[test]
 fn pair_iteration() {
     let t = parse("## syntax: indent\n\

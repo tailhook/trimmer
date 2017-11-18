@@ -450,7 +450,7 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                 let mut sub = root.sub();
                 write_block(r, &mut sub, &ostatements)?;
             }
-            Loop { target: AssignTarget::Var(_), .. } => {
+            Loop { target: AssignTarget::Var(_), ref filter, .. } => {
                 let iterator = items.clone().map(|x| match x[idx].code {
                     Loop { ref iterator, .. } => iterator,
                     _ => unreachable!(),
@@ -474,6 +474,15 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                     Loop { target: AssignTarget::Var(ref var), .. } => &var[..],
                     _ => unreachable!(),
                 }).erase_owner();
+
+                let filter = if filter.is_some() {
+                    Some(items.clone().map(|x| match x[idx].code {
+                        Loop { ref filter, .. } => filter.as_ref().unwrap(),
+                        _ => unreachable!(),
+                    }))
+                } else {
+                    None
+                };
 
                 loop {
                     let mut sub = root.sub();
@@ -499,10 +508,24 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                         };
                         set(&mut sub, target.clone(), val);
                     }
+                    if let Some(ref filter) = filter {
+                        let condval = eval_expr(r, &sub, filter);
+                        match condval.as_bool() {
+                            Ok(true) | Err(BoolUnsupported(..)) => {
+                                // Skip It!
+                                continue;
+                            }
+                            Ok(false) => {},
+                            Err(e) => {
+                                r.errors.push((filter.position.0, e));
+                                // treating as false
+                            }
+                        };
+                    }
                     write_block(r, &mut sub, &statements)?;
                 }
             }
-            Loop { target: AssignTarget::Pair(..), .. } => {
+            Loop { target: AssignTarget::Pair(..), ref filter, .. } => {
                 let iterator = items.clone().map(|x| match x[idx].code {
                     Loop { ref iterator, .. } => iterator,
                     _ => unreachable!(),
@@ -532,6 +555,15 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                     => &b[..],
                     _ => unreachable!(),
                 }).erase_owner();
+
+                let filter = if filter.is_some() {
+                    Some(items.clone().map(|x| match x[idx].code {
+                        Loop { ref filter, .. } => filter.as_ref().unwrap(),
+                        _ => unreachable!(),
+                    }))
+                } else {
+                    None
+                };
 
                 loop {
                     let mut sub = root.sub();
@@ -570,6 +602,20 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                         };
                         set(&mut sub, targ_a.clone(), val_a);
                         set(&mut sub, targ_b.clone(), val_b);
+                    }
+                    if let Some(ref filter) = filter {
+                        let condval = eval_expr(r, &sub, filter);
+                        match condval.as_bool() {
+                            Ok(true) | Err(BoolUnsupported(..)) => {
+                                // Skip It!
+                                continue;
+                            }
+                            Ok(false) => {},
+                            Err(e) => {
+                                r.errors.push((filter.position.0, e));
+                                // treating as false
+                            }
+                        };
                     }
                     write_block(r, &mut sub, &statements)?;
                 }

@@ -499,14 +499,31 @@ fn for_stmt<'a>(input: TokenStream<'a>)
         .and(parser(top_level_expression))
         .skip(ws())
         .skip(kind(Newline))
+    .and(many::<Vec<_>, _>(st_start("skip")
+        .skip(ws())
+        .and(keyword("if"))
+        .skip(ws())
+        .with(parser(top_level_expression))
+        .skip(ws())
+        .skip(kind(Newline))))
     .and(parser(body))
     .skip(st_start("endfor")).skip(ws()).skip(kind(Newline))
-    .map(|(((for_token, target), list), block)| {
+    .map(|((((for_token, target), list), mut filter), block)| {
         Loop {
             indent: for_token.value.len() - for_token.value.trim_left().len(),
             target: target,
             iterator: list,
-            filter: None,
+            filter: if filter.len() > 0 {
+                let init = filter.remove(0);
+                Some(filter.into_iter().fold(init, |a: Expr, b: Expr| {
+                    Expr {
+                        position: (a.position.0, b.position.1),
+                        code: ExprCode::Or(Box::new(a), Box::new(b)),
+                    }
+                }))
+            } else {
+                None
+            },
             body: block,
         }
     })

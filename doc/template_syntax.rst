@@ -210,4 +210,22 @@ And for iterating over dictionaries::
     ## endfor
 
 In any case lines containing ``## for`` and ``## endfor`` do not put into
-output.  In ``indent`` syntax the inner indentation of the block is also stripped.
+output.  In ``indent`` syntax the inner indentation of the block is also
+stripped.
+
+For loop does **not** support imperative ``break`` and ``continue`` statements,
+but it allows filtering values by using ``## skip if``::
+
+    ## for key, value in var
+        ## skip if key == "bad_value"
+        {{ key }} = {{ value }}
+    ## endfor
+
+This is works just like the following, but allows to keep indentation lower::
+
+    ## for key, value in var
+        ## if key != "bad_value"
+            {{ key }} = {{ value }}
+        ## endif
+    ## endfor
+
