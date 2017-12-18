@@ -50,6 +50,18 @@ impl<'a> From<i64> for Comparable<'a> {
     }
 }
 
+impl<'a> From<isize> for Comparable<'a> {
+    fn from(x: isize) -> Comparable<'a> {
+        Comparable(ComparableInner::I64(x as i64))
+    }
+}
+
+impl<'a> From<usize> for Comparable<'a> {
+    fn from(x: usize) -> Comparable<'a> {
+        Comparable(ComparableInner::U64(x as u64))
+    }
+}
+
 impl<'a> From<u8> for Comparable<'a> {
     fn from(x: u8) -> Comparable<'a> {
         Comparable(ComparableInner::U64(x as u64))

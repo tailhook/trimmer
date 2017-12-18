@@ -66,6 +66,34 @@ impl From<u64> for Number {
     }
 }
 
+#[cfg(target_pointer_width="64")]
+impl From<usize> for Number {
+    fn from(x: usize) -> Number {
+        Number(NumberInner::U64(x as u64))
+    }
+}
+
+#[cfg(target_pointer_width="32")]
+impl From<usize> for Number {
+    fn from(x: usize) -> Number {
+        Number(NumberInner::U32(x as u32))
+    }
+}
+
+#[cfg(target_pointer_width="64")]
+impl From<isize> for Number {
+    fn from(x: isize) -> Number {
+        Number(NumberInner::I64(x as i64))
+    }
+}
+
+#[cfg(target_pointer_width="32")]
+impl From<isize> for Number {
+    fn from(x: isize) -> Number {
+        Number(NumberInner::I32(x as i32))
+    }
+}
+
 impl From<f32> for Number {
     fn from(x: f32) -> Number {
         Number(NumberInner::F64(x as f64))

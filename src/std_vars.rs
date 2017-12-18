@@ -1,5 +1,6 @@
+use std::collections::{HashMap, BTreeMap, HashSet, BTreeSet};
+use std::hash::Hash;
 use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
-use std::collections::HashMap;
 
 use render_error::DataError;
 use vars::{Variable};
@@ -149,6 +150,8 @@ impl_number!(u64, 0);
 impl_number!(i64, 0);
 impl_number!(f32, 0.);
 impl_number!(f64, 0.);
+impl_number!(usize, 0);
+impl_number!(isize, 0);
 
 impl<'render, V> Variable<'render> for HashMap<String, V>
     where V: Variable<'render> + 'render
@@ -220,7 +223,75 @@ impl<'a: 'render, 'render, V> Variable<'render> for HashMap<&'a str, V>
     }
 }
 
+impl<'render, V> Variable<'render> for BTreeMap<String, V>
+    where V: Variable<'render> + 'render
+{
+    fn attr<'x>(&'x self, attr: &str)
+        -> Result<Var<'x, 'render>, DataError>
+        where 'render: 'x
+    {
+        self.get(attr)
+        .map(|x| Var::borrow(x))
+        .ok_or_else(|| DataError::AttrNotFound)
+    }
+    fn index<'x>(&'x self, index: &(Variable<'render>+'render))
+        -> Result<Var<'x, 'render>, DataError>
+        where 'render: 'x
+    {
+        self.get(index.as_str_key()?)
+        .map(|x| Var::borrow(x))
+        .ok_or(DataError::IndexNotFound)
+    }
+    fn typename(&self) -> &'static str {
+        "BTreeMap"
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(self.len() > 0)
+    }
+    fn iterate_pairs<'x>(&'x self)
+        -> Result<Box<Iterator<Item=(Var<'x, 'render>, Var<'x, 'render>)>+'x>,
+                  DataError>
+        where 'render: 'x
+    {
+        Ok(Box::new(self.iter()
+            .map(|(x, y)| (Var::borrow(x), Var::borrow(y)))))
+    }
+}
 
+impl<'a: 'render, 'render, V> Variable<'render> for BTreeMap<&'a str, V>
+    where V: Variable<'render> + 'render
+{
+    fn attr<'x>(&'x self, attr: &str)
+        -> Result<Var<'x, 'render>, DataError>
+        where 'render: 'x
+    {
+        self.get(attr)
+        .map(|x| Var::borrow(x))
+        .ok_or_else(|| DataError::AttrNotFound)
+    }
+    fn index<'x>(&'x self, index: &(Variable<'render>+'render))
+        -> Result<Var<'x, 'render>, DataError>
+        where 'render: 'x
+    {
+        self.get(index.as_str_key()?)
+        .map(|x| Var::borrow(x))
+        .ok_or(DataError::IndexNotFound)
+    }
+    fn typename(&self) -> &'static str {
+        "BTreeMap"
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(self.len() > 0)
+    }
+    fn iterate_pairs<'x>(&'x self)
+        -> Result<Box<Iterator<Item=(Var<'x, 'render>, Var<'x, 'render>)>+'x>,
+                  DataError>
+        where 'render: 'x
+    {
+        Ok(Box::new(self.iter()
+            .map(|(x, y)| (Var::borrow(x), Var::borrow(y)))))
+    }
+}
 
 impl<'a, 'render, T: Variable<'render> + 'render> Variable<'render> for Vec<T> {
     fn typename(&self) -> &'static str {
@@ -242,6 +313,40 @@ impl<'a, 'render, T: Variable<'render> + 'render> Variable<'render> for Vec<T> {
         self.get(index.as_int_key()?)
         .map(|x| Var::borrow(x))
         .ok_or(DataError::IndexNotFound)
+    }
+}
+
+impl<'a, 'render, T> Variable<'render> for HashSet<T>
+    where T: Variable<'render> + Hash + Eq + 'render
+{
+    fn typename(&self) -> &'static str {
+        "HashSet"
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(self.len() > 0)
+    }
+    fn iterate<'x>(&'x self)
+        -> Result<Box<Iterator<Item=Var<'x, 'render>>+'x>, DataError>
+        where 'render: 'x
+    {
+        Ok(Box::new(self.iter().map(|x| Var::borrow(x))))
+    }
+}
+
+impl<'a, 'render, T> Variable<'render> for BTreeSet<T>
+    where T: Variable<'render> + Ord + Eq + 'render
+{
+    fn typename(&self) -> &'static str {
+        "BTreeSet"
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        Ok(self.len() > 0)
+    }
+    fn iterate<'x>(&'x self)
+        -> Result<Box<Iterator<Item=Var<'x, 'render>>+'x>, DataError>
+        where 'render: 'x
+    {
+        Ok(Box::new(self.iter().map(|x| Var::borrow(x))))
     }
 }
 
