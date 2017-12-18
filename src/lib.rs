@@ -31,6 +31,7 @@ mod preparser;
 mod render;
 mod render_error;
 mod std_vars;
+mod box_vars;
 mod tokenizer;
 mod validators;
 mod varmap;
