@@ -123,6 +123,15 @@ fn aliasing_vars() {
 }
 
 #[test]
+fn parenthesis() {
+    let t = parse("## let x = (\ny)\na{{ x }}b");
+    let plus = "+";
+    let mut c = Context::new();
+    c.set("y", &plus);
+    assert_eq!(&t.render(&c).unwrap(), "a+b");
+}
+
+#[test]
 fn const_str() {
     let t = parse(r#"a{{ " and " }}b"#);
     let c = Context::new();

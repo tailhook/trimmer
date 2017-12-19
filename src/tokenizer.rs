@@ -60,6 +60,7 @@ pub struct TokenStream<'a> {
     tok: &'a Tokenizer,
     buf: &'a str,
     indent: Option<usize>,
+    parens: Vec<(char, Pos)>,
     position: Pos,
     off: usize,
     state: State,
@@ -133,7 +134,7 @@ impl<'a> StreamOnce for TokenStream<'a> {
                                 let start_off = self.off;
                                 let end = self.buf[start_off..].find("\n");
                                 let end = end.map(|x| {
-                                    start_off + x + 1 /* NL */ 
+                                    start_off + x + 1 /* NL */
                                 }).unwrap_or(self.buf.len());
                                 let slice = &self.buf[start_off..end];
                                 self.update_pos(slice);
@@ -143,6 +144,7 @@ impl<'a> StreamOnce for TokenStream<'a> {
                                 })
                             }
                             _ => {
+                                assert_eq!(self.parens.len(), 0);
                                 self.state = State::Statement;
                             }
                         }
@@ -166,6 +168,7 @@ impl<'a> StreamOnce for TokenStream<'a> {
                 return Ok(tok)
             }
             State::Statement => {
+                let pos = self.position;
                 let tok = self.match_line_expr()?;
 
                 self.update_pos(tok.value);
@@ -185,6 +188,31 @@ impl<'a> StreamOnce for TokenStream<'a> {
                     }
                     Newline => {
                         self.state = State::Top;
+                    }
+                    Paren => {
+                        let last =  self.parens.last().map(|&(c, _)| c);
+                        match tok.value.chars().next().unwrap() {
+                            '(' => self.parens.push((')', pos)),
+                            '[' => self.parens.push((']', pos)),
+                            '{' => self.parens.push(('}', pos)),
+                            ch if last == Some(ch) => {
+                                self.parens.pop();
+                            }
+                            ch => {
+                                if let Some(&(ech, epos)) = self.parens.last()
+                                {
+                                    return Err(Error::Unexpected(
+                                        Info::Owned(format!(
+                                            "Bracket {:?} expecting {:?} \
+                                             started at {}",
+                                            ch, ech, epos))));
+                                } else {
+                                    return Err(Error::Unexpected(
+                                        Info::Owned(
+                                            format!("Bracket {:?}", ch))));
+                                }
+                            }
+                        }
                     }
                     _ => {}
                 }
@@ -256,10 +284,18 @@ impl<'a> TokenStream<'a> {
             Some(idx) => {
                 let m = self.tok.line_list[idx].0.find(cur).unwrap();
                 assert_eq!(m.start(), 0);
-                Ok(Token {
-                    kind: self.tok.line_list[idx].1,
-                    value: &cur[..m.end()]
-                })
+                let kind = self.tok.line_list[idx].1;
+                if kind == Kind::Newline && self.parens.len() > 0 {
+                    Ok(Token {
+                        kind: Kind::Whitespace,
+                        value: &cur[..m.end()]
+                    })
+                } else {
+                    Ok(Token {
+                        kind,
+                        value: &cur[..m.end()]
+                    })
+                }
             }
         }
     }
@@ -356,6 +392,7 @@ impl Tokenizer {
             tok: self,
             buf: buf,
             indent: Some(0),
+            parens: Vec::new(),
             position: Pos { line: 1, column: 1 },
             off: 0,
             state: State::Top,
