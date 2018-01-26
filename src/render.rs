@@ -294,6 +294,13 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
             return OwningRef::new(Rc::new(map))
                 .map(|x: &HashMap<_, _>| x as &Variable).erase_owner();
         }
+        ExprCode::List(ref pairs) => {
+            let map = pairs.iter().map(|item| {
+                  RefVar(eval_expr(r, root, item))
+            }).collect::<Vec<_>>();
+            return OwningRef::new(Rc::new(map))
+                .map(|x: &Vec<_>| x as &Variable).erase_owner();
+        }
         x => panic!("Unimplemented oper {:?}", x),
     }
 }

@@ -366,3 +366,12 @@ fn use_dict() {
                          {{ a['x'] }} / {{ a['y'] }}"),
         "1 / 2");
 }
+
+#[test]
+fn use_list() {
+    assert_eq!(render_x("## let a = [4, 3, 5]\n\
+                         ## for i in a\n\
+                         {{ i }}
+                         ## endfor"),
+        "4\n3\n5\n");
+}

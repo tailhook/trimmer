@@ -64,4 +64,5 @@ v0.3.6
 * feature: Add python-like dictionary syntax support: ``{"a": 1}``. These
   dictionaries can be used instead of multiple ``if`` statements or to refer
   to the same values multiple times
+* feature: Add python list syntax support: ``["item1", "item2"]``
 

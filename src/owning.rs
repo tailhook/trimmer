@@ -27,7 +27,7 @@ pub enum ExprCode {
     Or(Owned<Expr>, Owned<Expr>),
     Not(Owned<Expr>),
     Comparison(Owned<Expr>, Owned<[(CmpOperator, Expr)]>),
-    List(Vec<Expr>),
+    List(Vec<Owned<Expr>>),
     Dict(Vec<(Owned<Expr>, Owned<Expr>)>),
     Range(Option<Owned<Expr>>, Option<Owned<Expr>>),
     Add(Owned<Expr>, Owned<Expr>),
@@ -113,7 +113,14 @@ impl Own for OwningRef<Rc<Arc<Tpl>>, grammar::ExprCode> {
             I::Comparison(_, _) => O::Comparison(
                 omap!(self, I::Comparison(ref a, _) => &**a),
                 omap!(self, I::Comparison(_, ref vec) => &vec[..])),
-            I::List(_) => unimplemented!(),
+            I::List(ref vec) => {
+                O::List((0..vec.len()).map(|index| {
+                    self.clone().map(|expr| match *expr {
+                        I::List(ref vec) => &vec[index],
+                        _ => unreachable!(),
+                    })
+                }).collect())
+            }
             I::Dict(ref vec) => {
                 O::Dict((0..vec.len()).map(|index| {
                     let a = self.clone().map(|expr| match *expr {

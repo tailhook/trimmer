@@ -171,6 +171,12 @@ fn atom<'a>(input: TokenStream<'a>)
             t.value.parse().map(Int)
                     .unwrap_or_else(|_| Float(t.value.parse().unwrap()))
         }))
+        .or(paren("[").skip(ws())
+            .with(sep_end_by(
+                parser(top_level_expression),
+                operator(",").skip(ws()))
+                .map(|vec| List(vec))
+            ).skip(paren("]")))
         .or(paren("{").skip(ws())
             .with(sep_end_by(
                 parser(top_level_expression)
