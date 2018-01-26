@@ -55,3 +55,13 @@ v0.3.5
   that was broken in v0.3.4, fixed now
 * Add ``skip if`` satement to the :ref:`for loop <for-statement>`
 
+
+.. _changelog-v0.3.6:
+
+v0.3.6
+======
+
+* feature: Add python-like dictionary syntax support: ``{"a": 1}``. These
+  dictionaries can be used instead of multiple ``if`` statements or to refer
+  to the same values multiple times
+

@@ -359,3 +359,10 @@ fn preserve_manually() {
 fn line_joiner() {
     assert_eq!(render_x("a  ##\n  b"), "a b");
 }
+
+#[test]
+fn use_dict() {
+    assert_eq!(render_x("## let a = {'x': 1, 'y': 2}\n\
+                         {{ a['x'] }} / {{ a['y'] }}"),
+        "1 / 2");
+}

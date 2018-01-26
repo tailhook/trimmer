@@ -3,6 +3,7 @@ use std::cmp::min;
 use std::mem::transmute;
 use std::rc::Rc;
 use std::sync::Arc;
+use std::collections::HashMap;
 
 use owning_ref::{OwningRef, Erased};
 
@@ -14,7 +15,7 @@ use compare::{compare};
 use preparser::Syntax::Oneline;
 use render_error::{RenderError, DataError};
 use varmap::{Context, SubContext, set, get};
-use vars::{UNDEFINED, TRUE, FALSE, Val, VarRef};
+use vars::{UNDEFINED, TRUE, FALSE, Val, VarRef, RefVar};
 use {Pos, Variable, Var};
 
 
@@ -273,6 +274,25 @@ fn eval_expr<'x, 'render: 'x>(r: &mut Renderer, root: &SubContext<'x, 'render>,
             }
             return OwningRef::new(nothing(&r.nothing, root))
                 .map(|_| TRUE as &Variable);
+        }
+        ExprCode::Dict(ref pairs) => {
+            let map = pairs.iter().flat_map(|&(ref key, ref value)| {
+                    let key_exp = eval_expr(r, root, key);
+                    let value_exp = eval_expr(r, root, value);
+                    match key_exp.as_str_key() {
+                        Ok(kstr) => {
+                            // TODO(tailhook) no clone?
+                            let key = kstr.to_string();
+                            Some((key, RefVar(value_exp)))
+                        }
+                        Err(e) => {
+                            r.errors.push((key.position.0, e));
+                            None
+                        }
+                    }
+            }).collect::<HashMap<_, _>>();
+            return OwningRef::new(Rc::new(map))
+                .map(|x: &HashMap<_, _>| x as &Variable).erase_owner();
         }
         x => panic!("Unimplemented oper {:?}", x),
     }

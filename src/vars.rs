@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use std::fmt::{Debug};
+use std::fmt::{self, Debug};
 use std::iter::empty;
 
 use render_error::DataError;
@@ -8,6 +8,9 @@ use {Var, Output, Number, Comparable};
 
 pub type VarRef<'render> = OwningRef<Rc<Erased+'render>,
                                      Variable<'render>+'render>;
+
+
+pub struct RefVar<'render>(pub VarRef<'render>);
 
 pub enum Val<'a, 'render: 'a>{
     Ref(&'a (Variable<'render> + 'render)),
@@ -218,5 +221,68 @@ impl<'a, 'render> Var<'a, 'render> {
     /// Create a variable that boolean false
     pub fn bool_false<'x, 'y: 'x>() -> Var<'x, 'y> {
         Var(Val::Ref(EMPTY))
+    }
+}
+
+impl<'r> fmt::Debug for RefVar<'r> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        (*self.0).fmt(f)
+    }
+}
+
+impl<'render> Variable<'render> for RefVar<'render>
+{
+    fn attr<'x>(&'x self,  attr: &str)
+        -> Result<Var<'x, 'render>, DataError>
+        where 'render: 'x
+    {
+        self.0.attr(attr)
+    }
+    fn index<'x>(&'x self,
+        key: &(Variable<'render> + 'render))
+        -> Result<Var<'x, 'render>, DataError>
+        where 'render: 'x
+    {
+        self.0.index(key)
+    }
+    fn output(&self) -> Result<Output, DataError> {
+        self.0.output()
+    }
+    fn typename(&self) -> &'static str {
+        return stringify!(#name);
+    }
+    fn as_str_key<'x>(&'x self)
+        -> Result<&'x str, DataError>
+    {
+        self.0.as_str_key()
+    }
+    fn as_int_key(&self) -> Result<usize, DataError> {
+        self.0.as_int_key()
+    }
+    fn as_bool(&self) -> Result<bool, DataError> {
+        self.0.as_bool()
+    }
+    fn as_number(&self) -> Result<Number, DataError> {
+        self.0.as_number()
+    }
+    fn as_comparable(&self) -> Result<Comparable, DataError> {
+        self.0.as_comparable()
+    }
+
+    fn iterate<'x>(&'x self)
+        -> Result<Box<Iterator<Item=
+            Var<'x, 'render>>+'x>,
+            DataError>
+        where 'render: 'x
+    {
+        self.0.iterate()
+    }
+
+    fn iterate_pairs<'x>(&'x self)
+        -> Result<Box<Iterator<Item=(Var<'x, 'render>, Var<'x, 'render>)>+'x>,
+            DataError>
+        where 'render: 'x
+    {
+        self.0.iterate_pairs()
     }
 }

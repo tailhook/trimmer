@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use {Variable, Var, DataError, Comparable, Number, Output};
 
@@ -227,3 +227,4 @@ impl<'render, T: Variable<'render>> Variable<'render> for &'render T {
         (**self).iterate_pairs()
     }
 }
+

@@ -1,5 +1,6 @@
 use combine::{Parser as CombineParser, ParseResult};
 use combine::combinator::{position, parser, many, optional, skip_many};
+use combine::combinator::{sep_end_by};
 
 use indent;
 use oneline;
@@ -169,7 +170,16 @@ fn atom<'a>(input: TokenStream<'a>)
         .or(kind(Number).map(|t| {
             t.value.parse().map(Int)
                     .unwrap_or_else(|_| Float(t.value.parse().unwrap()))
-        }));
+        }))
+        .or(paren("{").skip(ws())
+            .with(sep_end_by(
+                parser(top_level_expression)
+                .skip(operator(":"))
+                .skip(ws())
+                .and(parser(top_level_expression)),
+                operator(",").skip(ws()))
+                .map(|vec| Dict(vec))
+            ).skip(paren("}")));
     (position(), expr, position())
     .skip(ws())
     .map(|(s, c, e)| Expr {
