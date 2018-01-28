@@ -1,7 +1,7 @@
 use regex::{Regex, RegexSet};
 
 use parse_error::{ParseError, ParseErrorEnum};
-use validators::Validator;
+use validators::Filter;
 use {Options};
 
 
@@ -21,6 +21,7 @@ pub enum Syntax {
 pub enum Token {
     Syntax,
     Validate,
+    Filter,
     Comment,
 }
 
@@ -32,6 +33,8 @@ impl Preparser {
             (r"^##\s*syntax:\s*(\w+)(?:\n|$)", Syntax),
             (r"^##\s*validate\s+(\w+):[ \t]*(.*)\s*(?:\n|$)",
                 Validate),
+            (r"^##\s*filter\s+(\w+):[ \t]*(.*)\s*(?:\n|$)",
+                Filter),
             (r"^#.*(?:\n|$)", Comment),
             (r"^###.*(?:\n|$)", Comment),
             (r"^\s*\n", Comment),
@@ -99,11 +102,22 @@ impl Preparser {
                                 .map_err(|e| ParseErrorEnum::BadRegexValidator(
                                     regex.to_string(), e))?;
                             if name == "default" {
-                                options.default_validator =
-                                    Validator::Regex(regex);
+                                options.default_filter =
+                                    Filter::Validate(regex);
                             } else {
-                                options.validators.insert(
-                                    name.to_string(), Validator::Regex(regex));
+                                options.filters.insert(
+                                    name.to_string(), Filter::Validate(regex));
+                            }
+                        }
+                        Token::Filter => {
+                            let name = m.get(1).unwrap().as_str();
+                            let filter = m.get(2).unwrap().as_str().parse()?;
+                            if name == "default" {
+                                options.default_filter =
+                                    Filter::Escape(filter);
+                            } else {
+                                options.filters.insert(name.to_string(),
+                                    Filter::Escape(filter));
                             }
                         }
                         Token::Comment => {
@@ -120,7 +134,7 @@ impl Preparser {
 
 #[cfg(test)]
 mod test {
-    use validators::Validator;
+    use validators::Filter;
     use super::{Preparser, Syntax};
     use {Options};
 
@@ -129,8 +143,8 @@ mod test {
         let opt = Preparser::new().scan("## syntax: indent\n",
             Options::new().clone()).unwrap();
         assert_eq!(opt.syntax, Syntax::Indent);
-        assert!(matches!(opt.default_validator, Validator::Anything));
-        assert_eq!(opt.validators.len(), 0);
+        assert!(matches!(opt.default_filter, Filter::NoFilter));
+        assert_eq!(opt.filters.len(), 0);
     }
 
     #[test]
@@ -138,8 +152,8 @@ mod test {
         let opt = Preparser::new().scan("## syntax: oneline\n",
             Options::new().clone()).unwrap();
         assert_eq!(opt.syntax, Syntax::Oneline);
-        assert!(matches!(opt.default_validator, Validator::Anything));
-        assert_eq!(opt.validators.len(), 0);
+        assert!(matches!(opt.default_filter, Filter::NoFilter));
+        assert_eq!(opt.filters.len(), 0);
     }
 
     #[test]

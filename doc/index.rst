@@ -65,6 +65,31 @@ Results in (note the indentation):
         }
     }
 
+Since v0.3.6 it also works well for HTML and has autoescaping,
+here is an example:
+
+.. code-block:: html
+
+    ## syntax: indent
+    ## filter default: builtin.html_entities  ### autoescape
+    ## validate n: [0-9]+
+    <!DOCTYPE html>
+    <html>
+        <body>
+            <h1>{{ title }}</h1>               ### auto escaped
+            <div class="user_canvas"
+                style="position: absolute;     ### note: it's unsafe to just
+                       left: {{ x | n }}px;    ### autoescape values here
+                       top: {{ y | n }}px;">
+            </div>
+        </body>
+    </html>
+
+While the validation here looks like excessive (you must prevalidate it in
+the app) some time ago we thought that escaping values against XSS manually is
+a normal practice, now we always use autoescape. We look at validation of other
+values directly in the template as another way to minimize human error.
+
 
 Indices and tables
 ==================

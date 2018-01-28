@@ -16,6 +16,7 @@ use preparser::Syntax::Oneline;
 use render_error::{RenderError, DataError};
 use varmap::{Context, SubContext, set, get};
 use vars::{UNDEFINED, TRUE, FALSE, Val, VarRef, RefVar};
+use validators::Filter;
 use {Pos, Variable, Var};
 
 
@@ -389,28 +390,40 @@ fn write_block<'x, 'render>(r: &mut Renderer,
                 let var = &eval_expr(r, root, &e);
                 match var.output() {
                     Ok(value) => {
-                        let start = r.buf.len();
-                        write!(&mut r.buf, "{}", value.0)?;
-                        let val = match *validator {
+                        let filter = match *validator {
                             Some(ref name) => {
-                                match r.template.options.validators.get(name) {
+                                match r.template.options.filters.get(name) {
                                     Some(val) => val,
                                     None => {
                                         r.errors.push((item.position.0,
                                             UnknownValidator(
                                                 name.to_string())));
-                                        &r.template.options.default_validator
+                                        &r.template.options.default_filter
                                     }
                                 }
                             }
                             None => {
-                                &r.template.options.default_validator
+                                &r.template.options.default_filter
                             }
                         };
-                        match val.validate(&r.buf[start..]) {
-                            Ok(()) => {}
-                            Err(e) => {
-                                r.errors.push((item.position.0, e));
+                        let start = r.buf.len();
+                        match *filter {
+                            Filter::NoFilter => {
+                                write!(&mut r.buf, "{}", value.0)?;
+                            }
+                            Filter::Validate(ref re) => {
+                                write!(&mut r.buf, "{}", value.0)?;
+                                if !re.is_match(&r.buf[start..]) {
+                                    r.errors.push((item.position.0,
+                                        DataError::RegexValidationError(
+                                            r.buf[start..].to_string(),
+                                            re.as_str().to_string())));
+                                }
+                            }
+                            Filter::Escape(ref escaper) => {
+                                let mut buf = String::with_capacity(1024);
+                                write!(&mut buf, "{}", value.0)?;
+                                escaper.escape(&mut r.buf, &buf);
                             }
                         }
                     }

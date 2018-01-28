@@ -176,6 +176,95 @@ safe to put anything except a quote, so for all variables printed in quotes we
 can add a ``quoted`` validator. See :ref:`front page <showcase>` for more
 practical example.
 
+.. _filter:
+.. index:: pair: Filter; Statement
+
+Filter Statement
+==================
+
+Similarly to validate statements there is filter statement. This is useful
+if you produce HTML output and escape (qoute) some characters in it. This
+works similarly to how filters work in any other template engine, except it
+requires to declare an alias to validator, at the top of the template::
+
+    ## filter h: builtin.html_entities
+    <html>
+        <body>
+            <h1>{{ title | h }}</h1>
+        </body>
+    </html>
+
+Of course, there is a default filter declared in the template too.
+
+Validators and filters are in the same namespace so you can override
+filter by a validator::
+
+    ## filter default: builtin.html_entities
+    ## validate ne: .*
+    <html>
+        <body>
+            <h1>{{ title }}</h1>  ### auto-escaped
+            {{ body | ne }}       ### a piece of HTML validated in advance
+        </body>
+    </html>
+
+
+Predefined validators
+---------------------
+
+
+.. index:: pair: html_entities; Builtin Filter
+
+:builtin.html_entities:
+
+    transforms ``<>"'`/`` into HTML entities. It's good idea to use it as a
+    ``filter default:`` in any HTML template.
+
+    .. note:: This is not a catch-all validator for HTML (like in any other
+        template), you can't put such variables in tag name, attribute name,
+        script or style tag.
+
+        This work the same in amost any other HTML template engine, though.
+        Consult OWASP_ for more info.
+
+    .. _owasp: https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet
+
+.. index:: pair: quoted_shell_argument; Builtin Filter
+
+:builtin.quoted_shell_argument:
+
+    escapes variable value into an argument that's safe to put onto shell
+    command-line. It's **not safe** to put argument in quotes.
+
+    Example:
+
+    .. code-block:: bash
+
+        ## filter arg: builtin.shell_argument
+        #!/bin/sh
+        some_cmd {{ value1 | arg }} {{ value2 | arg }}
+
+    If the value is a part of the argument you must stop quotes before the arg:
+
+    .. code-block:: bash
+
+        ## filter arg: builtin.shell_argument
+        #!/bin/sh
+        echo "Here's arg: "{{ value1 | arg }}". It's safe"
+
+    The quoting caveats and brittleness of shell-commands are the reason it's
+    not recommended to use it as a default argument for example:
+
+    .. code-block:: bash
+
+        ## validate alnum: [a-z0-9]+
+        #!/bin/sh
+        cp source/{{ name | alnum }} target/{{ name | alnum }}
+
+    The above, wouldn't be safe with just shell escaping as one could use
+    parent directory specifiers even if shell expansion would be escaped in
+    ``name``.
+
 
 .. index:: pair: If; Statement
 

@@ -65,4 +65,4 @@ v0.3.6
   dictionaries can be used instead of multiple ``if`` statements or to refer
   to the same values multiple times
 * feature: Add python list syntax support: ``["item1", "item2"]``
-
+* feature: Add support for escaping of the variables no only validating

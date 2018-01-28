@@ -33,6 +33,9 @@ quick_error! {
             description("Validator regexp is invalid")
             display("Validator regex {:?} is invalid: {}", value, err)
         }
+        BadFilter(value: String) {
+            display("Filter {:?} is unknown", value)
+        }
     }
 }
 

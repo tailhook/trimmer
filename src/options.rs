@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use preparser::Syntax;
-use validators::Validator;
+use validators::Filter;
 use {Options};
 
 impl Options {
@@ -13,8 +13,8 @@ impl Options {
             curly: false,
             square: false,
             round: false,
-            default_validator: Validator::Anything,
-            validators: HashMap::new(),
+            default_filter: Filter::NoFilter,
+            filters: HashMap::new(),
         }
     }
     /// Enables `oneline` syntax by default

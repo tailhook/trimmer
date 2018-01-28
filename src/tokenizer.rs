@@ -130,7 +130,8 @@ impl<'a> StreamOnce for TokenStream<'a> {
                                     beginning of the line")));
                         }
                         match tok.value.split_whitespace().nth(1) {
-                            Some("validate") | Some("syntax") => {
+                            Some("validate") | Some("syntax") | Some("filter")
+                            => {
                                 let start_off = self.off;
                                 let end = self.buf[start_off..].find("\n");
                                 let end = end.map(|x| {

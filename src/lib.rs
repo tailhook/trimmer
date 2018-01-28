@@ -16,6 +16,7 @@ extern crate regex;
 #[cfg(feature="json")] extern crate serde_json;
 
 mod compare;
+mod escape;
 mod grammar;
 mod helpers;
 mod indent;
@@ -70,8 +71,8 @@ pub struct Options {
     square: bool,
     round: bool,
 
-    default_validator: validators::Validator,
-    validators: HashMap<String, validators::Validator>,
+    default_filter: validators::Filter,
+    filters: HashMap<String, validators::Filter>,
 }
 
 /// Variable reference returned from methods of Variable trait

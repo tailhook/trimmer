@@ -1,40 +1,54 @@
 use regex::Regex;
+use std::str::FromStr;
 
-use render_error::DataError;
+use escape;
+use parse_error::{ParseError, ParseErrorEnum};
 
-
-#[derive(Debug, Clone)]
-pub enum Validator {
-    Anything,
-    Regex(Regex),
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BuiltinEscape {
+    HtmlEntities,
+    QuotedShellArgument,
 }
 
-impl PartialEq for Validator {
-    fn eq(&self, other: &Validator) -> bool {
-        use self::Validator::*;
+#[derive(Debug, Clone)]
+pub enum Filter {
+    NoFilter,
+    Validate(Regex),
+    Escape(BuiltinEscape),
+}
+
+impl PartialEq for Filter {
+    fn eq(&self, other: &Filter) -> bool {
+        use self::Filter::*;
         match (self, other) {
-            (&Anything, &Anything) => true,
-            (&Anything, &Regex(..)) => false,
-            (&Regex(..), &Anything) => false,
-            (&Regex(ref a), &Regex(ref b)) => a.as_str() == b.as_str(),
+            (&NoFilter, &NoFilter) => true,
+            (&Validate(ref a), &Validate(ref b)) => a.as_str() == b.as_str(),
+            (&Escape(ref a), &Escape(ref b)) => a == b,
+            (&NoFilter, _) => false,
+            (&Validate(..), _) => false,
+            (&Escape(..), _) => false,
         }
     }
 }
 
-impl Validator {
-    pub(crate) fn validate(&self, data: &str)
-        -> Result<(), DataError>
-    {
-        use self::Validator::*;
+impl FromStr for BuiltinEscape {
+    type Err = ParseError;
+    fn from_str(val: &str) -> Result<Self, ParseError> {
+        use self::BuiltinEscape::*;
+        match val {
+            "builtin.html_entities" => Ok(HtmlEntities),
+            "builtin.quoted_shell_argument" => Ok(QuotedShellArgument),
+            _ => Err(ParseErrorEnum::BadFilter(val.to_string()).into()),
+        }
+    }
+}
+
+impl BuiltinEscape {
+    pub fn escape(&self, dest: &mut String, src: &str) {
+        use self::BuiltinEscape::*;
         match *self {
-            Anything => Ok(()),
-            Regex(ref re) => {
-                if !re.is_match(data) {
-                    return Err(DataError::RegexValidationError(
-                        data.to_string(), re.as_str().to_string()));
-                }
-                Ok(())
-            }
+            HtmlEntities => escape::html_entities(dest, src),
+            QuotedShellArgument => escape::quoted_shell_argument(dest, src),
         }
     }
 }
