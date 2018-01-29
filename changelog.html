@@ -1,0 +1,163 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Trimmer Changes By Version &#8212; Trimmer 0.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Template Syntax" href="template_syntax.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="trimmer-changes-by-version">
+<h1>Trimmer Changes By Version<a class="headerlink" href="#trimmer-changes-by-version" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="v0-3-6">
+<span id="changelog-v0-3-6"></span><h2>v0.3.6<a class="headerlink" href="#v0-3-6" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>feature: Add python-like dictionary syntax support: <code class="docutils literal"><span class="pre">{&quot;a&quot;:</span> <span class="pre">1}</span></code>. These
+dictionaries can be used instead of multiple <code class="docutils literal"><span class="pre">if</span></code> statements or to refer
+to the same values multiple times</li>
+<li>feature: Add python list syntax support: <code class="docutils literal"><span class="pre">[&quot;item1&quot;,</span> <span class="pre">&quot;item2&quot;]</span></code></li>
+<li>feature: Add support for filters, in particular <code class="docutils literal"><span class="pre">builtin.html_entities</span></code>
+and <code class="docutils literal"><span class="pre">builtin.quoted_shell_argument</span></code></li>
+</ul>
+</div>
+<div class="section" id="v0-3-5">
+<span id="changelog-v0-3-5"></span><h2>v0.3.5<a class="headerlink" href="#v0-3-5" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Validate directives with some regexes was broken from the start and more of
+that was broken in v0.3.4, fixed now</li>
+<li>Add <code class="docutils literal"><span class="pre">skip</span> <span class="pre">if</span></code> satement to the <a class="reference internal" href="template_syntax.html#for-statement"><span class="std std-ref">for loop</span></a></li>
+</ul>
+</div>
+<div class="section" id="v0-3-4">
+<span id="changelog-v0-3-4"></span><h2>v0.3.4<a class="headerlink" href="#v0-3-4" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Adds line joiner <code class="docutils literal"><span class="pre">##</span></code> (at end of line) syntax</li>
+<li>Bugfixes of syntax and command-line tool</li>
+</ul>
+</div>
+<div class="section" id="v0-3-3">
+<span id="changelog-v0-3-3"></span><h2>v0.3.3<a class="headerlink" href="#v0-3-3" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Implemented all comparison operators (<code class="docutils literal"><span class="pre">&gt;,</span> <span class="pre">&lt;,</span> <span class="pre">&gt;=,</span> <span class="pre">&lt;=,</span> <span class="pre">==,</span> <span class="pre">!=</span></code>)</li>
+<li>Implemented <code class="docutils literal"><span class="pre">as_comparable()</span></code> for <code class="docutils literal"><span class="pre">serde_json::Value</span></code></li>
+<li>Added parenthesis support in expressions</li>
+</ul>
+</div>
+<div class="section" id="v0-3-2">
+<span id="changelog-v0-3-2"></span><h2>v0.3.2<a class="headerlink" href="#v0-3-2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Implemented <code class="docutils literal"><span class="pre">as_number()</span></code> for <code class="docutils literal"><span class="pre">serde_json::Value</span></code></li>
+<li>Implemented <code class="docutils literal"><span class="pre">a*b</span></code>, <code class="docutils literal"><span class="pre">a/b</span></code> and <code class="docutils literal"><span class="pre">a%b</span></code> expressions</li>
+<li>[bugfix] Previously <code class="docutils literal"><span class="pre">a.x+b</span></code> worked but <code class="docutils literal"><span class="pre">a.x</span> <span class="pre">+b</span></code> did not (whitespace bug)</li>
+</ul>
+</div>
+<div class="section" id="v0-3-1">
+<span id="changelog-v0-3-1"></span><h2>v0.3.1<a class="headerlink" href="#v0-3-1" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">as_number()</span></code> and <code class="docutils literal"><span class="pre">as_comparable()</span></code> methods added to the <code class="docutils literal"><span class="pre">Variable</span></code>
+trait</li>
+<li>Implemented <code class="docutils literal"><span class="pre">a+b</span></code> and <code class="docutils literal"><span class="pre">a-b</span></code> syntax in templates</li>
+<li><code class="docutils literal"><span class="pre">##</span> <span class="pre">validate</span></code> statements implemented (See <a class="reference internal" href="template_syntax.html#validate"><span class="std std-ref">documentation</span></a>)</li>
+<li>The <code class="docutils literal"><span class="pre">#</span> <span class="pre">comments</span></code> inside line statements are supported now</li>
+<li>The <code class="docutils literal"><span class="pre">###</span> <span class="pre">comments</span></code> can be used as line comments in normal context</li>
+<li>Added <code class="docutils literal"><span class="pre">--version</span></code> parameter to command-line tool</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Trimmer Changes By Version</a><ul>
+<li><a class="reference internal" href="#v0-3-6">v0.3.6</a></li>
+<li><a class="reference internal" href="#v0-3-5">v0.3.5</a></li>
+<li><a class="reference internal" href="#v0-3-4">v0.3.4</a></li>
+<li><a class="reference internal" href="#v0-3-3">v0.3.3</a></li>
+<li><a class="reference internal" href="#v0-3-2">v0.3.2</a></li>
+<li><a class="reference internal" href="#v0-3-1">v0.3.1</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="template_syntax.html" title="previous chapter">Template Syntax</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/changelog.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Paul Colomiets.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/changelog.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

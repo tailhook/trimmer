@@ -1,0 +1,199 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Welcome to Trimmer’s documentation! &#8212; Trimmer 0.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Template Syntax" href="template_syntax.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-trimmer-s-documentation">
+<h1>Welcome to Trimmer’s documentation!<a class="headerlink" href="#welcome-to-trimmer-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Trimmer is a template language that was initially created to make configuration
+files. Basically it’s template renderer for text files which can also do
+very small subset of validations to make process of design of template easier
+and safer to use.</p>
+<p><a class="reference external" href="https://github.com/tailhook/trimmer/">Github</a> | <a class="reference external" href="https://docs.rs/trimmer/">API Docs</a> | <a class="reference external" href="https://crates.io/crates/trimmer">Crate</a></p>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="template_syntax.html">Template Syntax</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="template_syntax.html#expressions">Expressions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="template_syntax.html#statements">Statements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="template_syntax.html#syntax-statement">Syntax Statement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="template_syntax.html#validate-statement">Validate Statement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="template_syntax.html#filter-statement">Filter Statement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="template_syntax.html#if-statement">If Statement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="template_syntax.html#index-8">For Statement</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Trimmer Changes By Version</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#v0-3-6">v0.3.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#v0-3-5">v0.3.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#v0-3-4">v0.3.4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#v0-3-3">v0.3.3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#v0-3-2">v0.3.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#v0-3-1">v0.3.1</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p id="showcase">Quick showcase:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1">## syntax: indent</span>
+<span class="c1">## validate default: [^;{}]*  # no ; { } to break nginx syntax</span>
+<span class="c1">## validate ne: [^;{}]+       # non-empty (note plus in regex)</span>
+http <span class="o">{</span>
+    <span class="c1">## for server in servers</span>
+        <span class="c1">## skip if server.hostname == &quot;&quot;</span>
+        server <span class="o">{</span>
+            root /var/www<span class="p">;</span>
+            server_name
+                <span class="c1">## for name in server.hostnames</span>
+                   <span class="o">{{</span>+ server.hostname <span class="p">|</span> ne <span class="o">}}</span>.<span class="o">{{</span> suffix <span class="p">|</span> ne -<span class="o">}}</span>
+                <span class="c1">## endfor</span>
+            <span class="p">;</span>
+            <span class="c1">## if server.ip</span>
+                listen <span class="o">{{</span> server.ip <span class="o">}}</span>:80<span class="p">;</span>
+            <span class="c1">## else</span>
+                listen <span class="m">80</span><span class="p">;</span>
+            <span class="c1">## endif</span>
+        <span class="o">}</span>
+    <span class="c1">## endfor</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Results in (note the indentation):</p>
+<div class="highlight-nginx"><div class="highlight"><pre><span></span><span class="k">http</span> <span class="p">{</span>
+    <span class="kn">server</span> <span class="p">{</span>
+        <span class="kn">root</span> <span class="s">/var/www</span><span class="p">;</span>
+        <span class="kn">server_name</span> <span class="s">apple.local</span><span class="p">;</span>
+        <span class="kn">listen</span> <span class="n">192.168.0.1</span><span class="p">:</span><span class="mi">80</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kn">server</span> <span class="p">{</span>
+        <span class="kn">root</span> <span class="s">/var/www</span><span class="p">;</span>
+        <span class="kn">server_name</span> <span class="s">orange.local</span> <span class="s">plum.local</span><span class="p">;</span>
+        <span class="kn">listen</span> <span class="mi">80</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Since v0.3.6 it also works well for HTML and has autoescaping,
+here is an example:</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span>## syntax: indent
+## filter default: builtin.html_entities  ### autoescape
+## validate n: [0-9]+
+<span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>{{ title }}<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>               ### auto escaped
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;user_canvas&quot;</span>
+            <span class="na">style</span><span class="o">=</span><span class="s">&quot;position: absolute;     ### note: it&#39;s unsafe to just</span>
+<span class="s">                   left: {{ x | n }}px;    ### autoescape values here</span>
+<span class="s">                   top: {{ y | n }}px;&quot;</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>While the validation here looks like excessive (you must prevalidate it in
+the app) some time ago we thought that escaping values against XSS manually is
+a normal practice, now we always use autoescape. We look at validation of other
+values directly in the template as another way to minimize human error.</p>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to Trimmer’s documentation!</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="template_syntax.html" title="next chapter">Template Syntax</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Paul Colomiets.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

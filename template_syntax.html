@@ -1,0 +1,396 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Template Syntax &#8212; Trimmer 0.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Trimmer Changes By Version" href="changelog.html" />
+    <link rel="prev" title="Welcome to Trimmer’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="template-syntax">
+<span id="id1"></span><h1>Template Syntax<a class="headerlink" href="#template-syntax" title="Permalink to this headline">¶</a></h1>
+<p>A trimmer template is a simple text file, similarly to many template engines
+out there. There are few kinds of delimiters supported in template:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">{{</span> <span class="pre">a.b</span> <span class="pre">}}</span></code> prints expression (usually just variable substitution) to the
+template output</li>
+<li><code class="docutils literal"><span class="pre">##</span> <span class="pre">something</span></code> statements, they usually they last to the end of line</li>
+</ul>
+<div class="section" id="expressions">
+<span id="index-0"></span><h2>Expressions<a class="headerlink" href="#expressions" title="Permalink to this headline">¶</a></h2>
+<p>Simple expression substitutes a variable passed to template context of
+a renderer:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{{</span> <span class="n">var</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>You can use attribute access via dot <code class="docutils literal"><span class="pre">a.b</span></code> and item access via brackets
+<code class="docutils literal"><span class="pre">a[&quot;b&quot;]</span></code>. It depends on the type of variable (i.e. the implementor of
+<code class="docutils literal"><span class="pre">Variable</span></code> trait) whether this means the same or a different thing. For
+most types these kind of accesses are equivalent.</p>
+<p>There are also whitespace control flags on an expression. If there is a
+dash <code class="docutils literal"><span class="pre">-</span></code> char on either end of the expression, then all of the adjacent
+whitespace is stripped, for example, the following examples will render
+the same:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{{</span> <span class="n">x</span> <span class="p">}}{{</span> <span class="n">y</span> <span class="p">}}</span>
+<span class="p">{{</span> <span class="n">x</span> <span class="o">-</span><span class="p">}}</span>     <span class="p">{{</span> <span class="n">y</span> <span class="p">}}</span>
+<span class="p">{{</span> <span class="n">x</span> <span class="p">}}</span>   <span class="p">{{</span><span class="o">-</span> <span class="n">y</span> <span class="p">}}</span>
+<span class="p">{{</span> <span class="n">x</span> <span class="o">-</span><span class="p">}}</span>    <span class="p">{{</span><span class="o">-</span> <span class="n">y</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>This works even if expressions are divided by newlines, comments, loops and
+conditional staments.</p>
+<p>Another mode of whitespace control is using plus <code class="docutils literal"><span class="pre">+</span></code> character instead, this
+strips all the whitespace and puts exactly one space between variables. These
+examples are all equivalent:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{{</span> <span class="n">x</span> <span class="p">}}</span> <span class="p">{{</span> <span class="n">y</span> <span class="p">}}</span>
+<span class="p">{{</span> <span class="n">x</span> <span class="o">+</span><span class="p">}}{{</span><span class="o">+</span> <span class="n">y</span> <span class="p">}}</span>
+<span class="p">{{</span> <span class="n">x</span> <span class="o">+</span><span class="p">}}</span>    <span class="p">{{</span> <span class="n">y</span> <span class="p">}}</span>
+<span class="p">{{</span> <span class="n">x</span> <span class="p">}}</span>    <span class="p">{{</span><span class="o">+</span> <span class="n">y</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>In case of conflict (i.e. one operator on the left and other on the right):</p>
+<ul class="simple">
+<li>Plus <code class="docutils literal"><span class="pre">+</span></code> operator overrides no operator at all</li>
+<li>Dash <code class="docutils literal"><span class="pre">-</span></code> operator overrides both plus <code class="docutils literal"><span class="pre">+</span></code> and no operator</li>
+</ul>
+<p>Additional notes:</p>
+<ol class="arabic simple">
+<li>The plus operator doesn’t add space at the beginning and the
+end of the buffer</li>
+<li>We don’t strip spaces output by an expression, only template source</li>
+</ol>
+<p>The rule (2) in particular means, you can protect spaces using expression, in
+particular these are equivalent:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{{</span> <span class="n">x</span> <span class="p">}}</span>   <span class="p">{{</span> <span class="n">y</span> <span class="p">}}</span>
+<span class="p">{{</span> <span class="n">x</span> <span class="o">+</span><span class="p">}}</span>    <span class="p">{{</span> <span class="s2">&quot; &quot;</span> <span class="p">}}</span>    <span class="p">{{</span><span class="o">+</span> <span class="n">y</span> <span class="p">}}</span>
+<span class="p">{{</span> <span class="n">x</span> <span class="o">-</span><span class="p">}}</span>   <span class="p">{{</span> <span class="s2">&quot;   &quot;</span> <span class="p">}}</span>   <span class="p">{{</span><span class="o">-</span> <span class="n">y</span> <span class="p">}}</span>
+<span class="p">{{</span> <span class="n">x</span> <span class="o">-</span><span class="p">}}</span>   <span class="p">{{</span> <span class="s2">&quot;&quot;</span> <span class="p">}}</span>   <span class="p">{{</span> <span class="s2">&quot;&quot;</span> <span class="p">}}</span>   <span class="p">{{</span><span class="o">-</span> <span class="n">y</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p><em>(yes even empty string is a delimiter that stops whitespace removal)</em></p>
+<p>As you have already seen you can also put a bare string in expression, this is
+the easiest way to put expression or statement delimiter into the file:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{{</span> <span class="s1">&#39;{{&#39;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="statements">
+<span id="index-1"></span><h2>Statements<a class="headerlink" href="#statements" title="Permalink to this headline">¶</a></h2>
+<p>Statements start with double-sharp and a keyword. Here are examples:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">##</span> <span class="pre">syntax:</span> <span class="pre">indent</span></code></li>
+<li><code class="docutils literal"><span class="pre">##</span> <span class="pre">if</span> <span class="pre">x</span> <span class="pre">&gt;</span> <span class="pre">0</span></code></li>
+<li><code class="docutils literal"><span class="pre">##</span> <span class="pre">for</span> <span class="pre">a</span> <span class="pre">in</span> <span class="pre">array</span></code></li>
+</ul>
+<p>They must start at the start of the line, not counting the whitespace.</p>
+<p>The <code class="docutils literal"><span class="pre">syntax</span></code> and <code class="docutils literal"><span class="pre">validate</span></code> statements must also be at the start of the
+file and in the first column of the row.</p>
+<p>As a special case empty statement <code class="docutils literal"><span class="pre">##</span></code> at the end of the line strips newline
+and leading spaces on the new line, effectively joining two lines:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">function</span><span class="p">(</span>  <span class="c1">##</span>
+  <span class="n">arg1</span><span class="p">,</span>    <span class="c1">##</span>
+  <span class="n">arg2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Would output <code class="docutils literal"><span class="pre">function(arg1,</span> <span class="pre">arg2)</span></code>. This is useful if the whole output
+line doesn’t fit a template line. While you could use <code class="docutils literal"><span class="pre">{{-</span> <span class="pre">''</span> <span class="pre">+}}</span></code> at
+the same place, the line joiner <code class="docutils literal"><span class="pre">##</span></code> is simpler and more clear.</p>
+</div>
+<div class="section" id="syntax-statement">
+<span id="index-2"></span><h2>Syntax Statement<a class="headerlink" href="#syntax-statement" title="Permalink to this headline">¶</a></h2>
+<p>Syntax statement looks like this:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">## syntax: indent</span>
+</pre></div>
+</div>
+<p>Syntax doesn’t influence parsing the template but the typechecking and the
+output of the template.</p>
+<p>Syntax statement must come the first in the file</p>
+<p>Here are the list of supported syntaxes:</p>
+<span class="target" id="syntax-indent"></span><dl class="describe">
+<dt>
+<code class="descname">## syntax: indent</code></dt>
+<dd><p>Means the output is indentation-sensitive, and
+we strip the additional indentation created by the block statements
+(<code class="docutils literal"><span class="pre">##</span> <span class="pre">if</span></code> / <code class="docutils literal"><span class="pre">##</span> <span class="pre">endif</span></code> and <code class="docutils literal"><span class="pre">##</span> <span class="pre">for</span></code> / <code class="docutils literal"><span class="pre">##</span> <span class="pre">endfor</span></code>), so the
+final output can easily be YAML or Python code.</p>
+</dd></dl>
+
+<span class="target" id="syntax-oneline"></span><dl class="describe">
+<dt>
+<code class="descname">## syntax: oneline</code></dt>
+<dd><p>All subsequent whitespace (including newlines)
+is condensed and treated as a single space, effectively making template
+a oneline thing. This syntax is useful for templating log formats
+and command-lines.</p>
+<p>Note: all whitespace printed by expressions is preserved, so you might
+escape whitespace and newlines using quoted literals (<code class="docutils literal"><span class="pre">{{</span> <span class="pre">&quot;\n&quot;</span> <span class="pre">}}</span></code>),
+unless they are rejected by a validator.</p>
+</dd></dl>
+
+<dl class="describe">
+<dt>
+<code class="descname">&lt;plain-syntax&gt;</code></dt>
+<dd><p>Plain (no syntax statement) means the output of the template is rendered
+as is with all whitespace. Statements always occupy the whole line
+including indentation whitespace and trailing end of line.</p>
+</dd></dl>
+
+<span class="target" id="validate"></span></div>
+<div class="section" id="validate-statement">
+<span id="index-3"></span><h2>Validate Statement<a class="headerlink" href="#validate-statement" title="Permalink to this headline">¶</a></h2>
+<p>The validate statement is the core thing for producing valid template output.
+By default template output is not validated. But if you add the following
+to the beginning of the file:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">## validate default: [a-z]+</span>
+</pre></div>
+</div>
+<p>The output of any variable can consist only of alphanumeric characters.
+Validator is a regular expression, the <code class="docutils literal"><span class="pre">^</span></code> and <code class="docutils literal"><span class="pre">$</span></code> anchors are added
+automatically.</p>
+<p>The <code class="docutils literal"><span class="pre">default</span></code> validator is used for every expression that doesn’t override
+the validator. You can add a validator with any other name to be used in
+code that possibly extends default syntax, for example:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">## validate default: [a-zA-Z0-9]+</span>
+<span class="c1">## validate quoted: [^&#39;]*</span>
+<span class="c1">#!/bin/sh</span>
+<span class="n">echo</span> <span class="p">{{</span> <span class="n">arg1</span> <span class="p">}}</span> <span class="s1">&#39;{{ arg2 | quoted }}&#39;</span>
+</pre></div>
+</div>
+<p>Here we generate a shell script. To be careful, we assume that it’s only safe
+to put alphanumeric characters into the file. But in single-quoted strings its
+safe to put anything except a quote, so for all variables printed in quotes we
+can add a <code class="docutils literal"><span class="pre">quoted</span></code> validator. See <a class="reference internal" href="index.html#showcase"><span class="std std-ref">front page</span></a> for more
+practical example.</p>
+<span class="target" id="filter"></span></div>
+<div class="section" id="filter-statement">
+<span id="index-4"></span><h2>Filter Statement<a class="headerlink" href="#filter-statement" title="Permalink to this headline">¶</a></h2>
+<p>Similarly to validate statements there is filter statement. This is useful
+if you produce HTML output and escape (qoute) some characters in it. This
+works similarly to how filters work in any other template engine, except it
+requires to declare an alias to validator, at the top of the template:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">## filter h: builtin.html_entities</span>
+<span class="o">&lt;</span><span class="n">html</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="n">body</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="p">{{</span> <span class="n">title</span> <span class="o">|</span> <span class="n">h</span> <span class="p">}}</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+    <span class="o">&lt;/</span><span class="n">body</span><span class="o">&gt;</span>
+<span class="o">&lt;/</span><span class="n">html</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Of course, there is a default filter declared in the template too.</p>
+<p>Validators and filters are in the same namespace so you can override
+filter by a validator:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">## filter default: builtin.html_entities</span>
+<span class="c1">## validate ne: .*</span>
+<span class="o">&lt;</span><span class="n">html</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="n">body</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="p">{{</span> <span class="n">title</span> <span class="p">}}</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>  <span class="c1">### auto-escaped</span>
+        <span class="p">{{</span> <span class="n">body</span> <span class="o">|</span> <span class="n">ne</span> <span class="p">}}</span>       <span class="c1">### a piece of HTML validated in advance</span>
+    <span class="o">&lt;/</span><span class="n">body</span><span class="o">&gt;</span>
+<span class="o">&lt;/</span><span class="n">html</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="predefined-validators">
+<h3>Predefined validators<a class="headerlink" href="#predefined-validators" title="Permalink to this headline">¶</a></h3>
+<table class="docutils field-list" frame="void" id="index-5" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">builtin.html_entities:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first">transforms <code class="docutils literal"><span class="pre">&lt;&gt;&quot;'`/</span></code> into HTML entities. It’s good idea to use it as a
+<code class="docutils literal"><span class="pre">filter</span> <span class="pre">default:</span></code> in any HTML template.</p>
+<div class="last admonition note">
+<p class="first admonition-title">Note</p>
+<p>This is not a catch-all validator for HTML (like in any other
+template), you can’t put such variables in tag name, attribute name,
+script or style tag.</p>
+<p class="last">This work the same in amost any other HTML template engine, though.
+Consult <a class="reference external" href="https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet">OWASP</a> for more info.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<table class="docutils field-list" frame="void" id="index-6" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">builtin.quoted_shell_argument:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first">escapes variable value into an argument that’s safe to put onto shell
+command-line. It’s <strong>not safe</strong> to put argument in quotes.</p>
+<p>Example:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1">## filter arg: builtin.shell_argument</span>
+<span class="c1">#!/bin/sh</span>
+some_cmd <span class="o">{{</span> value1 <span class="p">|</span> arg <span class="o">}}</span> <span class="o">{{</span> value2 <span class="p">|</span> arg <span class="o">}}</span>
+</pre></div>
+</div>
+<p>If the value is a part of the argument you must stop quotes before the arg:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1">## filter arg: builtin.shell_argument</span>
+<span class="c1">#!/bin/sh</span>
+<span class="nb">echo</span> <span class="s2">&quot;Here&#39;s arg: &quot;</span><span class="o">{{</span> value1 <span class="p">|</span> arg <span class="o">}}</span><span class="s2">&quot;. It&#39;s safe&quot;</span>
+</pre></div>
+</div>
+<p>The quoting caveats and brittleness of shell-commands are the reason it’s
+not recommended to use it as a default argument for example:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1">## validate alnum: [a-z0-9]+</span>
+<span class="c1">#!/bin/sh</span>
+cp source/<span class="o">{{</span> name <span class="p">|</span> alnum <span class="o">}}</span> target/<span class="o">{{</span> name <span class="p">|</span> alnum <span class="o">}}</span>
+</pre></div>
+</div>
+<p class="last">The above, wouldn’t be safe with just shell escaping as one could use
+parent directory specifiers even if shell expansion would be escaped in
+<code class="docutils literal"><span class="pre">name</span></code>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="if-statement">
+<span id="index-7"></span><h2>If Statement<a class="headerlink" href="#if-statement" title="Permalink to this headline">¶</a></h2>
+<p>Conditional statement looks like:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">## if something</span>
+    <span class="n">output</span> <span class="n">something</span>
+<span class="c1">## endif</span>
+</pre></div>
+</div>
+<p>In any case lines containing <code class="docutils literal"><span class="pre">##</span> <span class="pre">if</span></code> and <code class="docutils literal"><span class="pre">##</span> <span class="pre">endif</span></code> do not put into output.
+In <code class="docutils literal"><span class="pre">indent</span></code> syntax the inner indentation of the block is also stripped.</p>
+<span class="target" id="for-statement"></span></div>
+<div class="section" id="index-8">
+<span id="id2"></span><h2>For Statement<a class="headerlink" href="#index-8" title="Permalink to this headline">¶</a></h2>
+<p>There are two forms of loop statements, for iterating over sequences:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">## for var in value</span>
+    <span class="n">output</span> <span class="n">something</span>
+<span class="c1">## endfor</span>
+</pre></div>
+</div>
+<p>And for iterating over dictionaries:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">## for key, value in var</span>
+    <span class="p">{{</span> <span class="n">key</span> <span class="p">}}</span> <span class="o">=</span> <span class="p">{{</span> <span class="n">value</span> <span class="p">}}</span>
+<span class="c1">## endfor</span>
+</pre></div>
+</div>
+<p>In any case lines containing <code class="docutils literal"><span class="pre">##</span> <span class="pre">for</span></code> and <code class="docutils literal"><span class="pre">##</span> <span class="pre">endfor</span></code> do not put into
+output.  In <code class="docutils literal"><span class="pre">indent</span></code> syntax the inner indentation of the block is also
+stripped.</p>
+<p>For loop does <strong>not</strong> support imperative <code class="docutils literal"><span class="pre">break</span></code> and <code class="docutils literal"><span class="pre">continue</span></code> statements,
+but it allows filtering values by using <code class="docutils literal"><span class="pre">##</span> <span class="pre">skip</span> <span class="pre">if</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">## for key, value in var</span>
+    <span class="c1">## skip if key == &quot;bad_value&quot;</span>
+    <span class="p">{{</span> <span class="n">key</span> <span class="p">}}</span> <span class="o">=</span> <span class="p">{{</span> <span class="n">value</span> <span class="p">}}</span>
+<span class="c1">## endfor</span>
+</pre></div>
+</div>
+<p>This is works just like the following, but allows to keep indentation lower:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">## for key, value in var</span>
+    <span class="c1">## if key != &quot;bad_value&quot;</span>
+        <span class="p">{{</span> <span class="n">key</span> <span class="p">}}</span> <span class="o">=</span> <span class="p">{{</span> <span class="n">value</span> <span class="p">}}</span>
+    <span class="c1">## endif</span>
+<span class="c1">## endfor</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Template Syntax</a><ul>
+<li><a class="reference internal" href="#expressions">Expressions</a></li>
+<li><a class="reference internal" href="#statements">Statements</a></li>
+<li><a class="reference internal" href="#syntax-statement">Syntax Statement</a></li>
+<li><a class="reference internal" href="#validate-statement">Validate Statement</a></li>
+<li><a class="reference internal" href="#filter-statement">Filter Statement</a><ul>
+<li><a class="reference internal" href="#predefined-validators">Predefined validators</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#if-statement">If Statement</a></li>
+<li><a class="reference internal" href="#index-8">For Statement</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to Trimmer’s documentation!</a></li>
+      <li>Next: <a href="changelog.html" title="next chapter">Trimmer Changes By Version</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/template_syntax.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Paul Colomiets.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/template_syntax.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
