@@ -1,8 +1,6 @@
 Trimmer
 =======
 
-:Status: Beta
-
 [Reference](https://trimmer.readthedocs.io/) |
 [API Docs](https://docs.rs/trimmer/) |
 [Github](https://github.com/tailhook/trimmer) |
@@ -12,7 +10,8 @@ Yet another template engine for Rust. Features:
 
 * Can produce better indented text than most template engines
 * Can traverse Rust types without cloning them too much
-* Can produce safe output by validating variable values rather than escaping
+* Can produce safe output by validating variable values
+* Autoescaping is supported too, and decared in the template itself
 
 
 License
